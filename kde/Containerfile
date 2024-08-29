@@ -1,0 +1,7 @@
+FROM ghcr.io/ultramarine-linux/base-bootc:latest
+
+RUN rm -rf /root # workaround
+
+RUN dnf4 install --allowerasing -y @ultramarine-kde-product-environment
+
+RUN dnf4 clean all

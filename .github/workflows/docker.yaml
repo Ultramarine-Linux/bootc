@@ -23,6 +23,9 @@ jobs:
         variant:
           - base
           - gnome
+          - flagship
+          - xfce
+          - kde
 
     runs-on: ubuntu-latest
     permissions:
