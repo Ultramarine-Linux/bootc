@@ -22,7 +22,7 @@ jobs:
       matrix:
         variant:
           - base
-          # - gnome
+          - gnome
 
     runs-on: ubuntu-latest
     permissions:
