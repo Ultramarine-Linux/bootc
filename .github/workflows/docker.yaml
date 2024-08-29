@@ -79,7 +79,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.variant }}
-          file: ${{ matrix.varian t}}/Containerfile
+          file: ${{ matrix.variant }}/Containerfile
           push: ${{ github.event_name != 'pull_request' }}
           # tags: ${{ steps.meta.outputs.tags }}
           tags: ghcr.io/ultramarine-linux/${{ matrix.variant }}-bootc
