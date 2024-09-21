@@ -1,3 +1,5 @@
+# todo: Build base image from scratch with melody
+
 FROM quay.io/fedora/fedora-bootc:41
 
 RUN dnf up -y
@@ -8,5 +10,8 @@ RUN dnf install -y --repofrompath "ultramarine,https://repos.fyralabs.com/um$(rp
 
 RUN dnf swap -y --allowerasing fedora-release-common ultramarine-release-identity-basic
 RUN dnf swap -y fedora-logos ultramarine-logos
+
+# Delete old kernels
+RUN dnf remove -y $(dnf repoquery --installonly --latest-limit=1 -q)
 
 RUN dnf4 clean all && dnf clean all
