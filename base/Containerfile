@@ -11,10 +11,10 @@ RUN dnf install -y --repofrompath "ultramarine,https://repos.fyralabs.com/um$(rp
 RUN dnf swap -y --allowerasing fedora-release-common ultramarine-release-identity-basic
 RUN dnf swap -y fedora-logos ultramarine-logos
 
-# Delete old kernels
-RUN dnf4 remove -y --oldinstallonly 
+# Delete old kernels (and maybe all kernels except the latest one)
+RUN dnf remove -y $(dnf repoquery --installonly --latest-limit=1 -q)
 
-# Install kernel modules and stuff for the new kernel, because the old ones are gone???
+# reinstall kernel modules and stuff for the new kernel, install new kernel in case the old one was removed
 # Also install some extra packages :3
 RUN dnf install -y kernel kernel-modules{,-core,-extra,-internal} linux-firmware fwupd fwupd-efi @ultramarine-product-common
 
