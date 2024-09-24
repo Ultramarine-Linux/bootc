@@ -16,7 +16,7 @@ RUN dnf remove -y $(dnf repoquery --installonly --latest-limit=1 -q)
 
 # reinstall kernel modules and stuff for the new kernel, install new kernel in case the old one was removed
 # Also install some extra packages :3
-RUN dnf install -y kernel kernel-modules{,-core,-extra} linux-firmware fwupd fwupd-efi @ultramarine-product-common
+RUN dnf install -y kernel kernel-core kernel-modules{,-core,-extra} linux-firmware fwupd fwupd-efi @ultramarine-product-common
 
 # Regenerate initramfs for new kernel
 RUN dracut -fv --regenerate-all
