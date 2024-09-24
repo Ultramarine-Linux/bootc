@@ -17,15 +17,6 @@ env:
 
 jobs:
   build-base:
-    strategy:
-      fail-fast: false
-      
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
     uses: ./.github/workflows/docker-build.yml
     with:
       variant: base
@@ -41,13 +32,6 @@ jobs:
           - xfce
           - kde
       
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    
     uses: ./.github/workflows/docker-build.yml
     with:
       variant: ${{ matrix.variant }}
