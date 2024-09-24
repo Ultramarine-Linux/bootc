@@ -1,8 +1,8 @@
 # todo: Build base image from scratch with melody
 
 FROM quay.io/fedora/fedora-bootc:41
-
-RUN dnf up -y
+# do not cache this layer
+RUN --mount=type=cache,target=/tmp/cache:none dnf update -y
 
 RUN dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 RUN dnf install -y --repofrompath "terra,https://repos.fyralabs.com/terra$(rpm -E %fedora)" --setopt="terra.gpgkey=https://repos.fyralabs.com/terra$(rpm -E %fedora)/key.asc" terra-release
