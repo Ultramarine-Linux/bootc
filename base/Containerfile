@@ -12,7 +12,7 @@ RUN dnf swap -y --allowerasing fedora-release-common ultramarine-release-identit
 RUN dnf swap -y fedora-logos ultramarine-logos
 
 # Delete old kernels
-RUN dnf remove -y --oldinstallonly 
+RUN dnf4 remove -y --oldinstallonly 
 
 # Install kernel modules and stuff for the new kernel, because the old ones are gone???
 # Also install some extra packages :3
