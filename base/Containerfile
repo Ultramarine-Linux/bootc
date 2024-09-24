@@ -14,4 +14,7 @@ RUN dnf swap -y fedora-logos ultramarine-logos
 # Delete old kernels
 RUN dnf remove -y $(dnf repoquery --installonly --latest-limit=1 -q)
 
+# Regenerate initramfs for new kernel
+RUN dracut -fv --regenerate-all
+
 RUN dnf4 clean all && dnf clean all
