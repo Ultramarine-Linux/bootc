@@ -12,11 +12,11 @@ RUN dnf swap -y --allowerasing fedora-release-common ultramarine-release-identit
 RUN dnf swap -y fedora-logos ultramarine-logos
 
 # Delete old kernels
-RUN dnf remove -y $(dnf repoquery --installonly --latest-limit=1 -q)
+RUN dnf remove -y --oldinstallonly 
 
 # Install kernel modules and stuff for the new kernel, because the old ones are gone???
 # Also install some extra packages :3
-RUN dnf install -y kernel-modules{,-core,-extra,-internal} linux-firmware fwupd fwupd-efi @ultramarine-product-common
+RUN dnf install -y kernel kernel-modules{,-core,-extra,-internal} linux-firmware fwupd fwupd-efi @ultramarine-product-common
 
 # Regenerate initramfs for new kernel
 RUN dracut -fv --regenerate-all
