@@ -26,14 +26,9 @@ jobs:
       contents: read
       packages: write
       id-token: write
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Build base image
-        uses: ./.github/workflows/docker-build.yml
-        with:
-          variant: base
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      variant: base
   
   build-all:
     needs: build-base
@@ -53,10 +48,6 @@ jobs:
       packages: write
       id-token: write
     
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Build all images
-        uses: ./.github/workflows/docker-build.yml
-        with:
-          variant: ${{ matrix.variant }}
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      variant: ${{ matrix.variant }}
