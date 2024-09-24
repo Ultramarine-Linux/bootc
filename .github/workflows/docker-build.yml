@@ -63,8 +63,8 @@ jobs:
             id: build-and-push
             uses: docker/build-push-action@v5
             with:
-              context: ${{ inputs.variant }}
-              file: ${{ inputs.variant }}/Containerfile
+              context: ./${{ inputs.variant }}
+              file: ./${{ inputs.variant }}/Containerfile
               push: ${{ github.event_name != 'pull_request' }}
               # tags: ${{ steps.meta.outputs.tags }}
               tags: ghcr.io/ultramarine-linux/${{ inputs.variant }}-bootc
