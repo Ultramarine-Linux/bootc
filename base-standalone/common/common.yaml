@@ -20,7 +20,6 @@ default_target: graphical.target
 groups:
   - id: core
     blacklist:
-      - dnf-plugins-core
       - grubby
       - grubby-deprecated
       - initial-setup
@@ -78,8 +77,8 @@ packages:
   - vim # Let's install VIM anyway
   - nano
   - nano-default-editor
-  - dnf
-  - dnf-plugins-core
+  - dnf5
+  - dnf5-plugins
   # Boot (TODO: Switch to systemd-boot)
   #systemd-boot may be a bit tricky -jr
   - bootupd
