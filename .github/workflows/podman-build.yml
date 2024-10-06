@@ -26,12 +26,12 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
             
-            - name: Login to ghcr.io
-              uses: redhat-actions/podman-login@v1
-              with:
-                registry: ghcr.io
-                username: ${{ github.actor }}
-                password: ${{ secrets.GITHUB_TOKEN }}
+            # - name: Login to ghcr.io
+            #   uses: redhat-actions/podman-login@v1
+            #   with:
+            #     registry: ghcr.io
+            #     username: ${{ github.actor }}
+            #     password: ${{ secrets.GITHUB_TOKEN }}
             
             - name: Build container image
               id: build-image
