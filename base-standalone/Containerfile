@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/var/cache \
 
 RUN \
   --mount=type=cache,target=/cache \
-  --mount=type=bind,rw=true,src=.,dst=/buildcontext,bind-propagation=shared \
+  --mount=type=bind,rw=true,src=/var/tmp,dst=/buildcontext,bind-propagation=shared \
   rpm-ostree compose image \
     --cachedir=/cache \
     --format=ociarchive \
@@ -26,5 +26,5 @@ RUN \
 FROM oci-archive:./out.ociarchive
 # Need to reference builder here to force ordering. But since we have to run
 # something anyway, we might as well cleanup after ourselves.
-RUN --mount=type=bind,from=builder,src=.,target=/var/tmp --mount=type=bind,rw=true,src=.,dst=/buildcontext,bind-propagation=shared rm /buildcontext/out.ociarchive
+RUN --mount=type=bind,from=builder,src=/var/tmp,target=/var/tmp --mount=type=bind,rw=true,src=/var/tmp,dst=/buildcontext,bind-propagation=shared rm /buildcontext/out.ociarchive
 
