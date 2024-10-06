@@ -23,7 +23,7 @@ RUN \
     out/base/0.yaml /buildcontext/out.ociarchive
 
 
-FROM oci-archive:./out.ociarchive
+FROM oci-archive:/var/tmp/out.ociarchive
 # Need to reference builder here to force ordering. But since we have to run
 # something anyway, we might as well cleanup after ourselves.
 RUN --mount=type=bind,from=builder,src=/var/tmp,target=/var/tmp --mount=type=bind,rw=true,src=/var/tmp,dst=/buildcontext,bind-propagation=shared rm /buildcontext/out.ociarchive
