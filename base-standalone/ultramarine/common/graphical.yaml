@@ -1,0 +1,5 @@
+groups:
+  - id: ultramarine-desktop-product-common
+
+packages:
+  - firefox # I don't know why melody doesnt include firefox from the comps but yeah

@@ -1,0 +1,6 @@
+/out
+/ostree-repo
+/cache
+*.tar
+*.auth.json
+images/

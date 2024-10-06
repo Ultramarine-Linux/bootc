@@ -1,0 +1,34 @@
+groups:
+  - id: hardware-support
+    # TODO: For some reaason, even though other arch only packages get filtered out by melody, it doesn't do this one
+    # seems like a comps format or libdnf issue
+    blacklist:
+      - bcm283x-firmware
+      - cmospwd
+      - intel-media-driver
+      - libva-intel-driver
+      - broadcom-wl
+      # TODO: multican isn't even in Fedora 40, yet is in the Fedora comps.xml for 40
+      # We should notify upstream
+      - multican
+  - id: server-hardware-support
+
+# TODO: Add NVIDIA and other proprietary hardware here
+# This is a very hacky solution and I honestly think we could figure out how to make the installer do this -jr
+packages:
+  - mesa-va-drivers-freeworld
+  - mesa-vdpau-drivers-freeworld
+  - NetworkManager
+
+exclude-packages:
+  - mesa-va-drivers
+
+packages-x86_64:
+  - cmospwd
+  - intel-media-driver
+  - libva-intel-driver
+  # TODO: breaks tree build due to an issue in the %post script under the OSTree build renv
+  # - broadcom-wl
+
+packages-aarch64:
+  - bcm283x-firmware

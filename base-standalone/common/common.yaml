@@ -1,0 +1,152 @@
+boot-location: modules
+selinux: true
+cliwrap: true
+readonly-executables: true
+tmp-is-dir: true
+
+etc-group-members:
+  - wheel
+ignore-removed-users:
+  - root
+ignore-removed-groups:
+  - root
+check-passwd:
+  type: file
+  filename: passwd
+check-groups:
+  type: file
+  filename: group
+default_target: graphical.target
+groups:
+  - id: core
+    blacklist:
+      - dnf
+      - dnf-plugins-core
+      - yum
+      - grubby
+      - grubby-deprecated
+      - initial-setup
+      - dracut-config-rescue
+      - grub2-efi-aa64
+      - grub2-efi-ia32
+      - grub2-efi-x64
+      - grub2-ppc64le
+      - s390utils-base
+      - lsvpd
+      - powerpc-utils
+
+  - id: standard
+    blacklist:
+      - abrt-cli
+      - crontabs
+      - at
+      - deltarpm
+      - psacct
+      # TODO: See hardware.yaml
+      - mcelog
+      - microcode_ctl
+  - id: cloud-bootloader-tools
+    blacklist:
+      - grub2-pc
+      - grub2-tools-efi
+      - grub2-efi-aa64
+      - grub2-efi-ia32
+      - grub2-efi-x64
+      - grub2-ppc64le
+      - s390utils
+      - s390utils-base
+      - shim-aa64
+      - shim-ia32
+      - shim-x64
+  - id: workstation-ostree-support
+  - id: guest-agents
+  - id: printing
+    # There are some junk packages (printing related CLIs, and a GUI) in the optional packages for this group.
+    blacklist:
+      - a2ps
+      - enscript
+      - system-config-printer
+      - cups-bjnp
+
+packages:
+  # Linux
+  - kernel
+  - kernel-modules
+  - kernel-modules-extra
+  # Utilities
+  - lvm2
+  - podman
+  - git
+  - vim # Let's install VIM anyway
+  - nano
+  - nano-default-editor
+  # Boot (TODO: Switch to systemd-boot)
+  #systemd-boot may be a bit tricky -jr
+  - bootupd
+  - grub2
+  - shim
+  - rpmfusion-free-release
+  - rpmfusion-nonfree-release
+  - plocate
+  - ostree-grub2
+
+packages-x86_64:
+  - mcelog
+  - microcode_ctl
+  - cmospwd
+  - intel-media-driver
+  - libva-intel-driver
+  # For some reason, adding in this kmod causes the build to fail with rpmdb corruption
+  # - broadcom-wl
+  - grub2-pc
+  - grub2-efi-x64
+  - grub2-tools-efi
+  - shim-ia32
+  - shim-x64
+
+packages-aarch64:
+  - bcm283x-firmware
+
+exclude-packages:
+  - fedora-release
+  - fedora-release-identity-basic
+  - fedora-release-common
+  - fedora-release-identity-workstation
+  - generic-release
+  - grub2-ppc64le
+  - vim-default-editor # Because we use nano-default-editor, GNU nano is the default editor
+
+postprocess:
+  - |
+    #!/usr/bin/env bash
+    set -xeuo pipefail
+
+    # Work around https://bugzilla.redhat.com/show_bug.cgi?id=1265295
+    # From https://github.com/coreos/fedora-coreos-config/blob/testing-devel/overlay.d/05core/usr/lib/systemd/journald.conf.d/10-coreos-persistent.conf
+    install -dm0755 /usr/lib/systemd/journald.conf.d/
+    echo -e "[Journal]\nStorage=persistent" > /usr/lib/systemd/journald.conf.d/10-persistent.conf
+
+    # See: https://src.fedoraproject.org/rpms/glibc/pull-request/4
+    # Basically that program handles deleting old shared library directories
+    # mid-transaction, which never applies to rpm-ostree. This is structured as a
+    # loop/glob to avoid hardcoding (or trying to match) the architecture.
+    for x in /usr/sbin/glibc_post_upgrade.*; do
+        if test -f ${x}; then
+            ln -srf /usr/bin/true ${x}
+        fi
+    done
+
+    # Remove loader directory causing issues in Anaconda in unified core mode
+    # Will be obsolete once we start using bootupd
+    rm -rf /usr/lib/ostree-boot/loader
+
+    # # Undo RPM scripts enabling units; we want the presets to be canonical
+    # # https://github.com/projectatomic/rpm-ostree/issues/1803
+    # rm -rf /etc/systemd/system/*
+    # systemctl preset-all
+    # rm -rf /etc/systemd/user/*
+    # systemctl --user --global preset-all
+
+    # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2218006
+    systemctl enable nfs-client.target
+postprocess-script: "postprocess.sh"
