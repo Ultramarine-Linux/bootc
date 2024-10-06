@@ -5,6 +5,10 @@ on:
     - cron: "15 14 * * *"
   push:
     branches: ["main"]
+    paths-ignore:
+      - "README.md"
+      - "LICENSE"
+      - base-standalone/**
   pull_request:
     branches: ["main"]
   workflow_dispatch:

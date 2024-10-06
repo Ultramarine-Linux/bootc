@@ -40,6 +40,8 @@ jobs:
               id: build-image
               uses: redhat-actions/buildah-build@v2
               with:
+                containerfiles: |
+                    base-standalone/Containerfile
                 image: ghcr.io/ultramarine-linux/base-standalone-bootc
                 tags: 41 latest
                 context: base-standalone
