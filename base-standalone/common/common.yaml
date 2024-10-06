@@ -1,6 +1,6 @@
 boot-location: modules
 selinux: true
-cliwrap: true
+cliwrap: false
 readonly-executables: true
 tmp-is-dir: true
 
@@ -20,9 +20,7 @@ default_target: graphical.target
 groups:
   - id: core
     blacklist:
-      - dnf
       - dnf-plugins-core
-      - yum
       - grubby
       - grubby-deprecated
       - initial-setup
@@ -80,6 +78,8 @@ packages:
   - vim # Let's install VIM anyway
   - nano
   - nano-default-editor
+  - dnf
+  - dnf-plugins-core
   # Boot (TODO: Switch to systemd-boot)
   #systemd-boot may be a bit tricky -jr
   - bootupd
@@ -89,12 +89,45 @@ packages:
   - rpmfusion-nonfree-release
   - plocate
   - ostree-grub2
+  - bootc
+  # Additional file compression/decompression
+  - bzip2 zstd
+  # Improved MOTD experience
+  - console-login-helper-messages-issuegen
+  - console-login-helper-messages-profile
+  # kdump support
+  # https://github.com/coreos/fedora-coreos-tracker/issues/622
+  - kexec-tools
+  # Container tooling
+  - toolbox
+  - distrobox
+  # nvme-cli for managing nvme disks
+  - nvme-cli
+  # Used by admins interactively
+  - lsof
+  # stuff for managing the system
+  - zram-generator
+  - htop
+  - btop
+  # Additional firewall support; we aren't including these in RHCOS or they
+  # don't exist in RHEL
+  - iptables-services
+  - WALinuxAgent-udev
+  - libsss_sudo
+  # SSSD; we only ship a subset of the backends
+  - sssd-client sssd-ad sssd-ipa sssd-krb5 sssd-ldap
+  # Used by admins interactively
+  - openssl
+  # Provides terminal tools like clear, reset, tput, and tset
+  - ncurses
+
+
+
 
 packages-x86_64:
   - mcelog
   - microcode_ctl
   - cmospwd
-  - intel-media-driver
   - intel-media-driver
   # For some reason, adding in this kmod causes the build to fail with rpmdb corruption
   # - broadcom-wl
@@ -115,38 +148,78 @@ exclude-packages:
   - generic-release
   - grub2-ppc64le
   - vim-default-editor # Because we use nano-default-editor, GNU nano is the default editor
+  - perl
+  - perl-interpreter
+  - nodejs
+  - grubby
+  - cowsay  # Just in case
+  # Let's make sure initscripts doesn't get pulled back in
+  # https://github.com/coreos/fedora-coreos-tracker/issues/220#issuecomment-611566254
+  - initscripts
+  # Do not use legacy ifcfg config format in NetworkManager
+  # See https://github.com/coreos/fedora-coreos-config/pull/1991
+  - NetworkManager-initscripts-ifcfg-rh
+  # Let's not have both legacy and nft versions in the image. Users are free to
+  # also layer legacy themselves if they want.
+  - iptables-legacy
+
 
 postprocess:
   - |
     #!/usr/bin/env bash
+    set -euo pipefail
+    target=/usr/lib/systemd/system/default.target.wants
+    mkdir -p $target
+    set -x
+    ln -s ../bootc-fetch-apply-updates.timer $target
+  # Undo RPM scripts enabling units; we want the presets to be canonical
+  # https://github.com/projectatomic/rpm-ostree/issues/1803
+  - |
+    #!/usr/bin/env bash
     set -xeuo pipefail
+    rm -rf /etc/systemd/system/*
+    systemctl preset-all
+    rm -rf /etc/systemd/user/*
+    systemctl --user --global preset-all
+  # See: https://github.com/coreos/fedora-coreos-tracker/issues/1253
+  #      https://bugzilla.redhat.com/show_bug.cgi?id=2112857
+  #      https://github.com/coreos/rpm-ostree/issues/3918
+  # Temporary workaround to remove the SetGID binary from liblockfile that is
+  # pulled by the s390utils but not needed for /usr/sbin/zipl.
+  - |
+    #!/usr/bin/env bash
+    set -xeuo pipefail
+    rm -f /usr/bin/dotlockfile
+  - |
+    #!/bin/bash
+    set -euo pipefail
+    mkdir -p /usr/lib/systemd/system/local-fs.target.wants
+    ln -s ../bootc-generic-growpart.service /usr/lib/systemd/system/local-fs.target.wants/bootc-generic-growpart.service
+  # Taken from https://github.com/coreos/fedora-coreos-config/blob/aa4373201f415baff85701f7f96ab0583931af6c/overlay.d/05core/usr/lib/systemd/journald.conf.d/10-coreos-persistent.conf#L5
+  # Hardcode persistent journal by default. journald has this "auto" behaviour
+  # that only makes logs persistent if `/var/log/journal` exists, which it won't
+  # on first boot because `/var` isn't fully populated. We should be able to get
+  # rid of this once we move to sysusers and create the dir in the initrd.
+  - | #!/bin/bash
+    mkdir -p /usr/lib/systemd/journald.conf.d/
+    cat >/usr/lib/systemd/journald.conf.d/10-centos-bootc-persistent.conf << EOF
+    [Journal]
+    Storage=persistent
+    EOF
+  - |
+    #!/usr/bin/env bash
+    mkdir -p /usr/lib/dracut/dracut.conf.d
+    cat > /usr/lib/dracut/dracut.conf.d/30-bootc-tier-1.conf << 'EOF'
+    add_dracutmodules+=" lvm crypt fips "
+    EOF
 
-    # Work around https://bugzilla.redhat.com/show_bug.cgi?id=1265295
-    # From https://github.com/coreos/fedora-coreos-config/blob/testing-devel/overlay.d/05core/usr/lib/systemd/journald.conf.d/10-coreos-persistent.conf
-    install -dm0755 /usr/lib/systemd/journald.conf.d/
-    echo -e "[Journal]\nStorage=persistent" > /usr/lib/systemd/journald.conf.d/10-persistent.conf
 
-    # See: https://src.fedoraproject.org/rpms/glibc/pull-request/4
-    # Basically that program handles deleting old shared library directories
-    # mid-transaction, which never applies to rpm-ostree. This is structured as a
-    # loop/glob to avoid hardcoding (or trying to match) the architecture.
-    for x in /usr/sbin/glibc_post_upgrade.*; do
-        if test -f ${x}; then
-            ln -srf /usr/bin/true ${x}
-        fi
-    done
 
-    # Remove loader directory causing issues in Anaconda in unified core mode
-    # Will be obsolete once we start using bootupd
-    rm -rf /usr/lib/ostree-boot/loader
+add-files:
+  - - bootc-generic-growpart
+    - /usr/libexec/bootc-generic-growpart
+  - - bootc-generic-growpart.service
+    - /usr/lib/systemd/system/bootc-generic-growpart.service
 
-    # # Undo RPM scripts enabling units; we want the presets to be canonical
-    # # https://github.com/projectatomic/rpm-ostree/issues/1803
-    # rm -rf /etc/systemd/system/*
-    # systemctl preset-all
-    # rm -rf /etc/systemd/user/*
-    # systemctl --user --global preset-all
 
-    # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2218006
-    systemctl enable nfs-client.target
 postprocess-script: "postprocess.sh"
