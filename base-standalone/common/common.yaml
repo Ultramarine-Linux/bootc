@@ -215,9 +215,9 @@ postprocess:
 
 
 
-add-files:
-  - - bootc-generic-growpart
-    - /usr/libexec/bootc-generic-growpart
-  - - bootc-generic-growpart.service
-    - /usr/lib/systemd/system/bootc-generic-growpart.service
+# add-files:
+#   - - bootc-generic-growpart
+#     - /usr/libexec/bootc-generic-growpart
+#   - - bootc-generic-growpart.service
+#     - /usr/lib/systemd/system/bootc-generic-growpart.service
 
