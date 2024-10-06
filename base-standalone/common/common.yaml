@@ -221,5 +221,3 @@ add-files:
   - - bootc-generic-growpart.service
     - /usr/lib/systemd/system/bootc-generic-growpart.service
 
-
-postprocess-script: "postprocess.sh"
