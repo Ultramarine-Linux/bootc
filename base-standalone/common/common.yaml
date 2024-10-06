@@ -95,7 +95,7 @@ packages-x86_64:
   - microcode_ctl
   - cmospwd
   - intel-media-driver
-  - libva-intel-driver
+  - intel-media-driver
   # For some reason, adding in this kmod causes the build to fail with rpmdb corruption
   # - broadcom-wl
   - grub2-pc
