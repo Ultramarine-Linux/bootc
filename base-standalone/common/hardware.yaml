@@ -6,7 +6,7 @@ groups:
       - bcm283x-firmware
       - cmospwd
       - intel-media-driver
-      - intel-media-driver
+      - libva-intel-driver
       - broadcom-wl
       # TODO: multican isn't even in Fedora 40, yet is in the Fedora comps.xml for 40
       # We should notify upstream
