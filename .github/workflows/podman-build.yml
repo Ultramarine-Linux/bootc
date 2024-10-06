@@ -56,6 +56,5 @@ jobs:
               with:
                 image: ${{ steps.build-image.outputs.image }}
                 tags: ${{ steps.build-image.outputs.tags }}
-                registry: ghcr.io/ultramarine-linux
                 username: ${{ github.actor }}
                 password: ${{ secrets.GITHUB_TOKEN }}
