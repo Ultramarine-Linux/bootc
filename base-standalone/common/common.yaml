@@ -148,8 +148,6 @@ exclude-packages:
   - generic-release
   - grub2-ppc64le
   - vim-default-editor # Because we use nano-default-editor, GNU nano is the default editor
-  - perl
-  - perl-interpreter
   - nodejs
   - grubby
   - cowsay  # Just in case
