@@ -41,7 +41,7 @@
 image_name := "ghcr.io/ultramarine/base-standalone-bootc"
 
 build-base-standalone:
-  sudo podman build --security-opt=label=disable --cap-add=all --device /dev/fuse -t {{image_name}} base-standalone 
+  sudo buildah build --security-opt=label=disable --cap-add=all --device /dev/fuse -t {{image_name}} base-standalone 
 
 
   

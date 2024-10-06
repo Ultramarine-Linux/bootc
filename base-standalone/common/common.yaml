@@ -153,12 +153,6 @@ exclude-packages:
   - nodejs
   - grubby
   - cowsay  # Just in case
-  # Let's make sure initscripts doesn't get pulled back in
-  # https://github.com/coreos/fedora-coreos-tracker/issues/220#issuecomment-611566254
-  - initscripts
-  # Do not use legacy ifcfg config format in NetworkManager
-  # See https://github.com/coreos/fedora-coreos-config/pull/1991
-  - NetworkManager-initscripts-ifcfg-rh
   # Let's not have both legacy and nft versions in the image. Users are free to
   # also layer legacy themselves if they want.
   - iptables-legacy
