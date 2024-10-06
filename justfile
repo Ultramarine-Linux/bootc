@@ -38,9 +38,10 @@
 # build-tree variant: prep (compile variant) (compose-tree variant)
 # build-image variant: prep (compile variant) (compose-image variant)
 
+image_name := "ghcr.io/ultramarine/base-standalone-bootc"
 
-build:
-  sudo podman build --security-opt=label=disable --cap-add=all --device /dev/fuse -t ultramarine-base-artifact . 
+build-base-standalone:
+  sudo podman build --security-opt=label=disable --cap-add=all --device /dev/fuse -t {{image_name}} base-standalone 
 
 
   
