@@ -23,6 +23,9 @@ jobs:
             image: ghcr.io/terrapkg/builder:f40
             options: --privileged --device=/dev/fuse
         steps:
+            - name: Install dependencies
+              run: |
+                  dnf5 install -y buildah podman skopeo fuse-overlayfs fuse3
             - name: Checkout repository
               uses: actions/checkout@v4
             
