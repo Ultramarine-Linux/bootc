@@ -2,7 +2,7 @@
 
 FROM quay.io/fedora/fedora-bootc:41
 # do not cache this layer
-RUN --mount=type=cache,target=/tmp/cache:none dnf update -y
+RUN --mount=type=cache,target=/tmp/cache:none dnf update -y -x kernel*
 
 RUN dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 RUN dnf install -y --repofrompath "terra,https://repos.fyralabs.com/terra$(rpm -E %fedora)" --setopt="terra.gpgkey=https://repos.fyralabs.com/terra$(rpm -E %fedora)/key.asc" terra-release
@@ -15,14 +15,14 @@ RUN dnf swap -y fedora-logos ultramarine-logos
 
 # check if there are any old kernels then remove them
 # if empty then do nothing
-RUN if [ -n "$(dnf repoquery --installonly --latest-limit=-1 -q)" ]; then dnf remove -y $(dnf repoquery --installonly --latest-limit=-1 -q); fi
+# RUN if [ -n "$(dnf repoquery --installonly --latest-limit=-1 -q)" ]; then dnf remove -y $(dnf repoquery --installonly --latest-limit=-1 -q); fi
 # RUN dnf remove -y $(dnf repoquery --installonly --latest-limit=-1 -q) || true
 
 # reinstall kernel modules and stuff for the new kernel, install new kernel in case the old one was removed
 # Also install some extra packages :3
 RUN dnf install -y kernel kernel-core kernel-modules{,-core,-extra} linux-firmware fwupd fwupd-efi @ultramarine-product-common
+RUN dnf4 clean all && dnf clean all
 
 # Regenerate initramfs for new kernel
 RUN dracut -fv --regenerate-all
 
-RUN dnf4 clean all && dnf clean all

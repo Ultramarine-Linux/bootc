@@ -10,4 +10,5 @@ qemu-system-"$ARCH" \
     -smp "$QEMU_CPU" \
     -m "$QEMU_MEM" \
     -bios /usr/share/OVMF/OVMF_CODE.fd \
+    -serial stdio \
     -drive file=output/qcow2/disk.qcow2,format=qcow2,if=virtio
