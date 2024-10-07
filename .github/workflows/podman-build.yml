@@ -54,7 +54,8 @@ jobs:
             - name: Push To ghcr.io
               uses: redhat-actions/push-to-registry@v2
               with:
-                image: ${{ steps.build-image.outputs.image }}
+                image: base-standalone-bootc
                 tags: ${{ steps.build-image.outputs.tags }}
+                registry: ghcr.io/ultramarine-linux
                 username: ${{ github.actor }}
                 password: ${{ secrets.GITHUB_TOKEN }}
