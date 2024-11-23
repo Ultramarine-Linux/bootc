@@ -11,18 +11,18 @@ RUN dnf install -y --repofrompath "ultramarine,https://repos.fyralabs.com/um$(rp
 RUN dnf swap -y --allowerasing fedora-release-common ultramarine-release-identity-basic
 RUN dnf swap -y fedora-logos ultramarine-logos
 
-# Delete old kernels (and maybe all kernels except the latest one)
-
-# check if there are any old kernels then remove them
-# if empty then do nothing
-# RUN if [ -n "$(dnf repoquery --installonly --latest-limit=-1 -q)" ]; then dnf remove -y $(dnf repoquery --installonly --latest-limit=-1 -q); fi
-# RUN dnf remove -y $(dnf repoquery --installonly --latest-limit=-1 -q) || true
+# Remove existing kernel
+RUN for pkg in kernel kernel-core kernel-modules kernel-modules-core ; do rpm --erase $pkg --nodeps ; done
 
 # reinstall kernel modules and stuff for the new kernel, install new kernel in case the old one was removed
 # Also install some extra packages :3
 RUN dnf install -y kernel kernel-core kernel-modules{,-core,-extra} linux-firmware fwupd fwupd-efi @ultramarine-product-common
-RUN dnf4 clean all && dnf clean all
+
+# (why isnt this here?)
+RUN rm -rf /root
 
 # Regenerate initramfs for new kernel
 RUN dracut -fv --regenerate-all
 
+# Lint the container for any faulty changes
+RUN bootc container lint
