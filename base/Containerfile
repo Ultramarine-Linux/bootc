@@ -18,7 +18,7 @@ RUN for pkg in kernel kernel-core kernel-modules kernel-modules-core ; do rpm --
 # Also install some extra packages :3
 RUN dnf install -y kernel kernel-core kernel-modules{,-core,-extra} linux-firmware fwupd fwupd-efi @ultramarine-product-common
 
-# (why isnt this here?)
+# Workaround to make dracut work just fine
 RUN rm -rf /root
 
 # Regenerate initramfs for new kernel

@@ -1,9 +1,11 @@
 FROM ghcr.io/ultramarine-linux/base-bootc:latest
 
-RUN rm -rf /root # workaround
-
-RUN dnf4 remove -y desktop-backgrounds-compat
-
-RUN dnf4 install -x PackageKit -x PackageKit-command-not-found -x grubby -x sdubby -x gnome-software-fedora-langpacks --allowerasing -y @ultramarine-xfce-product-environment
-
-RUN dnf4 clean all
+RUN dnf install \
+  -x PackageKit \
+  -x PackageKit-command-not-found \
+  -x grubby \
+  -x sdubby \
+  -x gnome-software-fedora-langpacks \
+  -x desktop-backgrounds-compat \
+  --allowerasing -y \
+  @ultramarine-xfce-product-environment
