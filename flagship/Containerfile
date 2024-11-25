@@ -1,7 +1,12 @@
 FROM ghcr.io/ultramarine-linux/base-bootc:latest
 
-RUN rm -rf /root # workaround
+RUN dnf install \
+  -x PackageKit \
+  -x PackageKit-command-not-found \
+  -x grubby \
+  -x sdubby \
+  -x gnome-software-fedora-langpacks \
+  -x budgie-desktop-defaults \
+  --allowerasing -y \
+  @ultramarine-flagship-product-environment
 
-RUN dnf install -x PackageKit -x PackageKit-command-not-found -x grubby -x sdubby -x gnome-software-fedora-langpacks --allowerasing -y @ultramarine-flagship-product-environment
-
-RUN dnf clean all
