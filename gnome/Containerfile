@@ -9,3 +9,4 @@ RUN dnf install \
   -x gnome-software-rpm-ostree \
   --allowerasing -y \
   @ultramarine-gnome-product-environment
+
