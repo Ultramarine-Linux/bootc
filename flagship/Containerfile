@@ -2,6 +2,6 @@ FROM ghcr.io/ultramarine-linux/base-bootc:latest
 
 RUN rm -rf /root # workaround
 
-RUN dnf4 install -x PackageKit -x PackageKit-command-not-found -x grubby -x sdubby -x gnome-software-fedora-langpacks --allowerasing -y @ultramarine-flagship-product-environment
+RUN dnf install -x PackageKit -x PackageKit-command-not-found -x grubby -x sdubby -x gnome-software-fedora-langpacks --allowerasing -y @ultramarine-flagship-product-environment
 
-RUN dnf4 clean all
+RUN dnf clean all
