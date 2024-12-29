@@ -24,7 +24,7 @@ function get_uid_gid {
 }
 
 function bootc-image-builder {
-    sudo podman run \
+    podman run \
         --rm \
         -it \
         --privileged \
