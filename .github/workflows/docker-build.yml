@@ -87,3 +87,32 @@ jobs:
             # This step uses the identity token to provision an ephemeral certificate
             # against the sigstore community Fulcio instance.
             run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+    build-image:
+        needs: build
+        strategy:
+            fail-fast: false
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/terrapkg/builder:f41
+            options: --privileged --device=/dev/fuse
+        permissions:
+            contents: read
+            packages: write
+            id-token: write
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            
+            - name: Install dependencies
+              run: |
+                  dnf5 install -y buildah podman skopeo fuse rpm-ostree
+            - name: Build container image
+              run: |
+                scripts/image-builder.sh "ghcr.io/ultramarine-linux/${{ inputs.variant }}-bootc" --rootfs btrfs
+                
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                name: ${{{inputs.variant}}}-bootc-qcow2
+                path: output/
