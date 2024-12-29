@@ -1,10 +1,10 @@
-FROM ghcr.io/terrapkg/builder:f40 AS builder
+FROM ghcr.io/terrapkg/builder:f41 AS builder
 
 WORKDIR /work
 
 RUN \
  --mount=type=cache,target=/var/cache \
- sudo dnf5 install -y podman moby-engine rpm-ostree melody just python3-pip pkg-config wget ostree ostree-devel rpm-ostree git hfsplus-tools flatpak dbus dbus-daemon rpmdevtools make mock selinux-policy python3-pip jq @development-tools gcc cairo-devel python3-devel 'pkgconfig(gobject-introspection-1.0)' 'pkgconfig(cairo-gobject)' 'dnf-command(config-manager)'
+ dnf5 install -y podman moby-engine rpm-ostree melody just python3-pip pkg-config wget ostree ostree-devel rpm-ostree git hfsplus-tools flatpak dbus dbus-daemon rpmdevtools make mock selinux-policy python3-pip jq @development-tools gcc cairo-devel python3-devel 'pkgconfig(gobject-introspection-1.0)' 'pkgconfig(cairo-gobject)' 'dnf-command(config-manager)'
 
 RUN pip install yq
 
