@@ -19,7 +19,7 @@ jobs:
     build:
         strategy:
             fail-fast: false
-        runs-on: ubuntu-latest
+        runs-on: x86-64-lg
         permissions:
             contents: read
             packages: write

@@ -18,7 +18,7 @@ env:
 jobs:
     build:
         name: Build standalone container image
-        runs-on: ubuntu-latest
+        runs-on: x86-64-lg
         container:
             image: ghcr.io/terrapkg/builder:f40
             options: --privileged --device=/dev/fuse
