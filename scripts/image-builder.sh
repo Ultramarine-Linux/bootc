@@ -36,6 +36,7 @@ function bootc-image-builder {
         -v $(pwd)/scripts:/scripts \
         -v /var/lib/containers/storage:/var/lib/containers/storage \
         "$BOOTC_IMAGE_BUILDER" \
+        --progress=verbose \
         --chown "$(get_uid_gid)" \
         $@
 }
