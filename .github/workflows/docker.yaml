@@ -8,7 +8,7 @@ on:
     paths-ignore:
       - "README.md"
       - "LICENSE"
-      - base-standalone/**
+      # - base-standalone/**
   pull_request:
     branches: ["main"]
   workflow_dispatch:
