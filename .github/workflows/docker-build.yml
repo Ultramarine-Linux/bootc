@@ -107,6 +107,11 @@ jobs:
             - name: Install dependencies
               run: |
                   dnf5 install -y buildah podman skopeo fuse rpm-ostree sudo
+
+            - name: Pull image
+              run: |
+                podman pull ghcr.io/ultramarine-linux/${{ inputs.variant }}-bootc
+
             - name: Build container image
               run: |
                 scripts/image-builder.sh "ghcr.io/ultramarine-linux/${{ inputs.variant }}-bootc" --rootfs btrfs
