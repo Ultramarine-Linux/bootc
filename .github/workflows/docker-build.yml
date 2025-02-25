@@ -89,7 +89,7 @@ jobs:
             run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
     build-image:
-        needs: build
+        # needs: build
         strategy:
             fail-fast: false
         runs-on: ubuntu-latest
