@@ -21,9 +21,15 @@ env:
 
 jobs:
   build-base:
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - base
+          - base-standalone
     uses: ./.github/workflows/docker-build.yml
     with:
-      variant: base
+      variant: ${{ matrix.variant }}
   
   build-all:
     needs: build-base
@@ -32,6 +38,7 @@ jobs:
       matrix:
         variant:
           - gnome
+          - gnome-standalone
           - flagship
           - xfce
           - kde

@@ -1,0 +1,12 @@
+FROM ghcr.io/ultramarine-linux/gnome-standalone-bootc:latest
+
+RUN dnf install \
+  -x PackageKit \
+  -x PackageKit-command-not-found \
+  -x grubby \
+  -x sdubby \
+  -x gnome-software-fedora-langpacks \
+  -x gnome-software-rpm-ostree \
+  --allowerasing -y \
+  @ultramarine-gnome-product-environment
+

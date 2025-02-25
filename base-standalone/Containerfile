@@ -16,17 +16,19 @@ RUN --mount=type=cache,target=/var/cache \
 RUN \
   --mount=type=cache,target=/cache \
   --mount=type=bind,rw=true,src=.,dst=/buildcontext,bind-propagation=shared \
-  rpm-ostree compose image \
+  rpm-ostree experimental compose rootfs \
     --cachedir=/cache \
-    --format=ociarchive \
-    --initialize \
-    out/base/0.yaml /buildcontext/out.ociarchive
+    out/base/0.yaml /target-rootfs
 
 
 # Please build from the root directory of the repository
 
-FROM oci-archive:./base-standalone/out.ociarchive
+FROM scratch
+COPY --from=builder /target-rootfs/ /
+LABEL containers.bootc 1
+LABEL bootc.diskimage-builder quay.io/centos-bootc/bootc-image-builder
+ENV container=oci
 # Need to reference builder here to force ordering. But since we have to run
 # something anyway, we might as well cleanup after ourselves.
-RUN --mount=type=bind,from=builder,src=.,target=/var/tmp --mount=type=bind,rw=true,src=.,dst=/buildcontext,bind-propagation=shared rm /buildcontext/out.ociarchive
-
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]
