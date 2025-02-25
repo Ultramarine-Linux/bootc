@@ -1,6 +1,6 @@
 registry_prefix := "ghcr.io/ultramarine-linux"
 build variant:
-  buildah bud --cap-add CAP_SYS_ADMIN -t {{ registry_prefix }}/{{ variant }}-bootc {{ variant }}
+  buildah bud --cap-add=all --device=/dev/fuse --security-opt=label=disable -t {{ registry_prefix }}/{{ variant }}-bootc {{ variant }}
 
 build-vm image type="qcow2":
   #!/usr/bin/env bash

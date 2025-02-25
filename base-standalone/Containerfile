@@ -3,21 +3,31 @@ FROM ghcr.io/terrapkg/builder:f41 AS builder
 WORKDIR /work
 
 RUN \
- --mount=type=cache,target=/var/cache \
- dnf5 install -y yq podman moby-engine rpm-ostree melody just python3-pip pkg-config wget ostree ostree-devel rpm-ostree git hfsplus-tools flatpak dbus dbus-daemon rpmdevtools make mock selinux-policy python3-pip jq @development-tools gcc cairo-devel python3-devel 'pkgconfig(gobject-introspection-1.0)' 'pkgconfig(cairo-gobject)' 'dnf-command(config-manager)'
+  --mount=type=cache,target=/var/cache \
+  dnf5 install -y yq podman moby-engine rpm-ostree melody just python3-pip pkg-config wget ostree ostree-devel rpm-ostree git hfsplus-tools flatpak dbus dbus-daemon rpmdevtools make mock selinux-policy python3-pip jq @development-tools gcc cairo-devel python3-devel 'pkgconfig(gobject-introspection-1.0)' 'pkgconfig(cairo-gobject)' 'dnf-command(config-manager)'
 
 
 COPY . .
 
 RUN --mount=type=cache,target=/var/cache \
-    melody compile ultramarine/base.yaml out/base
+  melody compile ultramarine/base.yaml out/base
 
 RUN \
   --mount=type=cache,target=/cache \
   --mount=type=bind,rw=true,src=.,dst=/buildcontext,bind-propagation=shared \
-  rpm-ostree compose install \
-    --repo=/cache/repo \
-    out/base/0.yaml /target-rootfs
+  mkdir -p /sysroot/ostree/repo /target-rootfs && ostree init --repo /sysroot/ostree/repo --mode bare
+
+# Man I do not know what the hell is going on here
+# We're doing the funny granular chroot generation in /target-rootfs and then
+# copying it to the resulting scratch image.
+# This is very cursed
+# todo: check if we even need rpm-ostree for its fancy stuff, if not switch to katsu
+RUN \
+  --mount=type=cache,target=/cache \
+  --mount=type=bind,rw=true,src=.,dst=/buildcontext,bind-propagation=shared \
+  rpm-ostree compose install --unified-core \
+  --repo=/sysroot/ostree/repo \
+  out/base/0.yaml /target-rootfs && rpm-ostree compose postprocess /target-rootfs out/base/0.yaml
 
 
 # Please build from the root directory of the repository
