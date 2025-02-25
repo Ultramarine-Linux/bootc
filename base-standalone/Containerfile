@@ -39,6 +39,7 @@ RUN --mount=type=cache,target=/var/cache \
  dnf5 install -y kernel systemd bootc bootupd ostree flatpak dbus dbus-daemon rpmdevtools make selinux-policy python3-pip jq @development-tools gcc cairo-devel python3-devel 'pkgconfig(gobject-introspection-1.0)' 'pkgconfig(cairo-gobject)' 'dnf-command(config-manager)'
 # COPY --from=builder /target-rootfs/ /
 RUN rm -rf /boot/*
+RUN mkdir -p /sysroot
 
 RUN bootc container lint || true
 
