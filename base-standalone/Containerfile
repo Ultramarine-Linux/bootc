@@ -36,7 +36,7 @@
 
 FROM ghcr.io/ultramarine-linux/ultramarine:41
 RUN --mount=type=cache,target=/var/cache \
- dnf5 install -y kernel bootc bootupd ostree flatpak dbus dbus-daemon rpmdevtools make selinux-policy python3-pip jq @development-tools gcc cairo-devel python3-devel 'pkgconfig(gobject-introspection-1.0)' 'pkgconfig(cairo-gobject)' 'dnf-command(config-manager)'
+ dnf5 install -y kernel systemd bootc bootupd ostree flatpak dbus dbus-daemon rpmdevtools make selinux-policy python3-pip jq @development-tools gcc cairo-devel python3-devel 'pkgconfig(gobject-introspection-1.0)' 'pkgconfig(cairo-gobject)' 'dnf-command(config-manager)'
 # COPY --from=builder /target-rootfs/ /
 RUN rm -rf /boot/*
 
