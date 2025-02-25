@@ -20,13 +20,24 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  build-base-standalone-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          # - base
+          - base-standalone
+
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      variant: ${{ matrix.variant }}
   build-base:
     strategy:
       fail-fast: false
       matrix:
         variant:
           - base
-          - base-standalone
+          # - base-standalone
 
     uses: ./.github/workflows/docker-build.yml
     with:
