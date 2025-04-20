@@ -20,7 +20,7 @@ RUN dnf update -y kernel kernel-core kernel-modules{,-core} && \
 RUN dracut --no-hostonly --kver "$(rpm -q kernel | sed 's/kernel-//')" --reproducible --zstd -v --add ostree -f "/lib/modules/$(rpm -q kernel | sed 's/kernel-//')/initramfs.img"
 
 # These are straight up not necessary on bootc containers
-RUN rm -rf /var /boot && mkdir -p /var /boot
+RUN rm -rf /var /boot && mkdir -p /var/roothome /boot /root
 
 # Lint the container for any faulty changes
 RUN bootc container lint
