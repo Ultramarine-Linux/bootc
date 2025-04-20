@@ -33,7 +33,7 @@ on:
         required: false
 
 env:
-  IMAGE_NAME: ${{ inputs.image-name }}
+  IMAGE_NAME: ${{ inputs.flavor }}-bootc
   IMAGE_DESC: ${{ inputs.image-desc }}
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
   DEFAULT_TAG: "41"
@@ -110,7 +110,7 @@ jobs:
         uses: hhd-dev/rechunk@c945e9ec8ad4466f888e41ab7f4d5ba2f74a8ee4 # v1.2.1
         with:
           rechunk: "ghcr.io/hhd-dev/rechunk:v1.2.1"
-          ref: "localhost/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
+          ref: "localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
           prev-ref: "${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
           skip_compression: true
           version: ${{ env.FEDORA_VERSION }}
