@@ -1,4 +1,4 @@
-name: Build Ultramarine XFCE
+name: Build Ultramarine Flagship (40)
 
 on:
   pull_request:
@@ -19,4 +19,5 @@ jobs:
     secrets: inherit
     with:
       image-name: ultramarine
-      flavor: xfce
+      flavor: flagship
+      fedora-version: 40
