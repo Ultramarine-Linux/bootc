@@ -11,18 +11,16 @@ RUN dnf install -y --repofrompath "ultramarine,https://repos.fyralabs.com/um$(rp
 RUN dnf swap -y --allowerasing fedora-release-common ultramarine-release-identity-basic
 RUN dnf swap -y fedora-logos ultramarine-logos
 
-# Remove existing kernel
-RUN for pkg in kernel kernel-core kernel-modules kernel-modules-core ; do rpm --erase $pkg --nodeps ; done
-
-# reinstall kernel modules and stuff for the new kernel, install new kernel in case the old one was removed
+# reinstall kernel modules and stuff for the new kernel
 # Also install some extra packages :3
-RUN dnf install -y kernel kernel-core kernel-modules{,-core,-extra} linux-firmware fwupd fwupd-efi @ultramarine-product-common
-
-# Workaround to make dracut work just fine
-RUN rm -rf /root
+RUN dnf update -y kernel kernel-core kernel-modules{,-core} && \
+  dnf install -y kernel-modules-extra linux-firmware fwupd fwupd-efi @ultramarine-product-common
 
 # Regenerate initramfs for new kernel
-RUN dracut -fv --regenerate-all
+RUN dracut -fv --regenerate-all --add=ostree --reproducible --zstd
+
+# These are straight up not necessary on bootc containers
+RUN rm -rf /var /boot && mkdir -p /var /boot
 
 # Lint the container for any faulty changes
 RUN bootc container lint
