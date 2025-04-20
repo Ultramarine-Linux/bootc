@@ -95,7 +95,7 @@ jobs:
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
-          FLAVOR: ${{ input.flavor }}
+          FLAVOR: ${{ inputs.flavor }}
         run: |
           set -x
 
