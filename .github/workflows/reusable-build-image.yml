@@ -103,7 +103,7 @@ jobs:
           sudo podman build \
             -t "localhost/${FLAVOR}-bootc" \
             --build-arg "MAJOR_VERSION=${FEDORA_VERSION}" \
-            "${GITHUB_WORKSPACE}/${FLAVOR}"
+            "${GITHUB_WORKSPACE}/${FLAVOR}:${FEDORA_VERSION}"
 
       - name: Run Rechunker
         if: github.event_name != 'pull_request'
