@@ -35,7 +35,7 @@ on:
 env:
   IMAGE_NAME: ${{ inputs.flavor }}-bootc
   IMAGE_DESC: ${{ inputs.image-desc }}
-  IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
+  IMAGE_REGISTRY: "ghcr.io/ultramarine-linux"
   DEFAULT_TAG: "41"
   FEDORA_VERSION: ${{ inputs.fedora-version }}
   PLATFORMS: ${{ inputs.platforms }}
