@@ -17,7 +17,7 @@ RUN dnf update -y kernel kernel-core kernel-modules{,-core} && \
   dnf install -y kernel-modules-extra linux-firmware fwupd fwupd-efi @ultramarine-product-common
 
 # Regenerate initramfs for new kernel
-RUN dracut -fv --regenerate-all --add=ostree --reproducible --zstd
+RUN dracut --no-hostonly --kver "$(rpm -q kernel | sed 's/kernel-//')" --reproducible --zstd -v --add ostree -f "/lib/modules/$(rpm -q kernel | sed 's/kernel-//')/initramfs.img"
 
 # These are straight up not necessary on bootc containers
 RUN rm -rf /var /boot && mkdir -p /var /boot
