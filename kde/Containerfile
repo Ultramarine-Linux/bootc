@@ -1,4 +1,6 @@
-FROM ghcr.io/ultramarine-linux/base-bootc:latest
+ARG MAJOR_VERSION="${MAJOR_VERSION:-41}"
+
+FROM ghcr.io/ultramarine-linux/base-bootc:$MAJOR_VERSION
 
 RUN dnf install \
   -x PackageKit \
