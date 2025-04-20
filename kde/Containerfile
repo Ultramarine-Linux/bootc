@@ -9,4 +9,5 @@ RUN dnf install \
   -x sdubby \
   -x gnome-software-fedora-langpacks \
   --allowerasing -y \
+  taidan \
   @ultramarine-plasma-product-environment

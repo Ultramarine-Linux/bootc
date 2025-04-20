@@ -10,4 +10,5 @@ RUN dnf install \
   -x gnome-software-fedora-langpacks \
   -x desktop-backgrounds-compat \
   --allowerasing -y \
+  taidan \
   @ultramarine-xfce-product-environment

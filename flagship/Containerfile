@@ -10,5 +10,6 @@ RUN dnf install \
   -x gnome-software-fedora-langpacks \
   -x budgie-desktop-defaults \
   --allowerasing -y \
+  taidan \
   @ultramarine-flagship-product-environment
 
