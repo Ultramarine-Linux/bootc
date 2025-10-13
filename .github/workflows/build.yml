@@ -1,6 +1,7 @@
-name: Build Ultramarine Base
+name: Build bootc images
 
 on:
+    push:
     pull_request:
         branches:
             - main
