@@ -34,7 +34,7 @@
 
 # Please build from the root directory of the repository
 
-FROM ghcr.io/ultramarine-linux/ultramarine:41
+FROM ghcr.io/ultramarine-linux/ultramarine:42
 RUN --mount=type=cache,target=/var/cache \
   dnf5 install -y kernel systemd bootc bootupd ostree flatpak dbus dbus-daemon rpmdevtools make selinux-policy python3-pip 'dnf-command(config-manager)' grub2-common grub2-pc grub2-efi-x64
 # COPY --from=builder /target-rootfs/ /

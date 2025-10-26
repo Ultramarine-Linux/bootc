@@ -1,6 +1,6 @@
 # todo: Build base image from scratch with melody
 
-ARG MAJOR_VERSION="${MAJOR_VERSION:-41}"
+ARG MAJOR_VERSION="${MAJOR_VERSION:-42}"
 
 FROM quay.io/fedora/fedora-bootc:$MAJOR_VERSION
 
