@@ -1,4 +1,4 @@
-name: Build Ultramarine KDE (41)
+name: Build Ultramarine GNOME (42)
 
 on:
   pull_request:
@@ -19,5 +19,5 @@ jobs:
     secrets: inherit
     with:
       image-name: ultramarine
-      flavor: kde
-      fedora-version: 41
+      flavor: gnome
+      fedora-version: 42

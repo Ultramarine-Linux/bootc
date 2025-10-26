@@ -26,7 +26,7 @@ on:
         description: "The version of Fedora to build the image on"
         required: false
         type: string
-        default: "41"
+        default: "42"
     secrets:
       SIGNING_SECRET:
         description: "The private key used to sign the image"
@@ -36,7 +36,7 @@ env:
   IMAGE_NAME: ${{ inputs.flavor }}-bootc
   IMAGE_DESC: ${{ inputs.image-desc }}
   IMAGE_REGISTRY: "ghcr.io/ultramarine-linux"
-  DEFAULT_TAG: "41"
+  DEFAULT_TAG: "42"
   FEDORA_VERSION: ${{ inputs.fedora-version }}
   PLATFORMS: ${{ inputs.platforms }}
 
