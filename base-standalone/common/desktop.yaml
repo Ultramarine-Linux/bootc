@@ -1,4 +1,0 @@
-# Basically an extension of graphical with tools and utilities that would be useful for desktop users, for both UM and tau
-packages:
-  - distrobox
-  - moby-engine

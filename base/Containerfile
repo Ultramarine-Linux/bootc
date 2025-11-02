@@ -1,26 +1,32 @@
-# todo: Build base image from scratch with melody
+# Please build from the root directory of the repository
 
-ARG MAJOR_VERSION="${MAJOR_VERSION:-42}"
+# todo: fix katsu docker build
 
-FROM quay.io/fedora/fedora-bootc:$MAJOR_VERSION
+FROM ghcr.io/fyralabs/katsu-cache:main AS builder
 
-RUN dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-RUN dnf install -y --repofrompath "terra,https://repos.fyralabs.com/terra$(rpm -E %fedora)" --setopt="terra.gpgkey=https://repos.fyralabs.com/terra$(rpm -E %fedora)/key.asc" terra-release
-RUN dnf install -y --repofrompath "ultramarine,https://repos.fyralabs.com/um$(rpm -E %fedora)/" --setopt="ultramarine.gpgkey=https://repos.fyralabs.com/um$(rpm -E %fedora)/key.asc" ultramarine-repos-common ultramarine-repos
+WORKDIR /work
 
-RUN dnf swap -y --allowerasing fedora-release-common ultramarine-release-identity-basic
-RUN dnf swap -y fedora-logos ultramarine-logos
+COPY . .
 
-# reinstall kernel modules and stuff for the new kernel
-# Also install some extra packages :3
-RUN dnf update -y kernel kernel-core kernel-modules{,-core} && \
-  dnf install -y kernel-modules-extra linux-firmware fwupd fwupd-efi @ultramarine-product-common
+RUN --mount=type=cache,target=/var/cache \
+    katsu -o folder base.yaml
+# COPY --from=builder /target-rootfs/ /
+# RUN rm -rf /boot/*
 
-# Regenerate initramfs for new kernel
-RUN dracut --no-hostonly --kver "$(rpm -q kernel | sed 's/kernel-//')" --reproducible --zstd -v --add ostree -f "/lib/modules/$(rpm -q kernel | sed 's/kernel-//')/initramfs.img"
+FROM scratch
 
-# These are straight up not necessary on bootc containers
-RUN rm -rf /var /boot && mkdir -p /var/roothome /boot /root
+COPY --from=builder /work/katsu-work/chroot /
 
-# Lint the container for any faulty changes
-RUN bootc container lint
+RUN mkdir -p /sysroot/ostree
+RUN ln -srvf /sysroot/ostree /ostree
+# RUN ostree init --repo /sysroot/ostree/repo --mode bare
+COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
+RUN bootc container lint || true
+
+LABEL containers.bootc 1
+LABEL bootc.diskimage-builder quay.io/centos-bootc/bootc-image-builder
+ENV container=oci
+# Need to reference builder here to force ordering. But since we have to run
+# something anyway, we might as well cleanup after ourselves.
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]

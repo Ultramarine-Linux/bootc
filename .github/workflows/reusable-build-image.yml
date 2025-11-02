@@ -266,11 +266,13 @@ jobs:
         id: metadata
         with:
           tags: |
-            type=raw,value=${{ env.FEDORA_VERSION }}
-            type=raw,value=${{ env.FEDORA_VERSION }}.{{date 'YYYYMMDD'}}
-            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }}
-            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }}.{{date 'YYYYMMDD'}}
+            type=raw,value=${{ env.FEDORA_VERSION }},enable={{is_default_branch}}
+            type=raw,value=${{ env.FEDORA_VERSION }}.{{date 'YYYYMMDD'}},enable={{is_default_branch}}
+            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }},enable={{is_default_branch}}
+            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }}.{{date 'YYYYMMDD'}},enable={{is_default_branch}}
             type=ref,event=pr
+            type=ref,event=branch
+            
           labels: |
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/main/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
