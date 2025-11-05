@@ -2,7 +2,7 @@
 
 # todo: fix katsu docker build
 
-FROM ghcr.io/fyralabs/katsu-cache:main AS builder
+FROM ghcr.io/fyralabs/katsu:main AS builder
 
 WORKDIR /work
 
