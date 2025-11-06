@@ -1,12 +1,12 @@
-FROM ghcr.io/ultramarine-linux/base-standalone-bootc:latest
+FROM ghcr.io/ultramarine-linux/base-bootc:latest
 
-RUN dnf install \
+RUN --mount=type=cache,target=/var/cache dnf install \
   -x PackageKit \
   -x PackageKit-command-not-found \
   -x grubby \
   -x sdubby \
   -x gnome-software-fedora-langpacks \
   -x gnome-software-rpm-ostree \
-  --allowerasing -y \
+  --allowerasing -y --no-best \
   @ultramarine-gnome-product-environment
 
