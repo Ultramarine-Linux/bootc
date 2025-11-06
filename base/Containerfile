@@ -20,6 +20,7 @@ COPY --from=builder /work/katsu-work/chroot /
 RUN mkdir -p /sysroot/ostree
 RUN ln -srvf /sysroot/ostree /ostree
 # symlink rpmdb for ostree compatibility
+RUN mkdir -p /usr/share/rpm
 RUN ln -srvf /usr/lib/sysimage/rpm/rpmdb.sqlite /usr/share/rpm/rpmdb.sqlite
 # RUN ostree init --repo /sysroot/ostree/repo --mode bare
 COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
