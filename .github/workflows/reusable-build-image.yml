@@ -100,7 +100,7 @@ jobs:
         run: |
           set -x
 
-          sudo podman build \
+          sudo podman build --privileged \
             -t "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
             --build-arg "MAJOR_VERSION=${FEDORA_VERSION}" \
             "${GITHUB_WORKSPACE}/${FLAVOR}"

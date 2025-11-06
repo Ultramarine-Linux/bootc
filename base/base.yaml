@@ -5,11 +5,11 @@ scripts:
     - id: cleanup
       name: Clean up system
       file: cleanup.sh
-    - id: selinux-setup
-      name: Set up SELinux
-      file: selinux.sh
-      chroot: false
-      priority: 100
+    # - id: selinux-setup
+    #   name: Set up SELinux
+    #   file: selinux.sh
+    #   chroot: false
+    #   priority: 100
     - id: buildstamp
       name: Generate buildstamp
       file: buildstamp.sh
