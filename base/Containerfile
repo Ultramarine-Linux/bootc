@@ -21,7 +21,7 @@ RUN mkdir -p /sysroot/ostree
 RUN ln -srvf /sysroot/ostree /ostree
 # symlink rpmdb for ostree compatibility
 # hack: rechunk needs this to be happy
-RUN mv /usr/lib/sysimage /usr/share/rpm
+RUN mv /usr/lib/sysimage/rpm /usr/share/rpm
 # todo: should be the other way around, but rechunk hates this
 RUN ln -srvf /usr/share/rpm /usr/lib/sysimage/rpm
 # RUN ostree init --repo /sysroot/ostree/repo --mode bare
