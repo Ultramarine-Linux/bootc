@@ -58,11 +58,16 @@ dnf:
   packages:
     # because dracut just doesn't like it if it's not there
     # plus iSCSI is useful sometimes
+    - iscsi-initiator-utils
+    - libiscsi-utils
     - "@core"
     - "@standard"
     - shadow-utils
-    - iscsi-initiator-utils
-    - libiscsi-utils
+    - grub2-tools
+    - grub2-tools-extra
+    - ostree-grub2
+    - systemd-boot
+    - efibootmgr
     - ultramarine-release-common
     - ultramarine-release
     - ultramarine-repos

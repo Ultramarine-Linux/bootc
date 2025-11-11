@@ -27,6 +27,5 @@ build-vm image type="qcow2":
     quay.io/centos-bootc/bootc-image-builder:latest \
     --type {{ type }} \
     --rootfs btrfs \
-    --local \
     $TARGET_IMAGE
   sudo chown -R $USER:$USER output
