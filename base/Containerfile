@@ -54,10 +54,13 @@ RUN ln -srvf /sysroot/ostree /ostree
 # RUN ostree init --repo /sysroot/ostree/repo --mode bare
 COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
 COPY dracut/55-ostree.conf /usr/lib/dracut/dracut.conf.d/55-ostree.conf
+RUN cp -av /boot /usr/lib/ostree-boot
+RUN bootupctl backend generate-update-metadata
+
 
 RUN echo "HOME=/var/home" | tee "/etc/default/useradd" && \
-    rm -rf /boot /home /root /usr/local /srv && \
-    mkdir -p /var /sysroot /boot /usr/lib/ostree && \
+    rm -rf /home /root /usr/local /srv && \
+    mkdir -p /var /sysroot /boot /usr/lib/ostree /usr/lib/ostree-boot/efi/EFI && \
     ln -sf var/opt /opt && \
     ln -sf var/roothome /root && \
     ln -sf var/home /home && \
@@ -69,7 +72,6 @@ RUN echo "HOME=/var/home" | tee "/etc/default/useradd" && \
 # Setup a temporary root passwd (changeme) for dev purposes
 # TODO: Replace this for a more robust option when in prod
 RUN usermod -p '$6$AJv9RHlhEXO6Gpul$5fvVTZXeM0vC03xckTIjY8rdCofnkKSzvF5vEzXDKAby5p3qaOGTHDypVVxKsCE3CbZz7C3NXnbpITrEUvN/Y/' root
-
 RUN bootc container lint || true
 
 
