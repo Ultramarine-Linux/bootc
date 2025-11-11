@@ -272,7 +272,7 @@ jobs:
             type=raw,value=${{ env.FEDORA_VERSION_NUMBER }}.{{date 'YYYYMMDD'}},enable={{is_default_branch}}
             type=ref,event=pr
             type=ref,event=branch
-            
+
           labels: |
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/main/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
