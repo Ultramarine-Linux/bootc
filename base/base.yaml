@@ -58,6 +58,9 @@ dnf:
   packages:
     # because dracut just doesn't like it if it's not there
     # plus iSCSI is useful sometimes
+    - "@core"
+    - "@standard"
+    - shadow-utils
     - iscsi-initiator-utils
     - libiscsi-utils
     - ultramarine-release-common
