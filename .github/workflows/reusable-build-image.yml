@@ -102,7 +102,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | podman login -u ${{ github.actor }} --password-stdin $registry
+          echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin $registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login -u ${{ github.actor }} --password-stdin $registry
 
       - name: Build Image
@@ -152,7 +152,7 @@ jobs:
           FEDORA_VERSION: ${{ env.FEDORA_VERSION }}
         run: |
           set -x
-          
+
           sudo podman run --rm \
           --privileged \
           -v /var/lib/containers:/var/lib/containers \
@@ -160,7 +160,7 @@ jobs:
           /usr/libexec/bootc-base-imagectl rechunk \
           "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}" \
           "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}" | tee rechunk.log
-          
+
           cat rechunk.log
           IMAGE_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}")
           echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
@@ -170,15 +170,12 @@ jobs:
         id: load
         run: |
           set -x
-          echo ${{ steps.rechunk.outputs.digest }} > digest.txt
-          cat digest.txt
-          IMAGE="localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
-          # IMAGE=$(podman pull "localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}")
-          podman image tag $IMAGE ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}
+          LOCAL_IMAGE="localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
+          REMOTE_IMAGE="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
+          sudo podman image tag "$LOCAL_IMAGE" "$REMOTE_IMAGE"
 
-          IMAGE=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}
-          IMAGE_DIGEST=$(podman image inspect --format '{{.Digest}}' $IMAGE)
-          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          IMAGE_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "$REMOTE_IMAGE")
+          echo "image=$REMOTE_IMAGE" >> $GITHUB_OUTPUT
           echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
 
       # Push the image to GHCR (Image Registry)
@@ -192,9 +189,9 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
         run: |
           set -x
-          podman tag ${{ env.IMAGE_REGISTRY }}/${IMAGE_NAME}:${FEDORA_VERSION} $IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM
+          sudo podman tag ${{ env.IMAGE_REGISTRY }}/${IMAGE_NAME}:${FEDORA_VERSION} $IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM
           for i in {1..3}; do
-            podman push --digestfile=/tmp/digestfile $IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM && break || sleep $((5 * i));
+            sudo podman push --digestfile=/tmp/digestfile $IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM && break || sleep $((5 * i));
           done
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
           echo "remote_image_digest=$REMOTE_IMAGE_DIGEST" >> $GITHUB_OUTPUT
@@ -418,7 +415,7 @@ jobs:
       - name: Login to GHCR
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login -u ${{ github.actor }} --password-stdin ghcr.io
-          echo ${{ secrets.GITHUB_TOKEN }} | podman login -u ${{ github.actor }} --password-stdin ghcr.io
+          echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin ghcr.io
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
