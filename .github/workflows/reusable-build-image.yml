@@ -112,7 +112,7 @@ jobs:
               "${GITHUB_WORKSPACE}/${FLAVOR}"
           }
 
-          build 
+          build
 
       # - name: Run Rechunker
       #   if: github.event_name != 'pull_request'
@@ -129,6 +129,10 @@ jobs:
       - name: Run Rechunker
         if: github.event_name != 'pull_request'
         id: rechunk
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+          FLAVOR: ${{ inputs.flavor }}
         run: sudo podman run --rm \
           --privileged \
           -v /var/lib/containers:/var/lib/containers \
