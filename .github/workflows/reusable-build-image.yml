@@ -162,12 +162,16 @@ jobs:
           "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}" | tee rechunk.log
           
           cat rechunk.log
+          IMAGE_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}")
+          echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
 
       - name: Load Image
         if: github.event_name != 'pull_request'
         id: load
         run: |
           set -x
+          echo ${{ steps.rechunk.outputs.digest }} > digest.txt
+          cat digest.txt
           IMAGE="localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
           # IMAGE=$(podman pull "localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}")
           podman image tag $IMAGE ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}
