@@ -95,6 +95,16 @@ jobs:
         with:
           remove-codeql: true
 
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        env:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | podman login -u ${{ github.actor }} --password-stdin $registry
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login -u ${{ github.actor }} --password-stdin $registry
+
       - name: Build Image
         id: build-image
         shell: bash
@@ -103,11 +113,16 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
           FLAVOR: ${{ inputs.flavor }}
           FEDORA_VERSION: ${{ env.FEDORA_VERSION }}
+          PLATFORM: ${{ matrix.platform }}
+          IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
         run: |
           set -x
 
           function build() {
             sudo podman build --cap-add=all --userns=host --cgroupns=host \
+              --layers=true \
+              --cache-from '$IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM' \
+              --cache-to '$IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM' \
               -t "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
               --build-arg "MAJOR_VERSION=${FEDORA_VERSION}" \
               "${GITHUB_WORKSPACE}/${FLAVOR}"
@@ -157,16 +172,6 @@ jobs:
           IMAGE_DIGEST=$(podman image inspect --format '{{.Digest}}' $IMAGE)
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
           echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
-
-      - name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request'
-        env:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | podman login -u ${{ github.actor }} --password-stdin $registry
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login -u ${{ github.actor }} --password-stdin $registry
 
       # Push the image to GHCR (Image Registry)
       - name: Push to GHCR
