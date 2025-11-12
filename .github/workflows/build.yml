@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - 42
+          - 43
     uses: ./.github/workflows/reusable-build-image.yml
     secrets: inherit
     with:

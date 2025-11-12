@@ -6,9 +6,18 @@ build variant:
   --cap-add=all \
   --userns=host \
   --cgroupns=host \
+  --layers=true \
   --security-opt=label=disable -t \
   {{ registry_prefix }}/{{ variant }}-bootc {{ variant }}
 
+rechunk variant:
+    sudo podman run --rm \
+        --privileged \
+        -v /var/lib/containers:/var/lib/containers \
+        "quay.io/centos-bootc/centos-bootc:stream10" \
+        /usr/libexec/bootc-base-imagectl rechunk \
+        "{{ registry_prefix }}/{{ variant }}-bootc" \
+        "{{ registry_prefix }}/{{ variant }}-bootc"
   
 # bootc {variant} {args}
 bootc variant *ARGS:

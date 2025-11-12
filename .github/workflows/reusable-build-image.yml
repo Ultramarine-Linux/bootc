@@ -26,7 +26,7 @@ on:
         description: "The version of Fedora to build the image on"
         required: false
         type: string
-        default: "42"
+        default: "43"
     secrets:
       SIGNING_SECRET:
         description: "The private key used to sign the image"
@@ -84,11 +84,11 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       # Only uncomment if necessary, your builds are super small anyways
-      # - name: Maximize build space
-      #   if: matrix.platform != 'arm64'
-      #   uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
-      #   with:
-      #     remove-codeql: true
+      - name: Maximize build space
+        if: matrix.platform != 'arm64'
+        uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
+        with:
+          remove-codeql: true
 
       - name: Build Image
         id: build-image
@@ -100,28 +100,47 @@ jobs:
         run: |
           set -x
 
-          sudo podman build --cap-add=all --userns=host --cgroupns=host \
-            -t "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
-            --build-arg "MAJOR_VERSION=${FEDORA_VERSION}" \
-            "${GITHUB_WORKSPACE}/${FLAVOR}"
+          function build() {
+            sudo podman build --cap-add=all --userns=host --cgroupns=host \
+              -t "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
+              --build-arg "MAJOR_VERSION=${FEDORA_VERSION}" \
+              "${GITHUB_WORKSPACE}/${FLAVOR}"
+          }
 
+          echo "out_ref=$(build)" >> $GITHUB_OUTPUT
+
+      # - name: Run Rechunker
+      #   if: github.event_name != 'pull_request'
+      #   id: rechunk
+      #   uses: hhd-dev/rechunk@c945e9ec8ad4466f888e41ab7f4d5ba2f74a8ee4 # v1.2.1
+      #   with:
+      #     rechunk: "ghcr.io/hhd-dev/rechunk:v1.2.1"
+      #     ref: "localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
+      #     prev-ref: "${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
+      #     skip_compression: true
+      #     version: ${{ env.FEDORA_VERSION }}
+      
+      # let's use the new upstream rechunker
       - name: Run Rechunker
         if: github.event_name != 'pull_request'
         id: rechunk
-        uses: hhd-dev/rechunk@c945e9ec8ad4466f888e41ab7f4d5ba2f74a8ee4 # v1.2.1
-        with:
-          rechunk: "ghcr.io/hhd-dev/rechunk:v1.2.1"
-          ref: "localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
-          prev-ref: "${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
-          skip_compression: true
-          version: ${{ env.FEDORA_VERSION }}
+        run:
+          
+          sudo podman run --rm \
+              --privileged \
+              -v /var/lib/containers:/var/lib/containers \
+              "quay.io/fedora-bootc/fedora-bootc:${{ env.FEDORA_VERSION }}" \
+              /usr/libexec/bootc-base-imagectl rechunk \
+                 "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
+                 "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}"
+              
+        
 
       - name: Load Image
         if: github.event_name != 'pull_request'
         id: load
         run: |
-          IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
-          sudo rm -rf ${{ steps.rechunk.outputs.location }}
+          IMAGE=$(podman pull "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}")
           podman image tag $IMAGE ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}
 
           IMAGE=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}
