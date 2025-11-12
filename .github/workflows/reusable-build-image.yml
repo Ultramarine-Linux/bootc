@@ -134,13 +134,14 @@ jobs:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
           FLAVOR: ${{ inputs.flavor }}
+          FEDORA_VERSION: ${{ env.FEDORA_VERSION }}
         run: sudo podman run --rm \
           --privileged \
           -v /var/lib/containers:/var/lib/containers \
           "quay.io/fedora-bootc/fedora-bootc:${{ env.FEDORA_VERSION }}" \
           /usr/libexec/bootc-base-imagectl rechunk \
-          "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
-          "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}"
+          "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}" \
+          "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}"
 
       - name: Load Image
         if: github.event_name != 'pull_request'
