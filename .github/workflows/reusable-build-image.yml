@@ -141,7 +141,7 @@ jobs:
           sudo podman run --rm \
           --privileged \
           -v /var/lib/containers:/var/lib/containers \
-          "quay.io/fedora-bootc/fedora-bootc:${{ env.FEDORA_VERSION }}" \
+          "quay.io/centos-bootc/centos-bootc:stream10" \
           /usr/libexec/bootc-base-imagectl rechunk \
           "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}" \
           "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}"
