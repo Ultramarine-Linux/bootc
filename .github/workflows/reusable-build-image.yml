@@ -121,8 +121,8 @@ jobs:
           function build() {
             sudo podman build --cap-add=all --userns=host --cgroupns=host \
               --layers=true \
-              --cache-from '$IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM' \
-              --cache-to '$IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM' \
+              --cache-from $IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM \
+              --cache-to $IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM \
               -t "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
               --build-arg "MAJOR_VERSION=${FEDORA_VERSION}" \
               "${GITHUB_WORKSPACE}/${FLAVOR}"
