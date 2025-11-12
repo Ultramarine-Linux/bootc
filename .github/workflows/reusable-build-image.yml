@@ -135,7 +135,10 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
           FLAVOR: ${{ inputs.flavor }}
           FEDORA_VERSION: ${{ env.FEDORA_VERSION }}
-        run: sudo podman run --rm \
+        run: |
+          set -x
+          
+          sudo podman run --rm \
           --privileged \
           -v /var/lib/containers:/var/lib/containers \
           "quay.io/fedora-bootc/fedora-bootc:${{ env.FEDORA_VERSION }}" \
