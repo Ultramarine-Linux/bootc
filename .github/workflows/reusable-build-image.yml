@@ -165,7 +165,8 @@ jobs:
         if: github.event_name != 'pull_request'
         id: load
         run: |
-          IMAGE=$(podman pull "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}")
+          set -x
+          IMAGE=$(podman pull "localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}")
           podman image tag $IMAGE ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}
 
           IMAGE=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}

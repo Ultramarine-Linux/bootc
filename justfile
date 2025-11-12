@@ -16,8 +16,8 @@ rechunk variant:
         -v /var/lib/containers:/var/lib/containers \
         "quay.io/centos-bootc/centos-bootc:stream10" \
         /usr/libexec/bootc-base-imagectl rechunk \
-        "{{ registry_prefix }}/{{ variant }}-bootc" \
-        "{{ registry_prefix }}/{{ variant }}-bootc"
+        "{{ registry_prefix }}/{{ variant }}-bootc:latest" \
+        "{{ registry_prefix }}/{{ variant }}-bootc:latest"
   
 # bootc {variant} {args}
 bootc variant *ARGS:
@@ -50,7 +50,7 @@ build-vm variant:
     #!/usr/bin/bash -x
     if [ ! -e "{{base_dir}}/output/bootable.img" ] ; then
         mkdir -p "{{base_dir}}/output"
-        fallocate -l 20G "${base_dir}/output/bootable.img"
+        fallocate -l 20G "{{base_dir}}/output/bootable.img"
     fi
     just bootc {{ variant }} install to-disk --via-loopback /data/output/bootable.img --filesystem btrfs --wipe
 
