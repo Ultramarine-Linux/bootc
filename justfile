@@ -43,7 +43,7 @@ build-vm variant:
         mkdir -p "{{base_dir}}/output"
         fallocate -l 20G "${base_dir}/output/bootable.img"
     fi
-    just bootc {{ variant }} install to-disk --via-loopback /data/output/bootable.img --filesystem ext4 --wipe
+    just bootc {{ variant }} install to-disk --via-loopback /data/output/bootable.img --filesystem btrfs --wipe
 
 build-vm-legacy image type="qcow2":
   #!/usr/bin/env bash
