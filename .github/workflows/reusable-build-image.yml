@@ -27,6 +27,11 @@ on:
         required: false
         type: string
         default: "43"
+      needs:
+        description: "The jobs that this job depends on"
+        required: false
+        type: string
+        default: ""
     secrets:
       SIGNING_SECRET:
         description: "The private key used to sign the image"
@@ -119,22 +124,18 @@ jobs:
       #     prev-ref: "${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
       #     skip_compression: true
       #     version: ${{ env.FEDORA_VERSION }}
-      
+
       # let's use the new upstream rechunker
       - name: Run Rechunker
         if: github.event_name != 'pull_request'
         id: rechunk
-        run:
-          
-          sudo podman run --rm \
-              --privileged \
-              -v /var/lib/containers:/var/lib/containers \
-              "quay.io/fedora-bootc/fedora-bootc:${{ env.FEDORA_VERSION }}" \
-              /usr/libexec/bootc-base-imagectl rechunk \
-                 "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
-                 "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}"
-              
-        
+        run: sudo podman run --rm \
+          --privileged \
+          -v /var/lib/containers:/var/lib/containers \
+          "quay.io/fedora-bootc/fedora-bootc:${{ env.FEDORA_VERSION }}" \
+          /usr/libexec/bootc-base-imagectl rechunk \
+          "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
+          "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}"
 
       - name: Load Image
         if: github.event_name != 'pull_request'
