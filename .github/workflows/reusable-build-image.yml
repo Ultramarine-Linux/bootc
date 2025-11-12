@@ -112,7 +112,8 @@ jobs:
               "${GITHUB_WORKSPACE}/${FLAVOR}"
           }
 
-          echo "out_ref=$(build)" >> $GITHUB_OUTPUT
+          out_ref=$(build)
+          echo "out_ref=$out_ref" >> $GITHUB_OUTPUT
 
       # - name: Run Rechunker
       #   if: github.event_name != 'pull_request'
