@@ -17,13 +17,9 @@ concurrency:
 
 jobs:
   build-base:
-    strategy:
-      matrix:
-        version:
-          - 43
     uses: ./.github/workflows/reusable-build-image.yml
     secrets: inherit
     with:
       image-name: ultramarine
       flavor: base
-      fedora-version: ${{ matrix.version }}
+  

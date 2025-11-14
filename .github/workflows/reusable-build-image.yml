@@ -22,11 +22,6 @@ on:
         required: false
         type: string
         default: "amd64,arm64"
-      fedora-version:
-        description: "The version of Fedora to build the image on"
-        required: false
-        type: string
-        default: "43"
       needs:
         description: "The jobs that this job depends on"
         required: false
@@ -79,8 +74,6 @@ env:
   IMAGE_NAME: ${{ inputs.flavor }}-bootc
   IMAGE_DESC: ${{ inputs.image-desc }}
   IMAGE_REGISTRY: "ghcr.io/ultramarine-linux"
-  DEFAULT_TAG: "42"
-  FEDORA_VERSION: ${{ inputs.fedora-version }}
   PLATFORMS: ${{ inputs.platforms }}
 
 jobs:
@@ -150,7 +143,6 @@ jobs:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
           FLAVOR: ${{ inputs.flavor }}
-          FEDORA_VERSION: ${{ env.FEDORA_VERSION }}
           PLATFORM: ${{ matrix.platform }}
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           FROM_IMAGE: ${{ inputs.from }}
@@ -172,8 +164,7 @@ jobs:
               --layers=true \
               --cache-from $IMAGE_REGISTRY/$IMAGE_NAME \
               --cache-to $IMAGE_REGISTRY/$IMAGE_NAME \
-              -t "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
-              --build-arg "MAJOR_VERSION=${FEDORA_VERSION}" \
+              -t "localhost/${FLAVOR}-bootc:build" \
               -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
               $FROM_ARG \
               "${BUILD_CONTEXT}"
@@ -200,7 +191,6 @@ jobs:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
           FLAVOR: ${{ inputs.flavor }}
-          FEDORA_VERSION: ${{ env.FEDORA_VERSION }}
         run: |
           set -x
 
@@ -209,11 +199,11 @@ jobs:
           -v /var/lib/containers:/var/lib/containers \
           "quay.io/centos-bootc/centos-bootc:stream10" \
           /usr/libexec/bootc-base-imagectl rechunk \
-          "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}" \
-          "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}" | tee rechunk.log
+          "localhost/${{ inputs.flavor }}-bootc:build" \
+          "localhost/${{ inputs.flavor }}-bootc:build" | tee rechunk.log
 
           cat rechunk.log
-          IMAGE_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "localhost/${{ inputs.flavor }}-bootc:${{ env.FEDORA_VERSION }}")
+          IMAGE_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "localhost/${{ inputs.flavor }}-bootc:build")
           echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
 
       - name: Load Image
@@ -221,7 +211,7 @@ jobs:
         id: load
         run: |
           set -x
-          LOCAL_IMAGE="localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
+          LOCAL_IMAGE="localhost/${{ env.IMAGE_NAME }}:build"
           # Use a temporary tag with run ID to avoid conflicts
           TEMP_TAG="temp-${{ github.run_id }}-${{ matrix.platform }}"
           REMOTE_IMAGE="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${TEMP_TAG}"
@@ -284,14 +274,14 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: ${{ env.IMAGE_NAME }}-${{ inputs.fedora-version }}-${{ matrix.platform }}
+          name: ${{ env.IMAGE_NAME }}-${{ github.run_id }}-${{ matrix.platform }}
           retention-days: 1
           if-no-files-found: error
           path: |
             /tmp/outputs/digests/*.txt
 
   manifest:
-    name: Create ${{ inputs.image-name }}:${{ inputs.fedora-version }} Manifest
+    name: Create ${{ inputs.image-name }} Manifest
     runs-on: ubuntu-latest
     if: always()
     needs:
@@ -351,12 +341,9 @@ jobs:
           # https://linux.die.net/man/1/date
           echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
 
-      - name: Extract numbers from input
-        id: extract-numbers
+      - name: Set tag variables
+        id: set-tags
         run: |
-          numbers_only=$(echo "${{ env.FEDORA_VERSION }}" | tr -cd '0-9')
-          echo "FEDORA_VERSION_NUMBER=$numbers_only" >> $GITHUB_ENV
-
           # Set tag suffix
           TAG_SUFFIX="${{ inputs.tag-suffix }}"
           echo "TAG_SUFFIX=$TAG_SUFFIX" >> $GITHUB_ENV
@@ -376,10 +363,7 @@ jobs:
         with:
           tags: |
             type=raw,value=${{ env.BASE_TAG }}${{ env.TAG_SUFFIX }}
-            type=raw,value=${{ env.FEDORA_VERSION }}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
-            type=raw,value=${{ env.FEDORA_VERSION }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
-            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
-            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
+            type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
             type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
             type=ref,event=branch,suffix=${{ env.TAG_SUFFIX }}
 
@@ -392,7 +376,7 @@ jobs:
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.url=https://ultramarine-linux.org/
             org.opencontainers.image.vendor=${{ github.repository_owner }}
-            org.opencontainers.image.version=${{ env.FEDORA_VERSION }}
+            org.opencontainers.image.version=${{ env.BASE_TAG }}
             io.artifacthub.package.deprecated=false
             io.artifacthub.package.keywords=bootc,fedora,ultramarine
             io.artifacthub.package.license=Apache-2.0
