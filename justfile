@@ -1,6 +1,10 @@
 base_dir := env("BUILD_BASE_DIR", justfile_directory())
 registry_prefix := "ghcr.io/ultramarine-linux"
-tag := env("BOOTC_IMAGE_TAG", "latest")
+tag := env("BOOTC_IMAGE_TAG", "ng")
+
+pull variant:
+    podman pull "{{ registry_prefix }}/{{ variant }}-bootc:{{ tag }}"
+
 build variant:
   podman build \
   --device=/dev/fuse \

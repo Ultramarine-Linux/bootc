@@ -27,6 +27,7 @@ jobs:
   
   build-tier1:
     uses: ./.github/workflows/reusable-build-image.yml
+    secrets: inherit
     needs: build-base
     strategy:
       fail-fast: false
