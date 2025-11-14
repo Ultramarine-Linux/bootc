@@ -23,11 +23,18 @@ jobs:
       image-name: ultramarine
       flavor: base
   
-  build-gnome:
+  # todo: maybe tier0 for desktop base images?
+  
+  build-tier1:
     uses: ./.github/workflows/reusable-build-image.yml
     needs: build-base
-    secrets: inherit
+    strategy:
+      matrix:
+        flavor:
+          - gnome
+          - xfce
     with:
       image-name: ultramarine
-      flavor: gnome
+      flavor: ${{ matrix.flavor }}
       from: ${{ needs.build-base.outputs.manifest }}
+    
