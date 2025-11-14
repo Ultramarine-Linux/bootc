@@ -11,7 +11,7 @@ build variant:
   {{ registry_prefix }}/{{ variant }}-bootc {{ variant }}
 
 rechunk variant:
-    sudo podman run --rm \
+    podman run --rm \
         --privileged \
         -v /var/lib/containers:/var/lib/containers \
         "quay.io/centos-bootc/centos-bootc:stream10" \
@@ -21,7 +21,7 @@ rechunk variant:
   
 # bootc {variant} {args}
 bootc variant *ARGS:
-    sudo podman run \
+    podman run \
         --rm --privileged --pid=host \
         -it \
         -v /sys/fs/selinux:/sys/fs/selinux \
@@ -34,7 +34,7 @@ bootc variant *ARGS:
         "{{ registry_prefix }}/{{ variant }}-bootc" bootc {{ARGS}}
 
 priv-shell variant:
-    sudo podman run \
+    podman run \
         --rm --privileged --pid=host \
         -it \
         -v /sys/fs/selinux:/sys/fs/selinux \
