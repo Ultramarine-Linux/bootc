@@ -32,6 +32,44 @@ on:
         required: false
         type: string
         default: ""
+      from:
+        description: "Base image to use with --from argument in podman build"
+        required: false
+        type: string
+        default: ""
+      containerfile:
+        description: "Path to the Containerfile relative to the context"
+        required: false
+        type: string
+        default: "Containerfile"
+      context-path:
+        description: "Build context path"
+        required: false
+        type: string
+        default: ""
+      tag-suffix:
+        description: "Optional suffix to append to tags (e.g., '-testing')"
+        required: false
+        type: string
+        default: ""
+      tag:
+        description: "Base tag for the image (defaults to branch name)"
+        required: false
+        type: string
+        default: ""
+    outputs:
+      image:
+        description: "The image name that was built"
+        value: ${{ jobs.manifest.outputs.image }}
+      digest:
+        description: "The digest of the built image"
+        value: ${{ jobs.manifest.outputs.digest }}
+      manifest:
+        description: "Full manifest reference (image@digest)"
+        value: ${{ jobs.manifest.outputs.manifest }}
+      tags:
+        description: "Newline-separated list of tags pushed"
+        value: ${{ jobs.manifest.outputs.tags }}
     secrets:
       SIGNING_SECRET:
         description: "The private key used to sign the image"
@@ -115,17 +153,30 @@ jobs:
           FEDORA_VERSION: ${{ env.FEDORA_VERSION }}
           PLATFORM: ${{ matrix.platform }}
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
+          FROM_IMAGE: ${{ inputs.from }}
+          CONTAINERFILE: ${{ inputs.containerfile }}
+          CONTEXT_PATH: ${{ inputs.context-path }}
         run: |
           set -x
 
           function build() {
+            FROM_ARG=""
+            if [ -n "$FROM_IMAGE" ]; then
+              FROM_ARG="--from=$FROM_IMAGE"
+            fi
+
+            # Set default context path if not provided
+            BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
+
             sudo podman build --cap-add=all --userns=host --cgroupns=host \
               --layers=true \
               --cache-from $IMAGE_REGISTRY/$IMAGE_NAME \
               --cache-to $IMAGE_REGISTRY/$IMAGE_NAME \
               -t "localhost/${FLAVOR}-bootc:${FEDORA_VERSION}" \
               --build-arg "MAJOR_VERSION=${FEDORA_VERSION}" \
-              "${GITHUB_WORKSPACE}/${FLAVOR}"
+              -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
+              $FROM_ARG \
+              "${BUILD_CONTEXT}"
           }
 
           build
@@ -171,7 +222,9 @@ jobs:
         run: |
           set -x
           LOCAL_IMAGE="localhost/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
-          REMOTE_IMAGE="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FEDORA_VERSION }}"
+          # Use a temporary tag with run ID to avoid conflicts
+          TEMP_TAG="temp-${{ github.run_id }}-${{ matrix.platform }}"
+          REMOTE_IMAGE="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${TEMP_TAG}"
           sudo podman image tag "$LOCAL_IMAGE" "$REMOTE_IMAGE"
 
           IMAGE_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "$REMOTE_IMAGE")
@@ -189,9 +242,11 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
         run: |
           set -x
-          sudo podman tag ${{ env.IMAGE_REGISTRY }}/${IMAGE_NAME}:${FEDORA_VERSION} $IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM
+          # Push with temporary tag, manifest job will create the real tags
+          TEMP_TAG="temp-${{ github.run_id }}-${{ matrix.platform }}"
+          TEMP_IMAGE="${{ env.IMAGE_REGISTRY }}/${IMAGE_NAME}:${TEMP_TAG}"
           for i in {1..3}; do
-            sudo podman push --digestfile=/tmp/digestfile $IMAGE_REGISTRY/$IMAGE_NAME:$FEDORA_VERSION-$PLATFORM && break || sleep $((5 * i));
+            sudo podman push --digestfile=/tmp/digestfile $TEMP_IMAGE && break || sleep $((5 * i));
           done
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
           echo "remote_image_digest=$REMOTE_IMAGE_DIGEST" >> $GITHUB_OUTPUT
@@ -252,6 +307,8 @@ jobs:
     outputs:
       image: ${{ steps.push_manifest.outputs.IMAGE }}
       digest: ${{ steps.push_manifest.outputs.DIGEST }}
+      manifest: ${{ steps.push_manifest.outputs.MANIFEST }}
+      tags: ${{ steps.push_manifest.outputs.TAGS }}
     steps:
       - name: Install dependencies
         run: |
@@ -300,17 +357,31 @@ jobs:
           numbers_only=$(echo "${{ env.FEDORA_VERSION }}" | tr -cd '0-9')
           echo "FEDORA_VERSION_NUMBER=$numbers_only" >> $GITHUB_ENV
 
+          # Set tag suffix
+          TAG_SUFFIX="${{ inputs.tag-suffix }}"
+          echo "TAG_SUFFIX=$TAG_SUFFIX" >> $GITHUB_ENV
+
+          # Set base tag (use input tag if provided, otherwise use branch/ref)
+          if [ -n "${{ inputs.tag }}" ]; then
+            BASE_TAG="${{ inputs.tag }}"
+          else
+            # Use branch name as default
+            BASE_TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
+
       - name: Image Metadata
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
         id: metadata
         with:
           tags: |
-            type=raw,value=${{ env.FEDORA_VERSION }},enable={{is_default_branch}}
-            type=raw,value=${{ env.FEDORA_VERSION }}.{{date 'YYYYMMDD'}},enable={{is_default_branch}}
-            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }},enable={{is_default_branch}}
-            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }}.{{date 'YYYYMMDD'}},enable={{is_default_branch}}
-            type=ref,event=pr
-            type=ref,event=branch
+            type=raw,value=${{ env.BASE_TAG }}${{ env.TAG_SUFFIX }}
+            type=raw,value=${{ env.FEDORA_VERSION }}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
+            type=raw,value=${{ env.FEDORA_VERSION }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
+            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
+            type=raw,value=${{ env.FEDORA_VERSION_NUMBER }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
+            type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
+            type=ref,event=branch,suffix=${{ env.TAG_SUFFIX }}
 
           labels: |
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/main/README.md
@@ -393,6 +464,7 @@ jobs:
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
         run: |
+          set -x
           while IFS= read -r tag; do
             podman manifest push --all=false --digestfile=/tmp/digestfile $MANIFEST $IMAGE_REGISTRY/$IMAGE_NAME:$tag
           done <<< "$TAGS"
@@ -400,6 +472,8 @@ jobs:
           DIGEST=$(cat /tmp/digestfile)
           echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
           echo "IMAGE=$IMAGE_REGISTRY/$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "MANIFEST=$IMAGE_REGISTRY/$IMAGE_NAME@$DIGEST" >> $GITHUB_OUTPUT
+          echo "TAGS=$TAGS" >> $GITHUB_OUTPUT
 
   # Cosign throws errors when ran inside the Fedora container for one reason or another
   # so we move this to another step in order to run on Ubuntu
