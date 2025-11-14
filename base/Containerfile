@@ -54,12 +54,13 @@ RUN ln -srvf /sysroot/ostree /ostree
 # RUN ostree init --repo /sysroot/ostree/repo --mode bare
 COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
 COPY dracut/55-ostree.conf /usr/lib/dracut/dracut.conf.d/55-ostree.conf
+COPY rechunk-prep /usr/libexec/rpmdb-rechunk-prep
+# COPY dnf5-actions.d/rechunk-prep.actions /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
+COPY rpmmacros.d/macros.111.bootc /usr/lib/rpm/macros.d/macros.111.bootc
 RUN cp -av /boot /usr/lib/ostree-boot
 RUN bootupctl backend generate-update-metadata
 # hack: rechunk needs this to be happy
-RUN mkdir -p /usr/share/rpm && \
-    find /usr/lib/sysimage/rpm -type f -exec sh -c 'set -e; ln -vf "$1" "/usr/share/rpm/$(basename "$1")"' _ {} \;
-
+RUN /usr/libexec/rpmdb-rechunk-prep
 
 # Initramfs needs to be here so OSTree and bootupd can find it
 # We'll delete the ones generated in /boot by default later

@@ -1,0 +1,18 @@
+#!/bin/bash
+# This script simply just hardlinks/copies the RPM database to /usr/share/rpm
+# so that other tools like rpm-ostree can interact with the standard RPM database.
+
+# Might not be needed when rpm-ostree is finally replaced with dnf5 in CoreOS
+RPM_MUT_DB="/usr/lib/sysimage/rpm"
+RPM_OSTREE_DB="/usr/share/rpm"
+
+# Ensure destination directory exists
+install -d "$RPM_OSTREE_DB"
+
+# Hardlink files from SRC_DB to RPM_OSTREE_DB; fallback to copy if hardlink fails
+find "$RPM_MUT_DB" -type f -print0 | while IFS= read -r -d '' src; do
+  dest="$RPM_OSTREE_DB/$(basename "$src")"
+  if ! ln -vf "$src" "$dest" 2>/dev/null; then
+    cp -vf "$src" "$dest"
+  fi
+done

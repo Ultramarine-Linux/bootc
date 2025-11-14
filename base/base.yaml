@@ -48,6 +48,7 @@ dnf:
     - shadow-utils
     - grub2-tools
     - ostree-grub2
+    - dnf5-plugins
     - ultramarine-release-common
     - ultramarine-release
     - ultramarine-repos
