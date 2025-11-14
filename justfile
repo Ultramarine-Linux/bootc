@@ -1,10 +1,12 @@
-base_dir := env("BUILD_BASE_DIR", ".")
+base_dir := env("BUILD_BASE_DIR", justfile_directory())
 registry_prefix := "ghcr.io/ultramarine-linux"
 build variant:
-  buildah bud \
+  podman build \
   --device=/dev/fuse \
   --cap-add=all \
   --userns=host \
+  --cache-from={{ registry_prefix }}/{{ variant }}-bootc \
+  --pull=always \
   --cgroupns=host \
   --layers=true \
   --security-opt=label=disable -t \
@@ -18,12 +20,13 @@ rechunk variant:
         /usr/libexec/bootc-base-imagectl rechunk \
         "{{ registry_prefix }}/{{ variant }}-bootc:latest" \
         "{{ registry_prefix }}/{{ variant }}-bootc:latest"
-  
+
 # bootc {variant} {args}
 bootc variant *ARGS:
     podman run \
         --rm --privileged --pid=host \
         -it \
+        --pull=never \
         -v /sys/fs/selinux:/sys/fs/selinux \
         -v /etc/containers:/etc/containers:Z \
         -v /var/lib/containers:/var/lib/containers:Z \
@@ -31,7 +34,7 @@ bootc variant *ARGS:
         -e RUST_LOG=debug \
         -v "{{base_dir}}:/data" \
         --security-opt label=type:unconfined_t \
-        "{{ registry_prefix }}/{{ variant }}-bootc" bootc {{ARGS}}
+        "{{ registry_prefix }}/{{ variant }}-bootc:latest" bootc {{ARGS}}
 
 priv-shell variant:
     podman run \
@@ -61,9 +64,9 @@ build-vm-legacy image type="qcow2":
 
   if ! sudo podman image exists $TARGET_IMAGE ; then
     echo "Ensuring image is on root storage"
-    sudo podman image scp $USER@localhost::$TARGET_IMAGE root@localhost:: 
+    sudo podman image scp $USER@localhost::$TARGET_IMAGE root@localhost::
   fi
-  
+
   echo "Cleaning up previous build"
   sudo rm -rf output || true
   mkdir -p output
