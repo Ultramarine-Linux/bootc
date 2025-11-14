@@ -12,3 +12,5 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
         taidan \
         gnome-tweaks
         
+RUN mkdir -p /usr/share/rpm && \
+    find /usr/lib/sysimage/rpm -type f -exec sh -c 'set -e; ln -vf "$1" "/usr/share/rpm/$(basename "$1")"' _ {} \;

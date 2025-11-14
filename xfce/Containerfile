@@ -1,14 +1,14 @@
-ARG MAJOR_VERSION="${MAJOR_VERSION:-41}"
+FROM ghcr.io/ultramarine-linux/base-bootc:latest
 
-FROM ghcr.io/ultramarine-linux/base-bootc:$MAJOR_VERSION
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --no-best \
+    --allowerasing \
+    --action=remove \
+    ultramarine-release-identity-basic \
+    --action=install \
+    ultramarine-release-identity-xfce \
+    taidan \
+    @ultramarine-xfce-product-environment
 
-RUN dnf install \
-  -x PackageKit \
-  -x PackageKit-command-not-found \
-  -x grubby \
-  -x sdubby \
-  -x gnome-software-fedora-langpacks \
-  -x desktop-backgrounds-compat \
-  --allowerasing -y \
-  taidan \
-  @ultramarine-xfce-product-environment
+RUN mkdir -p /usr/share/rpm && \
+    find /usr/lib/sysimage/rpm -type f -exec sh -c 'set -e; ln -vf "$1" "/usr/share/rpm/$(basename "$1")"' _ {} \;
