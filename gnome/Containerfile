@@ -1,12 +1,13 @@
 FROM ghcr.io/ultramarine-linux/base-bootc:latest
 
-RUN --mount=type=cache,target=/var/cache dnf install \
-  -x PackageKit \
-  -x PackageKit-command-not-found \
-  -x grubby \
-  -x sdubby \
-  -x gnome-software-fedora-langpacks \
-  -x gnome-software-rpm-ostree \
-  --allowerasing -y --no-best \
-  @ultramarine-gnome-product-environment
-
+RUN --mount=type=cache,target=/var/cache dnf do \
+    --allowerasing \
+    --action=remove \
+        ultramarine-release-identity-basic \
+    --action=install \
+        ultramarine-release-identity-gnome \
+        @gnome-desktop \
+        @ultramarine-gnome-product-environment \
+        taidan \
+        gnome-tweaks
+        

@@ -1,5 +1,5 @@
 # Please build from the root directory of the repository
-
+# This base image shouldn't be used with --from, as it's well, a base image.
 FROM quay.io/centos-bootc/centos-bootc:stream10 as imagectl
 FROM ghcr.io/fyralabs/katsu:main AS builder
 # FROM quay.io/centos-bootc/centos-bootc:stream10 as builder

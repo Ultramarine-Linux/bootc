@@ -1,22 +1,5 @@
 builder: dnf
 
-scripts:
-  post:
-    - id: cleanup
-      name: Clean up system
-      file: cleanup.sh
-    # - id: selinux-setup
-    #   name: Set up SELinux
-    #   file: selinux.sh
-    #   chroot: false
-    #   priority: 100
-    - id: buildstamp
-      name: Generate buildstamp
-      file: buildstamp.sh
-    - id: terra-mesa
-      name: Enable Terra Mesa Stream
-      file: terra-mesa.sh
-
 dnf:
   releasever: 43
   exec: dnf
