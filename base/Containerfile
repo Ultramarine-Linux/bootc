@@ -25,10 +25,10 @@ RUN --mount=type=cache,target=/var/cache \
 # RUN rm -rf /boot/*
 
 # === end katsu workflow ===
-# 
+#
 # === bootc-base-imagectl workflow ===
 
-# 
+#
 # RUN rm -rf /etc/yum.repos.d/*
 # RUN mkdir -p /etc/pki/rpm-gpg/
 # COPY --from=katsu /etc/pki/rpm-gpg/ /etc/pki/rpm-gpg/
@@ -64,7 +64,7 @@ RUN sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 
 dracut --force --no-hostonly --force-drivers erofs --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 # hack: rechunk needs this to be happy
 RUN mkdir -p /usr/share/rpm && \
-    find /usr/lib/sysimage/rpm -type f -exec ln -f {} /usr/share/rpm/{} \;
+    find /usr/lib/sysimage/rpm -type f -exec sh -c 'set -e; ln -f "$1" "/usr/share/rpm/$(basename "$1")"' _ {} \;
 
 RUN echo "HOME=/var/home" | tee "/etc/default/useradd" && \
     rm -rf /home /boot /root /usr/local /srv && \

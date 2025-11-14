@@ -1,12 +1,12 @@
 base_dir := env("BUILD_BASE_DIR", justfile_directory())
 registry_prefix := "ghcr.io/ultramarine-linux"
+tag := env("BOOTC_IMAGE_TAG", "latest")
 build variant:
   podman build \
   --device=/dev/fuse \
   --cap-add=all \
   --userns=host \
   --cache-from={{ registry_prefix }}/{{ variant }}-bootc \
-  --pull=always \
   --cgroupns=host \
   --layers=true \
   --security-opt=label=disable -t \
@@ -18,8 +18,8 @@ rechunk variant:
         -v /var/lib/containers:/var/lib/containers \
         "quay.io/centos-bootc/centos-bootc:stream10" \
         /usr/libexec/bootc-base-imagectl rechunk \
-        "{{ registry_prefix }}/{{ variant }}-bootc:latest" \
-        "{{ registry_prefix }}/{{ variant }}-bootc:latest"
+        "{{ registry_prefix }}/{{ variant }}-bootc:{{ tag }}" \
+        "{{ registry_prefix }}/{{ variant }}-bootc:{{ tag }}"
 
 # bootc {variant} {args}
 bootc variant *ARGS:
@@ -34,7 +34,7 @@ bootc variant *ARGS:
         -e RUST_LOG=debug \
         -v "{{base_dir}}:/data" \
         --security-opt label=type:unconfined_t \
-        "{{ registry_prefix }}/{{ variant }}-bootc:latest" bootc {{ARGS}}
+        "{{ registry_prefix }}/{{ variant }}-bootc:{{ tag }}" bootc {{ARGS}}
 
 priv-shell variant:
     podman run \

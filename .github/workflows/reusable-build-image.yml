@@ -200,9 +200,8 @@ jobs:
           "quay.io/centos-bootc/centos-bootc:stream10" \
           /usr/libexec/bootc-base-imagectl rechunk \
           "localhost/${{ inputs.flavor }}-bootc:build" \
-          "localhost/${{ inputs.flavor }}-bootc:build" | tee rechunk.log
+          "localhost/${{ inputs.flavor }}-bootc:build" || exit 1
 
-          cat rechunk.log
           IMAGE_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "localhost/${{ inputs.flavor }}-bootc:build")
           echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
 
