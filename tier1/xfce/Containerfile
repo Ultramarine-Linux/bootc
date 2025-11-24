@@ -7,7 +7,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     ultramarine-release-identity-basic \
     --action=install \
     ultramarine-release-identity-xfce \
-    taidan \
     @ultramarine-xfce-product-environment \
     --exclude='initial-setup*' \
     --exclude='desktop-backgrounds*' \
