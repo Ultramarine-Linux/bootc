@@ -61,3 +61,5 @@ dnf:
     - dnf-bootc
     - system-reinstall-bootc
     - bootupd
+    - libdnf5-plugin-actions
+    - libdnf5-plugin-appstream
