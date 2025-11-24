@@ -11,3 +11,4 @@ install -d "$RPM_OSTREE_DB"
 
 # Use rsync to synchronize files from SRC_DB to RPM_OSTREE_DB
 rsync -av "$RPM_MUT_DB/" "$RPM_OSTREE_DB/" 1>&2 2>/dev/null
+echo "log.INFO=Synchronized RPM database from $RPM_MUT_DB to $RPM_OSTREE_DB"
