@@ -52,6 +52,11 @@ on:
         required: false
         type: string
         default: ""
+      rechunk:
+        description: "Whether to run the rechunker step (true/false)"
+        required: false
+        type: boolean
+        default: true
     outputs:
       image:
         description: "The image name that was built"
@@ -187,7 +192,7 @@ jobs:
 
       # let's use the new upstream rechunker
       - name: Run Rechunker
-        if: github.event_name != 'pull_request'
+        if: inputs.rechunk != false
         id: rechunk
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
