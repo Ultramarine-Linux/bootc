@@ -2,10 +2,12 @@ name: Build bootc images
 permissions: write-all
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
-      - ng
   schedule:
     - cron: "0 1 * * TUE" # Every Tuesday at 1am UTC
   merge_group:
