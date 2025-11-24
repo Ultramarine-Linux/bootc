@@ -39,7 +39,6 @@ jobs:
     with:
       image-name: ultramarine-tier0
       flavor: ${{ matrix.flavor }}
-      containerfile: tier0/${{ matrix.flavor }}/Containerfile
       context-path: tier0/${{ matrix.flavor }}
       from: ${{ needs.build-base.outputs.manifest }}
 
@@ -68,7 +67,6 @@ jobs:
     with:
       image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
-      containerfile: tier1/${{ matrix.flavor }}/Containerfile
       context-path: tier1/${{ matrix.flavor }}
       from: ${{ fromJson(needs.tier0-outputs.outputs.result).manifest.desktop }}
 
