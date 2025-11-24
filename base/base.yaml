@@ -1,0 +1,62 @@
+builder: dnf
+
+dnf:
+  releasever: 43
+  exec: dnf
+  repodir: repodir
+  options:
+    - --setopt=cachedir=/var/cache/katsu-dnf
+    - --setopt=keepcache=True
+    - --setopt=tsflags=
+    - --setopt=max_parallel_downloads=20
+    - --setopt=install_weak_deps=True
+    # HACK: use packages in Terra when Fusion is broken
+    - --nobest
+  exclude:
+    - fedora-release*
+    - generic-release*
+    - kernel-debug*
+    - setroubleshoot
+    - setroubleshoot-plugins
+    - setroubleshoot-server
+    - initial-setup*
+  arch_packages:
+    aarch64:
+      - grub2-efi-aa64
+      - grub2-efi-aa64-modules
+      - grub2-efi-aa64-cdboot
+      - shim-aa64
+      - shim-unsigned-aarch64
+      - bcm283x-firmware
+      - bcm283x-overlays
+      - "@arm-tools"
+    x86_64:
+      - grub2-efi-x64
+      - grub2-efi-x64-modules
+      - grub2-efi-x64-cdboot
+      - grub2-pc
+      - grub2-pc-modules
+      - shim-x64
+      - shim-unsigned-x64
+  packages:
+    # because dracut just doesn't like it if it's not there
+    # plus iSCSI is useful sometimes
+    - iscsi-initiator-utils
+    - libiscsi-utils
+    - "@core"
+    - "@standard"
+    - shadow-utils
+    - grub2-tools
+    - ostree-grub2
+    - dnf5-plugins
+    - ultramarine-release-common
+    - ultramarine-release
+    - ultramarine-repos
+    - ultramarine-logos
+    - kernel
+    - dnf
+    # bootc
+    - bootc
+    - dnf-bootc
+    - system-reinstall-bootc
+    - bootupd

@@ -1,28 +1,46 @@
 name: Build bootc images
+permissions:
+  packages: write
+  id-token: write
+  contents: read
+  artifact-metadata: write
 
 on:
-    push:
-    pull_request:
-        branches:
-            - main
-    schedule:
-        - cron: "0 1 * * TUE" # Every Tuesday at 1am UTC
-    merge_group:
-    workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - ng
+  schedule:
+    - cron: "0 1 * * TUE" # Every Tuesday at 1am UTC
+  merge_group:
+  workflow_dispatch:
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
-    cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-    build-base:
-        strategy:
-            matrix:
-                version:
-                    - 42
-        uses: ./.github/workflows/reusable-build-image.yml
-        secrets: inherit
-        with:
-            image-name: ultramarine
-            flavor: base
-            fedora-version: ${{ matrix.version }}
+  build-base:
+    uses: ./.github/workflows/reusable-build-image.yml
+    secrets: inherit
+    with:
+      image-name: ultramarine
+      flavor: base
+  
+  # todo: maybe tier0 for desktop base images?
+  
+  build-tier1:
+    uses: ./.github/workflows/reusable-build-image.yml
+    secrets: inherit
+    needs: build-base
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor:
+          - gnome
+          - xfce
+    with:
+      image-name: ultramarine
+      flavor: ${{ matrix.flavor }}
+      from: ${{ needs.build-base.outputs.manifest }}
+    

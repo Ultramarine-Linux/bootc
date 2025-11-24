@@ -1,0 +1,39 @@
+releasever: 43
+
+repos:
+  - ultramarine
+  - fedora
+  - updates
+  - terra
+  - terra-extras
+
+variables:
+  distro: "ultramarine43"
+
+packages:
+  - ultramarine-release-common
+  - ultramarine-release-identity-basic
+  - ultramarine-repos
+  - terra-release
+  - terra-release-extras
+
+postprocess:
+  - |
+    #!/usr/bin/env bash
+
+    set -euo pipefail
+
+    mkdir -p /usr/lib/bootc/install/
+    cat > /usr/lib/bootc/install/20-btrfs.toml << EOF
+    [install]
+    root-fs-type = "btrfs"
+    EOF
+  - |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dnf clean all
+    rm /var/{log,cache,lib}/* -rf
+    systemctl preset-all
+
+include:
+  - standard/manifest.yaml

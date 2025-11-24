@@ -1,14 +1,15 @@
-ARG MAJOR_VERSION="${MAJOR_VERSION:-41}"
+FROM ghcr.io/ultramarine-linux/base-bootc:latest
 
-FROM ghcr.io/ultramarine-linux/base-bootc:$MAJOR_VERSION
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --no-best \
+    --allowerasing \
+    --action=remove \
+    ultramarine-release-identity-basic \
+    --action=install \
+    ultramarine-release-identity-xfce \
+    taidan \
+    @ultramarine-xfce-product-environment \
+    --exclude='initial-setup*' \
+    --setopt=install_weak_deps=False
 
-RUN dnf install \
-  -x PackageKit \
-  -x PackageKit-command-not-found \
-  -x grubby \
-  -x sdubby \
-  -x gnome-software-fedora-langpacks \
-  -x desktop-backgrounds-compat \
-  --allowerasing -y \
-  taidan \
-  @ultramarine-xfce-product-environment
+# RUN /usr/libexec/rpmdb-rechunk-prep
