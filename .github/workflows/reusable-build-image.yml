@@ -164,8 +164,6 @@ jobs:
 
             sudo podman build --cap-add=all --userns=host --cgroupns=host \
               --layers=true \
-              -D \
-              --jobs=4 \
               --cache-from $IMAGE_REGISTRY/$IMAGE_NAME \
               --cache-to $IMAGE_REGISTRY/$IMAGE_NAME \
               -t "localhost/${FLAVOR}-bootc:build" \
