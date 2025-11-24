@@ -1,21 +1,25 @@
 # Please build from the root directory of the repository
 # This base image shouldn't be used with --from, as it's well, a base image.
-FROM quay.io/centos-bootc/centos-bootc:stream10 as imagectl
+# FROM quay.io/centos-bootc/centos-bootc:stream10 AS imagectl
 FROM ghcr.io/fyralabs/katsu:main AS builder
 # FROM quay.io/centos-bootc/centos-bootc:stream10 as builder
 
 # prep katsu image with bootc-base-imagectl
 
 RUN --mount=type=cache,target=/var/cache dnf -y install rpm-ostree selinux-policy-targeted python3
-COPY --from=imagectl /usr/share/doc/bootc-base-imagectl/ /usr/share/doc/bootc-base-imagectl/
-COPY --from=imagectl /usr/libexec/bootc-base-imagectl /usr/libexec/bootc-base-imagectl
-RUN chmod +x /usr/libexec/bootc-base-imagectl
+
+
+#COPY --from=imagectl /usr/share/doc/bootc-base-imagectl/ /usr/share/doc/bootc-base-imagectl/
+#COPY --from=imagectl /usr/libexec/bootc-base-imagectl /usr/libexec/bootc-base-imagectl
+# RUN chmod +x /usr/libexec/bootc-base-imagectl
+
+FROM builder AS builder-build
 
 WORKDIR /work
 
 # === katsu workflow ===
 
-COPY . .
+COPY katsu .
 
 RUN --mount=type=cache,target=/var/cache \
     katsu -o folder base.yaml
@@ -39,10 +43,10 @@ RUN --mount=type=cache,target=/var/cache \
 # RUN /usr/libexec/bootc-base-imagectl build-rootfs --manifest=ultramarine --reinject /work/katsu-work/chroot
 
 # === end bootc-base-imagectl workflow ===
+FROM quay.io/centos-bootc/centos-bootc:stream10 AS imagectl
+FROM scratch AS final
 
-FROM scratch
-
-COPY --from=builder /work/katsu-work/chroot /
+COPY --from=builder-build /work/katsu-work/chroot /
 
 RUN mkdir -p /sysroot/ostree
 RUN ln -srvf /sysroot/ostree /ostree
@@ -55,45 +59,66 @@ RUN ln -srvf /sysroot/ostree /ostree
 COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
 COPY dracut/55-ostree.conf /usr/lib/dracut/dracut.conf.d/55-ostree.conf
 COPY rpmdb-rechunk-prep /usr/libexec/rpmdb-rechunk-prep
+
+# imagectl
+
 COPY dnf5-actions.d/rechunk-prep.actions /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
+COPY --from=imagectl /usr/share/doc/bootc-base-imagectl/ /usr/share/doc/bootc-base-imagectl/
+COPY --from=imagectl /usr/libexec/bootc-base-imagectl /usr/libexec/bootc-base-imagectl
+RUN chmod +x /usr/libexec/bootc-base-imagectl
+
+
 # COPY rpmmacros.d/macros.111.bootc /usr/lib/rpm/macros.d/macros.111.bootc
+#
+# HACK: ostree and bootupd stuff
 RUN cp -a /boot /usr/lib/ostree-boot
 RUN bootupctl backend generate-update-metadata
-# hack: rechunk needs this to be happy
+# HACK: rechunk needs this to be happy
+# Sync the two rpmdb locations for compatibility with rpm-ostree
 RUN /usr/libexec/rpmdb-rechunk-prep
 
 # Initramfs needs to be here so OSTree and bootupd can find it
 # We'll delete the ones generated in /boot by default later
 RUN sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
-dracut --force --no-hostonly --force-drivers erofs --reproducible --zstd --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
+    dracut --force --no-hostonly --force-drivers erofs --reproducible --zstd --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
-RUN echo "HOME=/var/home" | tee "/etc/default/useradd" && \
-    rm -rf /home /boot /root /usr/local /srv && \
+RUN echo "HOME=/var/home" | tee "/etc/default/useradd"
+
+RUN rm -rf /home /boot /root /usr/local /srv && \
     mkdir -p /var /sysroot /boot /usr/lib/ostree /usr/lib/ostree-boot/efi/EFI && \
-    mkdir -p /var/home /var/roothome /var/opt /var/usrlocal /var/srv /var/mnt && \
-    chmod 0755 /var/home /var/opt /var/usrlocal /var/srv /var/mnt && \
-    chmod 0700 /var/roothome && \
-    ln -sf var/opt /opt && \
+    mkdir -p /var/home /var/roothome /var/opt /var/usrlocal /var/srv /var/mnt
+
+RUN chmod 0755 /var/home /var/opt /var/usrlocal /var/srv /var/mnt && \
+    chmod 0700 /var/roothome
+
+RUN ln -sf var/opt /opt && \
     ln -sf var/roothome /root && \
     ln -sf var/home /home && \
-    ln -sf sysroot/ostree /ostree && \
-    echo "$(for dir in opt usrlocal home srv mnt ; do echo "d /var/$dir 0755 root root -" ; done)" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf && \
+    ln -sf sysroot/ostree /ostree
+# Tmpfiles configuration
+RUN echo "$(for dir in opt usrlocal home srv mnt ; do echo "d /var/$dir 0755 root root -" ; done)" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf && \
     echo "d /var/roothome 0700 root root -" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf && \
-    echo "d /run/media 0755 root root -" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf && \
-    semanage fcontext -a -e /home /var/home && \
+    echo "d /run/media 0755 root root -" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf
+
+RUN semanage fcontext -a -e /home /var/home && \
     restorecon -RF /var/home
 
 
 # Setup a temporary root passwd (changeme) for dev purposes
 # TODO: Replace this for a more robust option when in prod
 RUN usermod -p '$6$AJv9RHlhEXO6Gpul$5fvVTZXeM0vC03xckTIjY8rdCofnkKSzvF5vEzXDKAby5p3qaOGTHDypVVxKsCE3CbZz7C3NXnbpITrEUvN/Y/' root
+
+# let's clean up after ourselves
+RUN rm -rfv /var/log/* /var/cache/* /var/tmp/* /tmp/*
+
 RUN bootc container lint || true
 
 
-LABEL containers.bootc 1
-LABEL bootc.diskimage-builder quay.io/centos-bootc/bootc-image-builder
+LABEL containers.bootc=1
+LABEL bootc.diskimage-builder=quay.io/centos-bootc/bootc-image-builder
 ENV container=oci
 # Need to reference builder here to force ordering. But since we have to run
 # something anyway, we might as well cleanup after ourselves.
 STOPSIGNAL SIGRTMIN+3
+ONBUILD RUN /usr/libexec/rpmdb-rechunk-prep
 CMD ["/sbin/init"]
