@@ -364,6 +364,7 @@ jobs:
         with:
           tags: |
             type=raw,value=${{ env.BASE_TAG }}${{ env.TAG_SUFFIX }}
+            type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
             type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
             type=ref,event=branch,suffix=${{ env.TAG_SUFFIX }}
 
@@ -457,6 +458,8 @@ jobs:
           echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
           echo "IMAGE=$IMAGE_REGISTRY/$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "MANIFEST=$IMAGE_REGISTRY/$IMAGE_NAME@$DIGEST" >> $GITHUB_OUTPUT
+          TAGS=$(echo "$TAGS" | tr '\n' ',')
+          TAGS=${TAGS%,}
           echo "TAGS=$TAGS" >> $GITHUB_OUTPUT
 
   # Cosign throws errors when ran inside the Fedora container for one reason or another
