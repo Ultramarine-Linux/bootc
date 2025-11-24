@@ -1,4 +1,4 @@
-FROM ghcr.io/ultramarine-linux/base-bootc:latest
+FROM ghcr.io/ultramarine-linux/desktop-bootc:latest
 
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \

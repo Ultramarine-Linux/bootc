@@ -1,5 +1,5 @@
 FROM ghcr.io/ultramarine-linux/base-bootc:main
-
+COPY 20-rhgb.toml /usr/lib/bootc/kargs.d/
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \
