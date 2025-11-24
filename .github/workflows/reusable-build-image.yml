@@ -489,3 +489,29 @@ jobs:
           IMAGE: ${{ needs.manifest.outputs.image }}
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+
+  
+  write:
+    runs-on: ubuntu-latest
+    needs: [manifest]
+    steps:        
+      ## Write for matrix outputs workaround 
+      # todo: refer to https://github.com/marketplace/actions/matrix-outputs-write
+      # https://github.com/cloudposse/github-action-matrix-outputs-read
+      - uses: cloudposse/github-action-matrix-outputs-write@v1
+        id: out
+        with:
+          matrix-step-name: ${{ inputs.image-name }}
+          matrix-key: ${{ inputs.flavor }}
+          matrix-value: |
+            image: "${{ needs.manifest.outputs.image }}"
+            digest: "${{ needs.manifest.outputs.digest }}"
+            manifest: "${{ needs.manifest.outputs.manifest }}"
+            tags: "${{ needs.manifest.outputs.tags }}"
+
+
+    outputs:
+      image: ${{ fromJson(steps.out.outputs.result).image }}
+      digest: ${{ fromJson(steps.out.outputs.result).digest }}
+      manifest: ${{ fromJson(steps.out.outputs.result).manifest }}
+      tags: ${{ fromJson(steps.out.outputs.result).tags }}

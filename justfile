@@ -70,6 +70,12 @@ priv-shell variant:
         -v "{{base_dir}}:/data" \
         --security-opt label=type:unconfined_t \
         "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}":{{ tag }} /bin/bash
+        
+build-vm-imb variant type="qcow2":
+    #!/usr/bin/bash -x
+    VARIANT="{{ variant }}"
+    VARIANT_NAME="${VARIANT##*/}"
+    just build-vm-legacy "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}":{{ tag }} type="{{ type }}"
 
 build-vm variant:
     #!/usr/bin/bash -x

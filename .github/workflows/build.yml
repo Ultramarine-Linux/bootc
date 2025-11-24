@@ -38,7 +38,18 @@ jobs:
           - gnome
           - xfce
     with:
-      image-name: ultramarine
+      image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
       from: ${{ needs.build-base.outputs.manifest }}
-    
+  
+  tier1-outputs:
+    needs: [build-tier1]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: cloudposse/github-action-matrix-outputs-read@v1
+        id: read
+        with:
+          matrix-step-name: ultramarine-tier1
+          
+    outputs:
+      result: "${{ steps.read.outputs.result }}"
