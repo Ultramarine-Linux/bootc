@@ -9,6 +9,8 @@ pull variant:
     VARIANT_NAME="${VARIANT##*/}"
     podman pull "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}"
 
+ball variant: (build variant) (rechunk variant)
+
 build variant:
     #!/usr/bin/bash -x
     VARIANT="{{ variant }}"

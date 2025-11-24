@@ -55,8 +55,8 @@ RUN ln -srvf /sysroot/ostree /ostree
 COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
 COPY dracut/55-ostree.conf /usr/lib/dracut/dracut.conf.d/55-ostree.conf
 COPY rpmdb-rechunk-prep /usr/libexec/rpmdb-rechunk-prep
-# COPY dnf5-actions.d/rechunk-prep.actions /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
-COPY rpmmacros.d/macros.111.bootc /usr/lib/rpm/macros.d/macros.111.bootc
+COPY dnf5-actions.d/rechunk-prep.actions /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
+# COPY rpmmacros.d/macros.111.bootc /usr/lib/rpm/macros.d/macros.111.bootc
 RUN cp -av /boot /usr/lib/ostree-boot
 RUN bootupctl backend generate-update-metadata
 # hack: rechunk needs this to be happy

@@ -9,10 +9,5 @@ RPM_OSTREE_DB="/usr/share/rpm"
 # Ensure destination directory exists
 install -d "$RPM_OSTREE_DB"
 
-# Hardlink files from SRC_DB to RPM_OSTREE_DB; fallback to copy if hardlink fails
-find "$RPM_MUT_DB" -type f -print0 | while IFS= read -r -d '' src; do
-  dest="$RPM_OSTREE_DB/$(basename "$src")"
-  if ! ln -vf "$src" "$dest" 2>/dev/null; then
-    cp -vf "$src" "$dest"
-  fi
-done
+# Use rsync to synchronize files from SRC_DB to RPM_OSTREE_DB
+rsync -av "$RPM_MUT_DB/" "$RPM_OSTREE_DB/"
