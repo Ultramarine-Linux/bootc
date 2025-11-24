@@ -70,6 +70,8 @@ on:
         description: "The private key used to sign the image"
         required: false
 
+permissions: write-all
+
 env:
   IMAGE_NAME: ${{ inputs.flavor }}-bootc
   IMAGE_DESC: ${{ inputs.image-desc }}
