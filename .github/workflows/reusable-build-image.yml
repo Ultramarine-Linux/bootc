@@ -503,7 +503,7 @@ jobs:
         with:
           matrix-step-name: ${{ inputs.image-name }}
           matrix-key: ${{ inputs.flavor }}
-          matrix-value: |
+          outputs: |
             image: "${{ needs.manifest.outputs.image }}"
             digest: "${{ needs.manifest.outputs.digest }}"
             manifest: "${{ needs.manifest.outputs.manifest }}"

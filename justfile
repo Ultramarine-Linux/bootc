@@ -75,7 +75,7 @@ build-vm-imb variant type="qcow2":
     #!/usr/bin/bash -x
     VARIANT="{{ variant }}"
     VARIANT_NAME="${VARIANT##*/}"
-    just build-vm-legacy "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}":{{ tag }} type="{{ type }}"
+    just build-vm-legacy "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}":{{ tag }} "{{ type }}"
 
 build-vm variant:
     #!/usr/bin/bash -x
