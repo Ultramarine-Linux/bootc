@@ -24,13 +24,41 @@ jobs:
     with:
       image-name: ultramarine
       flavor: base
-  
+
   # todo: maybe tier0 for desktop base images?
-  
-  build-tier1:
+  #
+  build-tier0:
     uses: ./.github/workflows/reusable-build-image.yml
     secrets: inherit
     needs: build-base
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor:
+          - desktop
+    with:
+      image-name: ultramarine-tier0
+      flavor: ${{ matrix.flavor }}
+      containerfile: tier0/${{ matrix.flavor }}/Containerfile
+      context-path: tier0/${{ matrix.flavor }}
+      from: ${{ needs.build-base.outputs.manifest }}
+
+  tier0-outputs:
+    needs: [build-tier0]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: cloudposse/github-action-matrix-outputs-read@v1
+        id: read
+        with:
+          matrix-step-name: ultramarine-tier0
+
+    outputs:
+      result: "${{ steps.read.outputs.result }}"
+
+  build-tier1:
+    uses: ./.github/workflows/reusable-build-image.yml
+    secrets: inherit
+    needs: [build-base, tier0-outputs]
     strategy:
       fail-fast: false
       matrix:
@@ -40,8 +68,10 @@ jobs:
     with:
       image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
-      from: ${{ needs.build-base.outputs.manifest }}
-  
+      containerfile: tier1/${{ matrix.flavor }}/Containerfile
+      context-path: tier1/${{ matrix.flavor }}
+      from: ${{ fromJson(needs.tier0-outputs.outputs.result).manifest.desktop }}
+
   tier1-outputs:
     needs: [build-tier1]
     runs-on: ubuntu-latest
@@ -50,6 +80,6 @@ jobs:
         id: read
         with:
           matrix-step-name: ultramarine-tier1
-          
+
     outputs:
       result: "${{ steps.read.outputs.result }}"
