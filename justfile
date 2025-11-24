@@ -1,6 +1,6 @@
 base_dir := env("BUILD_BASE_DIR", justfile_directory())
 registry_prefix := "ghcr.io/ultramarine-linux"
-tag := "ng"
+tag := "main"
 image_suffix := "-bootc"
 
 pull variant:
