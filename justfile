@@ -3,18 +3,22 @@ registry_prefix := "ghcr.io/ultramarine-linux"
 tag := "main"
 image_suffix := "-bootc"
 
-pull variant:
-    #!/usr/bin/bash -x
-    VARIANT="{{ variant }}"
-    VARIANT_NAME="${VARIANT##*/}"
-    podman pull "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}"
-
 ball variant: (build variant) (rechunk variant)
 
-build variant:
-    #!/usr/bin/bash -x
+parse_variant variant:
+    #!/usr/bin/bash
     VARIANT="{{ variant }}"
     VARIANT_NAME="${VARIANT##*/}"
+    echo "${VARIANT_NAME}"
+
+pull variant:
+    #!/usr/bin/bash
+    VARIANT_NAME=$(just parse_variant {{ variant }})
+    podman pull "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}"
+
+build variant: (parse_variant variant)
+    #!/usr/bin/bash -x
+    VARIANT_NAME=$(just parse_variant {{ variant }})
     podman build \
     --device=/dev/fuse \
     --cap-add=all \
@@ -27,8 +31,7 @@ build variant:
 
 rechunk variant:
     #!/usr/bin/bash -x
-    VARIANT="{{ variant }}"
-    VARIANT_NAME="${VARIANT##*/}"
+    VARIANT_NAME=$(just parse_variant {{ variant }})
     podman run --rm \
         --privileged \
         -v /var/lib/containers:/var/lib/containers \
@@ -40,8 +43,7 @@ rechunk variant:
 # bootc {variant} {args}
 bootc variant *ARGS:
     #!/usr/bin/bash -x
-    VARIANT="{{ variant }}"
-    VARIANT_NAME="${VARIANT##*/}"
+    VARIANT_NAME=$(just parse_variant {{ variant }})
     podman run \
         --rm --privileged --pid=host \
         -it \
@@ -57,8 +59,7 @@ bootc variant *ARGS:
 
 priv-shell variant:
     #!/usr/bin/bash -x
-    VARIANT="{{ variant }}"
-    VARIANT_NAME="${VARIANT##*/}"
+    VARIANT_NAME=$(just parse_variant {{ variant }})
     podman run \
         --rm --privileged --pid=host \
         -it \
@@ -70,11 +71,10 @@ priv-shell variant:
         -v "{{base_dir}}:/data" \
         --security-opt label=type:unconfined_t \
         "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}":{{ tag }} /bin/bash
-        
+
 build-vm-imb variant type="qcow2":
     #!/usr/bin/bash -x
-    VARIANT="{{ variant }}"
-    VARIANT_NAME="${VARIANT##*/}"
+    VARIANT_NAME=$(just parse_variant {{ variant }})
     just build-vm-legacy "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}":{{ tag }} "{{ type }}"
 
 build-vm variant:
