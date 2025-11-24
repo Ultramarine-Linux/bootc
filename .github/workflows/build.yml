@@ -1,6 +1,9 @@
 name: Build bootc images
 permissions:
+  packages: write
+  id-token: write
   contents: read
+  artifact-metadata: write
 
 on:
   pull_request:
