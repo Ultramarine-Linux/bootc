@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 # This script simply just hardlinks/copies the RPM database to /usr/share/rpm
 # so that other tools like rpm-ostree can interact with the standard RPM database.
 
@@ -10,4 +10,4 @@ RPM_OSTREE_DB="/usr/share/rpm"
 install -d "$RPM_OSTREE_DB"
 
 # Use rsync to synchronize files from SRC_DB to RPM_OSTREE_DB
-rsync -av "$RPM_MUT_DB/" "$RPM_OSTREE_DB/"
+rsync -av "$RPM_MUT_DB/" "$RPM_OSTREE_DB/" 1>&2 2>/dev/null
