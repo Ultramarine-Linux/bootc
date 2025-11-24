@@ -1,0 +1,13 @@
+FROM ghcr.io/ultramarine-linux/desktop-bootc:main
+
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --no-best \
+    --allowerasing \
+    --action=remove \
+    ultramarine-release-identity-basic \
+    --action=install \
+    ultramarine-release-identity-plasma \
+    @ultramarine-plasma-product-environment \
+    --exclude='initial-setup*' \
+    --exclude='desktop-backgrounds*' \
+    --setopt=install_weak_deps=False

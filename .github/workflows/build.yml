@@ -64,6 +64,7 @@ jobs:
         flavor:
           - gnome
           - xfce
+          - plasma
     with:
       image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
