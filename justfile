@@ -23,7 +23,7 @@ build variant:
     --cgroupns=host \
     --layers=true \
     --security-opt=label=disable -t \
-    {{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }} {{ variant }}
+    {{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}  {{ variant }}
 
 rechunk variant:
     #!/usr/bin/bash -x
@@ -69,7 +69,7 @@ priv-shell variant:
         -e RUST_LOG=debug \
         -v "{{base_dir}}:/data" \
         --security-opt label=type:unconfined_t \
-        "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}" /bin/bash
+        "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}":{{ tag }} /bin/bash
 
 build-vm variant:
     #!/usr/bin/bash -x
