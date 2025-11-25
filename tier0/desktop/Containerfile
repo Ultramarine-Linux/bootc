@@ -8,6 +8,8 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     readymade \
     @multimedia \
     @ultramarine-product-common \
+    plymouth \
+    plymouth-system-theme \
     @base-graphical && \
     dnf clean all
 
