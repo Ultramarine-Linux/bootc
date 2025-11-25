@@ -62,13 +62,15 @@ COPY rpmdb-rechunk-prep /usr/libexec/rpmdb-rechunk-prep
 
 
 COPY dnf5-actions.d/rechunk-prep.actions /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
-COPY repos-override.d/50-ultramarine.repo /usr/share/dnf5/repos.d/
+COPY repos-override.d/50-ultramarine.repo /usr/share/dnf5/repos.override.d/
 
 # imagectl
 COPY --from=imagectl /usr/share/doc/bootc-base-imagectl/ /usr/share/doc/bootc-base-imagectl/
 COPY --from=imagectl /usr/libexec/bootc-base-imagectl /usr/libexec/bootc-base-imagectl
 RUN chmod +x /usr/libexec/bootc-base-imagectl
 
+# HACK: Disable OpenH264
+RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/fedora-cisco-openh264.repo
 
 # COPY rpmmacros.d/macros.111.bootc /usr/lib/rpm/macros.d/macros.111.bootc
 #

@@ -5,11 +5,11 @@ on:
   push:
     paths:
       # Update this when new tiers are added
-      - 'base/**'
-      - 'tier0/**'
-      - 'tier1/**'
-      - 'tier2/**'
-      - '.github/workflows/**'
+      - "base/**"
+      - "tier0/**"
+      - "tier1/**"
+      - "tier2/**"
+      - ".github/workflows/**"
     branches:
       - main
   pull_request:
@@ -113,7 +113,12 @@ jobs:
       image-name: ultramarine-tier2
       flavor: ${{ matrix.base-flavor }}
       context-path: tier2/${{ matrix.variant }}
-      platforms: ${{ matrix.variant == 'rpi' && 'linux/arm64' || 'linux/amd64,linux/arm64' }}
+      platforms: >-
+        ${{
+        matrix.variant == 'rpi' && 'linux/arm64' ||
+        matrix.variant == 'steam' && 'linux/amd64' ||
+        'linux/amd64,linux/arm64'
+        }}
       from: ${{ fromJson(needs.tier1-outputs.outputs.result).manifest[matrix.base-flavor] }}
       tag-suffix: "-${{ matrix.variant }}"
 
