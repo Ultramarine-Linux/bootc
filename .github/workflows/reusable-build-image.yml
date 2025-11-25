@@ -104,7 +104,7 @@ jobs:
 
   build_push:
     name: Build and push image
-    runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ contains(matrix.platform, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 60
     needs: generate_matrix
     strategy:
@@ -132,7 +132,6 @@ jobs:
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
         with:
           remove-codeql: true
-
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         env:
@@ -159,6 +158,12 @@ jobs:
           set -x
 
           function build() {
+            # Normalize platform to linux/ARCH format
+            BUILD_PLATFORM="${PLATFORM}"
+            if [[ "$BUILD_PLATFORM" != linux/* ]]; then
+              BUILD_PLATFORM="linux/${BUILD_PLATFORM}"
+            fi
+
             FROM_ARG=""
             if [ -n "$FROM_IMAGE" ]; then
               FROM_ARG="--from=$FROM_IMAGE"
@@ -167,7 +172,7 @@ jobs:
             # Set default context path if not provided
             BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
 
-            sudo podman build --cap-add=all --userns=host --cgroupns=host \
+            sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
               --layers=true \
               --cache-from $IMAGE_REGISTRY/$IMAGE_NAME \
               --cache-to $IMAGE_REGISTRY/$IMAGE_NAME \
@@ -431,9 +436,11 @@ jobs:
           platforms=()
           IFS=',' read -r -a platforms <<< "${{ inputs.platforms }}"
           for platform in ${platforms[@]}; do
+            # Strip "linux/" prefix to get short arch name (e.g., "linux/arm64" -> "arm64")
+            short_arch=$(echo "$platform" | sed 's|.*/||')
             digest=$(echo $DIGESTS | jq -r ".$platform")
-            echo "Adding ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@$digest for $platform"
-            podman manifest add $MANIFEST ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@$digest --arch $platform
+            echo "Adding ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@$digest for $platform (arch: $short_arch)"
+            podman manifest add $MANIFEST ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@$digest --arch $short_arch --os linux
           done
 
           # Apply the labels to the manifest (separated by newlines)
@@ -496,12 +503,11 @@ jobs:
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
-  
   write:
     runs-on: ubuntu-latest
     needs: [manifest]
-    steps:        
-      ## Write for matrix outputs workaround 
+    steps:
+      ## Write for matrix outputs workaround
       # todo: refer to https://github.com/marketplace/actions/matrix-outputs-write
       # https://github.com/cloudposse/github-action-matrix-outputs-read
       - uses: cloudposse/github-action-matrix-outputs-write@v1
@@ -514,7 +520,6 @@ jobs:
             digest: "${{ needs.manifest.outputs.digest }}"
             manifest: "${{ needs.manifest.outputs.manifest }}"
             tags: "${{ needs.manifest.outputs.tags }}"
-
 
     outputs:
       image: ${{ fromJson(steps.out.outputs.result).image }}
