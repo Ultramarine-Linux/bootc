@@ -54,6 +54,8 @@ dnf:
     - ultramarine-release
     - ultramarine-repos
     - ultramarine-logos
+    - terra-release-mesa
+    - terra-release
     - kernel
     - dnf
     # bootc

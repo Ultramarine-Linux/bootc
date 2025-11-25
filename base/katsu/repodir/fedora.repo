@@ -4,6 +4,8 @@ name=Fedora $releasever - $basearch
 metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch
 enabled=1
 countme=1
+# use terra-mesa
+exclude=mesa-*
 metadata_expire=7d
 repo_gpgcheck=0
 type=rpm

@@ -60,9 +60,11 @@ COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
 COPY dracut/55-ostree.conf /usr/lib/dracut/dracut.conf.d/55-ostree.conf
 COPY rpmdb-rechunk-prep /usr/libexec/rpmdb-rechunk-prep
 
-# imagectl
 
 COPY dnf5-actions.d/rechunk-prep.actions /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
+COPY repos-override.d/50-ultramarine.repo /usr/share/dnf5/repos.d/
+
+# imagectl
 COPY --from=imagectl /usr/share/doc/bootc-base-imagectl/ /usr/share/doc/bootc-base-imagectl/
 COPY --from=imagectl /usr/libexec/bootc-base-imagectl /usr/libexec/bootc-base-imagectl
 RUN chmod +x /usr/libexec/bootc-base-imagectl
