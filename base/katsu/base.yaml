@@ -10,6 +10,7 @@ dnf:
     - --setopt=tsflags=
     - --setopt=max_parallel_downloads=20
     - --setopt=install_weak_deps=True
+    #- --setopt=multilib_policy=all
     # HACK: use packages in Terra when Fusion is broken
     - --nobest
   exclude:

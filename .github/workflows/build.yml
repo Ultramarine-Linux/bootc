@@ -3,6 +3,13 @@ permissions: write-all
 
 on:
   push:
+    paths:
+      # Update this when new tiers are added
+      - 'base/**'
+      - 'tier0/**'
+      - 'tier1/**'
+      - 'tier2/**'
+      - '.github/workflows/**'
     branches:
       - main
   pull_request:
