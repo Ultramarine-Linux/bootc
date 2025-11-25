@@ -5,5 +5,5 @@ enabled=0
 
 
 # Exclude multimedia packages
-[rpmfusion*]
-exclude="*ffmpeg*,*gstreamer*,*libav*,*x26*,*libva*,*mesa*-freeworld*"
+#[rpmfusion*]
+#exclude="*ffmpeg*,*gstreamer*,*libav*,*x26*,*libva*,*mesa*-freeworld*"
