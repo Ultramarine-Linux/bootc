@@ -1,6 +1,6 @@
 
 # We don't want OpenH264, we got x264
-[fedora-cisco-openh264*]
+[fedora-cisco-openh264]
 enabled=0
 
 
