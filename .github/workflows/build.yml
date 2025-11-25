@@ -107,7 +107,7 @@ jobs:
       flavor: ${{ matrix.base-flavor }}-${{ matrix.variant }}
       context-path: tier2/${{ matrix.variant }}
       platforms: ${{ matrix.variant == 'rpi' && 'linux/arm64' || 'linux/amd64,linux/arm64' }}
-      from: ${{ fromJson(needs.tier1-outputs.outputs.result).manifest.${{ matrix.base-flavor }} }}
+      from: ${{ fromJson(needs.tier1-outputs.outputs.result).manifest[matrix.base-flavor] }}
 
   tier2-outputs:
     needs: [build-tier2]
