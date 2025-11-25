@@ -104,10 +104,11 @@ jobs:
           - steam
     with:
       image-name: ultramarine-tier2
-      flavor: ${{ matrix.base-flavor }}-${{ matrix.variant }}
+      flavor: ${{ matrix.base-flavor }}
       context-path: tier2/${{ matrix.variant }}
       platforms: ${{ matrix.variant == 'rpi' && 'linux/arm64' || 'linux/amd64,linux/arm64' }}
       from: ${{ fromJson(needs.tier1-outputs.outputs.result).manifest[matrix.base-flavor] }}
+      tag-suffix: "-${{ matrix.variant }}"
 
   tier2-outputs:
     needs: [build-tier2]
