@@ -83,3 +83,40 @@ jobs:
 
     outputs:
       result: "${{ steps.read.outputs.result }}"
+
+  # Extra tiers for HWE variants, etc.
+  build-tier2:
+    uses: ./.github/workflows/reusable-build-image.yml
+    secrets: inherit
+    needs: [build-base, tier1-outputs]
+    strategy:
+      fail-fast: false
+      matrix:
+        base-flavor:
+          - gnome
+          - xfce
+          - plasma
+          - budgie
+        variant:
+          # - surface
+          # - nvidia
+          # - rpi
+          - steam
+    with:
+      image-name: ultramarine-tier2
+      flavor: ${{ matrix.base-flavor }}-${{ matrix.variant }}
+      context-path: tier2/${{ matrix.variant }}
+      platforms: ${{ matrix.variant == 'rpi' && 'linux/arm64' || 'linux/amd64,linux/arm64' }}
+      from: ${{ fromJson(needs.tier1-outputs.outputs.result).manifest.${matrix.base-flavor} }}
+
+  tier2-outputs:
+    needs: [build-tier2]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: cloudposse/github-action-matrix-outputs-read@v1
+        id: read
+        with:
+          matrix-step-name: ultramarine-tier2
+    outputs:
+      result: "${{ steps.read.outputs.result }}"
+    

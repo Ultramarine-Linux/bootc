@@ -1,0 +1,28 @@
+# meh, this will be overriden with --from anyway
+FROM ghcr.io/ultramarine-linux/plasma-bootc:main
+
+# We exclude extest here since it's only required in GNOME
+# and some other desktops that don't work well with the Remote Desktop portal
+# 
+# ExTest is a shim that emulates the XTest extension by translating XTest requests
+# into direct udev calls as an alternative to using the Remote Desktop portal.
+# 
+# 
+
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --no-best \
+    --allowerasing \
+    --action=install \
+    steam \
+    steam-device-rules \
+    steam-notif-daemon \
+    terra-gamescope \
+    gamescope-session-steam \
+    gamemode \
+    lutris \
+    scx-scheds \
+    scx-tools \
+    mangohud \
+    terra-protontricks \
+    gamescope-session-plus \
+    --exclude='extest*' \
