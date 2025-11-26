@@ -10,3 +10,5 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     @ultramarine-plasma-product-environment \
     --exclude='desktop-backgrounds*' \
     --setopt=install_weak_deps=False
+
+RUN sed -i 's/^livesys_session=.*/livesys_session="kde"/' /etc/sysconfig/livesys

@@ -6,12 +6,34 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     --action install \
     taidan \
     readymade \
+    readymade-config-ultramarine \
     @multimedia \
     @ultramarine-product-common \
     plymouth \
+    livesys-scripts \
+    isomd5sum \
+    orca \
+    espeak-ng \
+    speech-dispatcher-espeak-ng \
+    mkfstab \
+    um \
+    dive \
+    dracut-strip-trigger \
     plymouth-system-theme \
     @base-graphical && \
     dnf clean all
 
+RUN plymouth-set-default-theme -R rhgb
+
+
+# Recreate initramfs to add plymouth back
+RUN sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
+    dracut --force --no-hostonly --force-drivers erofs --reproducible --zstd --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
+
+
 RUN systemctl set-default graphical.target
-RUN systemctl enable taidan-initial-setup.service
+
+COPY live-setup.sh /tmp/live-setup.sh
+
+RUN chmod +x /tmp/live-setup.sh && \
+    sh -c '/tmp/live-setup.sh && rm -f /tmp/live-setup.sh'

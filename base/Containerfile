@@ -59,6 +59,7 @@ RUN ln -srvf /sysroot/ostree /ostree
 COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
 COPY dracut/55-ostree.conf /usr/lib/dracut/dracut.conf.d/55-ostree.conf
 COPY rpmdb-rechunk-prep /usr/libexec/rpmdb-rechunk-prep
+COPY revert-bootc /usr/libexec/revert-bootc
 
 
 COPY dnf5-actions.d/rechunk-prep.actions /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
@@ -86,9 +87,16 @@ RUN /usr/libexec/rpmdb-rechunk-prep
 RUN sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
     dracut --force --no-hostonly --force-drivers erofs --reproducible --zstd --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
+
+# TODO: Probably somehow handle this for standard installs too?
+# 
+# Consider making readymade revert these changes for standard mode? Or a script to run post-deploy?
+# 
+# # Right now we just have post-deploy script that does this for us, but consider
+# handling this properly somehow
 RUN echo "HOME=/var/home" | tee "/etc/default/useradd"
 
-RUN rm -rf /home /boot /root /usr/local /srv && \
+RUN rm -rf /home /root /usr/local /srv && \
     mkdir -p /var /sysroot /boot /usr/lib/ostree /usr/lib/ostree-boot/efi/EFI && \
     mkdir -p /var/home /var/roothome /var/opt /var/usrlocal /var/srv /var/mnt
 
@@ -109,8 +117,7 @@ RUN semanage fcontext -a -e /home /var/home && \
 
 
 # Setup a temporary root passwd (changeme) for dev purposes
-# TODO: Replace this for a more robust option when in prod
-RUN usermod -p '$6$AJv9RHlhEXO6Gpul$5fvVTZXeM0vC03xckTIjY8rdCofnkKSzvF5vEzXDKAby5p3qaOGTHDypVVxKsCE3CbZz7C3NXnbpITrEUvN/Y/' root
+# RUN usermod -p '$6$AJv9RHlhEXO6Gpul$5fvVTZXeM0vC03xckTIjY8rdCofnkKSzvF5vEzXDKAby5p3qaOGTHDypVVxKsCE3CbZz7C3NXnbpITrEUvN/Y/' root
 
 # let's clean up after ourselves
 RUN rm -rfv /var/log/* /var/cache/* /var/tmp/* /tmp/*
@@ -124,5 +131,4 @@ ENV container=oci
 # Need to reference builder here to force ordering. But since we have to run
 # something anyway, we might as well cleanup after ourselves.
 STOPSIGNAL SIGRTMIN+3
-ONBUILD RUN /usr/libexec/rpmdb-rechunk-prep
 CMD ["/sbin/init"]

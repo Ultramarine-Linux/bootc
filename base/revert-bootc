@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Revert the ostree-specific changes made in the Dockerfile, so that the image can be used
+# in a standard installation.
+# 
+# This should only be run in a mutable installation context, not in an ostree-booted system.
+set -x
+
+# Remove symlinks created by bootc
+rm -f /opt /root /home /ostree /srv
+
+# remove rechunk-prep action
+rm -f /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
+# delete dummy rpm database
+rm -rf /usr/share/rpm
+
+# Recreate the original directories
+mkdir -p /home /root /usr/local /srv /opt
+
+# Set proper permissions
+chmod 0755 /home /opt /usr/local /srv
+chmod 0700 /root
+
+# Remove tmpfiles configuration
+rm -f /usr/lib/tmpfiles.d/bootc-base-dirs.conf
+
+# Restore default useradd HOME setting
+sed -i '/^HOME=\/var\/home$/d' /etc/default/useradd || true
