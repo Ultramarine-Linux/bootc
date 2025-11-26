@@ -267,7 +267,8 @@ jobs:
           DIGEST: ${{ steps.push.outputs.remote_image_digest }}
         run: |
           mkdir -p /tmp/outputs/digests
-          echo "${DIGEST}" > /tmp/outputs/digests/${IMAGE_NAME}-${PLATFORM}.txt
+          PLATFORM_SAFE="${PLATFORM//\//-}"
+          echo "${DIGEST}" > /tmp/outputs/digests/${IMAGE_NAME}-${PLATFORM_SAFE}.txt
 
       - name: Upload Output Artifacts
         if: github.event_name != 'pull_request'
