@@ -97,9 +97,8 @@ jobs:
     secrets: inherit
     needs: [normalize, detect-changes, build-base]
     if: |
-      always() &&
+      !cancelled() &&
       needs.build-base.result != 'failure' &&
-      needs.build-base.result != 'cancelled' &&
       (needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
       needs.detect-changes.outputs.workflows == 'true' ||
@@ -124,7 +123,8 @@ jobs:
   tier0-outputs:
     needs: [build-tier0]
     runs-on: ubuntu-latest
-    if: needs.build-tier0.result == 'success'
+    if: |
+      !cancelled() && needs.build-tier0.result == 'success'
     outputs:
       result: "${{ steps.read.outputs.result }}"
     steps:
@@ -138,9 +138,9 @@ jobs:
     secrets: inherit
     needs: [normalize, detect-changes, build-tier0, tier0-outputs]
     if: |
-      always() &&
+      !cancelled() &&
       needs.build-tier0.result != 'failure' &&
-      needs.build-tier0.result != 'cancelled' &&
+      needs.tier0-outputs.result != 'failure' &&
       (needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
       needs.detect-changes.outputs.tier1 == 'true' ||
@@ -169,7 +169,8 @@ jobs:
   tier1-outputs:
     needs: [build-tier1]
     runs-on: ubuntu-latest
-    if: needs.build-tier1.result == 'success'
+    if: |
+      !cancelled() && needs.build-tier1.result == 'success'
     outputs:
       result: "${{ steps.read.outputs.result }}"
     steps:
@@ -184,9 +185,9 @@ jobs:
     secrets: inherit
     needs: [normalize, detect-changes, build-tier1, tier1-outputs]
     if: |
-      always() &&
+      !cancelled() &&
       needs.build-tier1.result != 'failure' &&
-      needs.build-tier1.result != 'cancelled' &&
+      needs.tier1-outputs.result != 'failure' &&
       (needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
       needs.detect-changes.outputs.tier1 == 'true' ||
