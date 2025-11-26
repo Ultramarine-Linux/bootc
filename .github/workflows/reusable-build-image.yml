@@ -285,7 +285,7 @@ jobs:
   manifest:
     name: Create ${{ inputs.image-name }} Manifest
     runs-on: ubuntu-latest
-    if: always()
+    if: "!cancelled()"
     needs:
       - generate_matrix
       - build_push
@@ -429,7 +429,9 @@ jobs:
           for platform in ${platforms[@]}; do
             # Strip "linux/" prefix to get short arch name (e.g., "linux/arm64" -> "arm64")
             short_arch=$(echo "$platform" | sed 's|.*/||')
-            digest=$(echo $DIGESTS | jq -r ".$platform")
+            # Sanitize platform name for lookup (replace / with -)
+            platform_safe=$(echo "$platform" | tr '/' '-')
+            digest=$(echo $DIGESTS | jq -r --arg key "$platform_safe" '.[$key]')
             echo "Adding ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@$digest for $platform (arch: $short_arch)"
             podman manifest add $MANIFEST ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@$digest --arch $short_arch --os linux
           done
