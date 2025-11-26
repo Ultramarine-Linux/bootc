@@ -97,11 +97,14 @@ jobs:
     secrets: inherit
     needs: [normalize, detect-changes, build-base]
     if: |
-      needs.detect-changes.outputs.base == 'true' ||
+      always() &&
+      needs.build-base.result != 'failure' &&
+      needs.build-base.result != 'cancelled' &&
+      (needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
       needs.detect-changes.outputs.workflows == 'true' ||
       github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch'
+      github.event_name == 'workflow_dispatch')
     strategy:
       fail-fast: false
       matrix:
@@ -135,12 +138,15 @@ jobs:
     secrets: inherit
     needs: [normalize, detect-changes, build-tier0, tier0-outputs]
     if: |
-      needs.detect-changes.outputs.base == 'true' ||
+      always() &&
+      needs.build-tier0.result != 'failure' &&
+      needs.build-tier0.result != 'cancelled' &&
+      (needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
       needs.detect-changes.outputs.tier1 == 'true' ||
       needs.detect-changes.outputs.workflows == 'true' ||
       github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch'
+      github.event_name == 'workflow_dispatch')
     strategy:
       fail-fast: false
       matrix:
@@ -178,13 +184,16 @@ jobs:
     secrets: inherit
     needs: [normalize, detect-changes, build-tier1, tier1-outputs]
     if: |
-      needs.detect-changes.outputs.base == 'true' ||
+      always() &&
+      needs.build-tier1.result != 'failure' &&
+      needs.build-tier1.result != 'cancelled' &&
+      (needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
       needs.detect-changes.outputs.tier1 == 'true' ||
       needs.detect-changes.outputs.tier2 == 'true' ||
       needs.detect-changes.outputs.workflows == 'true' ||
       github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch'
+      github.event_name == 'workflow_dispatch')
     strategy:
       fail-fast: false
       matrix:
