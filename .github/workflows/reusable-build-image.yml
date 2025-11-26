@@ -98,7 +98,9 @@ jobs:
 
           MATRIX="{\"include\":[]}"
           for platform in "${platforms[@]}"; do
-            MATRIX=$(echo $MATRIX | jq ".include += [{\"platform\": \"$platform\"}]")
+            # Sanitize platform name for artifact naming (replace / with -)
+            platform_safe=$(echo "$platform" | tr '/' '-')
+            MATRIX=$(echo $MATRIX | jq ".include += [{\"platform\": \"$platform\", \"platform_safe\": \"$platform_safe\"}]")
           done
           echo "matrix=$(echo $MATRIX | jq -c '.')" >> $GITHUB_OUTPUT
 
@@ -274,7 +276,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: ${{ env.IMAGE_NAME }}-${{ github.run_id }}-${{ matrix.platform }}
+          name: ${{ env.IMAGE_NAME }}-${{ github.run_id }}-${{ matrix.platform_safe }}
           retention-days: 1
           if-no-files-found: error
           path: |
