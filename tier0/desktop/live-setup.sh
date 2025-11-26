@@ -1,6 +1,7 @@
 #!/bin/bash -x
+systemctl set-default graphical.target
 systemctl enable livesys.service
-systemctl enable livesys-late.service && \
+systemctl enable livesys-late.service
 systemctl enable tmp.mount
 # make it so that we don't do writing to the overlay for things which
 # are just tmpdirs/caches
