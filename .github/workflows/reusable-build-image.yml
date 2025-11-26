@@ -217,24 +217,6 @@ jobs:
           IMAGE_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "localhost/${{ inputs.flavor }}-bootc:build")
           echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
 
-      - name: Load Image
-        if: github.event_name != 'pull_request'
-        id: load
-        run: |
-          set -x
-          LOCAL_IMAGE="localhost/${{ env.IMAGE_NAME }}:build"
-          # Use a temporary tag with run ID to avoid conflicts
-          # Extract architecture from platform (e.g., linux/amd64 -> amd64)
-          NORMALIZED_PLATFORM="${{ matrix.platform }}"
-          NORMALIZED_PLATFORM="${NORMALIZED_PLATFORM##*/}"
-          TEMP_TAG="temp-${{ github.run_id }}-${NORMALIZED_PLATFORM}"
-          REMOTE_IMAGE="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${TEMP_TAG}"
-          sudo podman image tag "$LOCAL_IMAGE" "$REMOTE_IMAGE"
-
-          IMAGE_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "$REMOTE_IMAGE")
-          echo "image=$REMOTE_IMAGE" >> $GITHUB_OUTPUT
-          echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
-
       # Push the image to GHCR (Image Registry)
       - name: Push to GHCR
         if: github.event_name != 'pull_request'
@@ -242,21 +224,21 @@ jobs:
         env:
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
-          IMAGE_DIGEST: ${{ steps.load.outputs.digest }}
           PLATFORM: ${{ matrix.platform }}
         run: |
           set -x
-          # Push with temporary tag, manifest job will create the real tags
-          # Extract architecture from platform (e.g., linux/amd64 -> amd64)
-          NORMALIZED_PLATFORM="${{ matrix.platform }}"
-          NORMALIZED_PLATFORM="${NORMALIZED_PLATFORM##*/}"
-          TEMP_TAG="temp-${{ github.run_id }}-${NORMALIZED_PLATFORM}"
-          TEMP_IMAGE="${{ env.IMAGE_REGISTRY }}/${IMAGE_NAME}:${TEMP_TAG}"
+          # Push the local image directly by digest
+          # The manifest job will reference these by digest to create the multi-arch manifest
+          LOCAL_IMAGE="localhost/${IMAGE_NAME}:build"
+
           for i in {1..3}; do
-            sudo podman push --digestfile=/tmp/digestfile $TEMP_IMAGE && break || sleep $((5 * i));
+            # TODO: use docker:// or not use
+            sudo podman push --digestfile=/tmp/digestfile "$LOCAL_IMAGE" "${IMAGE_REGISTRY}/${IMAGE_NAME}" && break || sleep $((5 * i));
           done
+
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
           echo "remote_image_digest=$REMOTE_IMAGE_DIGEST" >> $GITHUB_OUTPUT
+          echo "Pushed image with digest: $REMOTE_IMAGE_DIGEST"
           cat /tmp/digestfile
 
       # This section is optional and only needs to be enabled in you plan on distributing
