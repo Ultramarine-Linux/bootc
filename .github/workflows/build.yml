@@ -85,7 +85,7 @@ jobs:
             echo "manifest=${{ needs.build-base.outputs.manifest }}" >> $GITHUB_OUTPUT
           else
             # Fetch existing image by branch/tag name
-            TAG="${GITHUB_REF_NAME}"
+            TAG="${GITHUB_REF_NAME//\//-}"
             echo "manifest=${{ env.IMAGE_REGISTRY }}/base-bootc:${TAG}" >> $GITHUB_OUTPUT
           fi
 
@@ -120,36 +120,33 @@ jobs:
     outputs:
       result: ${{ steps.get-result.outputs.result }}
     steps:
+      - uses: cloudposse/github-action-matrix-outputs-read@v1
+        if: needs.build-tier0.result == 'success'
+        id: read-matrix
+        with:
+          matrix-step-name: ultramarine-tier0
+
       - name: Get tier0 results
         id: get-result
         run: |
           if [[ "${{ needs.build-tier0.result }}" == "success" ]]; then
-            echo 'result=${{ needs.build-tier0.outputs.result }}' >> $GITHUB_OUTPUT
+            # Use the cloudposse matrix outputs reader
+            echo "result=${{ steps.read-matrix.outputs.result }}" >> $GITHUB_OUTPUT
           else
             # Build fallback JSON for existing images
-            TAG="${GITHUB_REF_NAME}"
-            RESULT=$(cat <<EOF
-          {
-            "manifest": {
-              "desktop": "${{ env.IMAGE_REGISTRY }}/desktop-bootc:${TAG}"
-            }
-          }
-          EOF
-          )
-            echo "result=$(echo $RESULT | jq -c .)" >> $GITHUB_OUTPUT
+            TAG="${GITHUB_REF_NAME//\//-}"
+            echo "result={\"manifest\":{\"desktop\":\"${{ env.IMAGE_REGISTRY }}/desktop-bootc:${TAG}\"}}" >> $GITHUB_OUTPUT
           fi
 
   tier0-outputs:
     needs: [fetch-tier0]
     runs-on: ubuntu-latest
+    outputs:
+      result: "${{ needs.fetch-tier0.outputs.result }}"
     steps:
       - name: Pass through outputs
-        id: read
         run: |
-          echo 'result=${{ needs.fetch-tier0.outputs.result }}' >> $GITHUB_OUTPUT
-
-    outputs:
-      result: "${{ steps.read.outputs.result }}"
+          echo "Tier0 result: ${{ needs.fetch-tier0.outputs.result }}"
 
   build-tier1:
     uses: ./.github/workflows/reusable-build-image.yml
@@ -184,39 +181,32 @@ jobs:
     outputs:
       result: ${{ steps.get-result.outputs.result }}
     steps:
+      - uses: cloudposse/github-action-matrix-outputs-read@v1
+        if: needs.build-tier1.result == 'success'
+        id: read-matrix
+        with:
+          matrix-step-name: ultramarine-tier1
+
       - name: Get tier1 results
         id: get-result
         run: |
           if [[ "${{ needs.build-tier1.result }}" == "success" ]]; then
-            echo 'result=${{ needs.build-tier1.outputs.result }}' >> $GITHUB_OUTPUT
+            echo "result=${{ steps.read-matrix.outputs.result }}" >> $GITHUB_OUTPUT
           else
             # Build fallback JSON for existing images
-            TAG="${GITHUB_REF_NAME}"
-            RESULT=$(cat <<EOF
-          {
-            "manifest": {
-              "gnome": "${{ env.IMAGE_REGISTRY }}/gnome-bootc:${TAG}",
-              "xfce": "${{ env.IMAGE_REGISTRY }}/xfce-bootc:${TAG}",
-              "plasma": "${{ env.IMAGE_REGISTRY }}/plasma-bootc:${TAG}",
-              "budgie": "${{ env.IMAGE_REGISTRY }}/budgie-bootc:${TAG}"
-            }
-          }
-          EOF
-          )
-            echo "result=$(echo $RESULT | jq -c .)" >> $GITHUB_OUTPUT
+            TAG="${GITHUB_REF_NAME//\//-}"
+            echo "result={\"manifest\":{\"gnome\":\"${{ env.IMAGE_REGISTRY }}/gnome-bootc:${TAG}\",\"xfce\":\"${{ env.IMAGE_REGISTRY }}/xfce-bootc:${TAG}\",\"plasma\":\"${{ env.IMAGE_REGISTRY }}/plasma-bootc:${TAG}\",\"budgie\":\"${{ env.IMAGE_REGISTRY }}/budgie-bootc:${TAG}\"}}" >> $GITHUB_OUTPUT
           fi
 
   tier1-outputs:
     needs: [fetch-tier1]
     runs-on: ubuntu-latest
+    outputs:
+      result: "${{ needs.fetch-tier1.outputs.result }}"
     steps:
       - name: Pass through outputs
-        id: read
         run: |
-          echo 'result=${{ needs.fetch-tier1.outputs.result }}' >> $GITHUB_OUTPUT
-
-    outputs:
-      result: "${{ steps.read.outputs.result }}"
+          echo "Tier1 result: ${{ needs.fetch-tier1.outputs.result }}"
 
   # Extra tiers for HWE variants, etc.
   build-tier2:
@@ -265,11 +255,17 @@ jobs:
     outputs:
       result: ${{ steps.get-result.outputs.result }}
     steps:
+      - uses: cloudposse/github-action-matrix-outputs-read@v1
+        if: needs.build-tier2.result == 'success'
+        id: read-matrix
+        with:
+          matrix-step-name: ultramarine-tier2
+
       - name: Get tier2 results
         id: get-result
         run: |
           if [[ "${{ needs.build-tier2.result }}" == "success" ]]; then
-            echo 'result=${{ needs.build-tier2.outputs.result }}' >> $GITHUB_OUTPUT
+            echo "result=${{ steps.read-matrix.outputs.result }}" >> $GITHUB_OUTPUT
           else
             # Tier2 images are optional variants, no fallback needed
             echo 'result={}' >> $GITHUB_OUTPUT
@@ -278,10 +274,9 @@ jobs:
   tier2-outputs:
     needs: [fetch-tier2]
     runs-on: ubuntu-latest
+    outputs:
+      result: "${{ needs.fetch-tier2.outputs.result }}"
     steps:
       - name: Pass through outputs
-        id: read
         run: |
-          echo 'result=${{ needs.fetch-tier2.outputs.result }}' >> $GITHUB_OUTPUT
-    outputs:
-      result: "${{ steps.read.outputs.result }}"
+          echo "Tier2 result: ${{ needs.fetch-tier2.outputs.result }}"
