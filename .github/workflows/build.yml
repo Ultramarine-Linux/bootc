@@ -70,31 +70,12 @@ jobs:
       image-name: ultramarine
       flavor: base
 
-  # Fetch base image if we didn't build it
-  fetch-base:
-    runs-on: ubuntu-latest
-    needs: [detect-changes, build-base]
-    if: always() && !cancelled()
-    outputs:
-      manifest: ${{ steps.get-manifest.outputs.manifest }}
-    steps:
-      - name: Get manifest reference
-        id: get-manifest
-        run: |
-          if [[ "${{ needs.build-base.result }}" == "success" ]]; then
-            echo "manifest=${{ needs.build-base.outputs.manifest }}" >> $GITHUB_OUTPUT
-          else
-            # Fetch existing image by branch/tag name
-            TAG="${GITHUB_REF_NAME//\//-}"
-            echo "manifest=${{ env.IMAGE_REGISTRY }}/base-bootc:${TAG}" >> $GITHUB_OUTPUT
-          fi
-
   # todo: maybe tier0 for desktop base images?
   #
   build-tier0:
     uses: ./.github/workflows/reusable-build-image.yml
     secrets: inherit
-    needs: [detect-changes, fetch-base]
+    needs: [detect-changes, build-base]
     if: |
       needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
@@ -110,48 +91,29 @@ jobs:
       image-name: ultramarine-tier0
       flavor: ${{ matrix.flavor }}
       context-path: tier0/${{ matrix.flavor }}
-      from: ${{ needs.fetch-base.outputs.manifest }}
-
-  # Fetch tier0 images if we didn't build them
-  fetch-tier0:
-    runs-on: ubuntu-latest
-    needs: [detect-changes, build-tier0]
-    if: always() && !cancelled()
-    outputs:
-      result: ${{ steps.get-result.outputs.result }}
-    steps:
-      - uses: cloudposse/github-action-matrix-outputs-read@v1
-        if: needs.build-tier0.result == 'success'
-        id: read-matrix
-        with:
-          matrix-step-name: ultramarine-tier0
-
-      - name: Get tier0 results
-        id: get-result
-        run: |
-          if [[ "${{ needs.build-tier0.result }}" == "success" ]]; then
-            # Use the cloudposse matrix outputs reader
-            echo "result=${{ steps.read-matrix.outputs.result }}" >> $GITHUB_OUTPUT
-          else
-            # Build fallback JSON for existing images
-            TAG="${GITHUB_REF_NAME//\//-}"
-            echo "result={\"manifest\":{\"desktop\":\"${{ env.IMAGE_REGISTRY }}/desktop-bootc:${TAG}\"}}" >> $GITHUB_OUTPUT
-          fi
+      from: >-
+        ${{
+          needs.build-base.result == 'success' &&
+          needs.build-base.outputs.manifest ||
+          format('ghcr.io/{0}/base-bootc:{1}', github.repository_owner, github.ref_name)
+        }}
 
   tier0-outputs:
-    needs: [fetch-tier0]
+    needs: [build-tier0]
     runs-on: ubuntu-latest
+    if: needs.build-tier0.result == 'success'
     outputs:
-      result: "${{ needs.fetch-tier0.outputs.result }}"
+      result: "${{ steps.read.outputs.result }}"
     steps:
-      - name: Pass through outputs
-        run: |
-          echo "Tier0 result: ${{ needs.fetch-tier0.outputs.result }}"
+      - uses: cloudposse/github-action-matrix-outputs-read@v1
+        id: read
+        with:
+          matrix-step-name: ultramarine-tier0
 
   build-tier1:
     uses: ./.github/workflows/reusable-build-image.yml
     secrets: inherit
-    needs: [detect-changes, tier0-outputs]
+    needs: [detect-changes, build-tier0, tier0-outputs]
     if: |
       needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
@@ -171,48 +133,30 @@ jobs:
       image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
       context-path: tier1/${{ matrix.flavor }}
-      from: ${{ fromJson(needs.tier0-outputs.outputs.result).manifest.desktop }}
-
-  # Fetch tier1 images if we didn't build them
-  fetch-tier1:
-    runs-on: ubuntu-latest
-    needs: [detect-changes, build-tier1]
-    if: always() && !cancelled()
-    outputs:
-      result: ${{ steps.get-result.outputs.result }}
-    steps:
-      - uses: cloudposse/github-action-matrix-outputs-read@v1
-        if: needs.build-tier1.result == 'success'
-        id: read-matrix
-        with:
-          matrix-step-name: ultramarine-tier1
-
-      - name: Get tier1 results
-        id: get-result
-        run: |
-          if [[ "${{ needs.build-tier1.result }}" == "success" ]]; then
-            echo "result=${{ steps.read-matrix.outputs.result }}" >> $GITHUB_OUTPUT
-          else
-            # Build fallback JSON for existing images
-            TAG="${GITHUB_REF_NAME//\//-}"
-            echo "result={\"manifest\":{\"gnome\":\"${{ env.IMAGE_REGISTRY }}/gnome-bootc:${TAG}\",\"xfce\":\"${{ env.IMAGE_REGISTRY }}/xfce-bootc:${TAG}\",\"plasma\":\"${{ env.IMAGE_REGISTRY }}/plasma-bootc:${TAG}\",\"budgie\":\"${{ env.IMAGE_REGISTRY }}/budgie-bootc:${TAG}\"}}" >> $GITHUB_OUTPUT
-          fi
+      from: >-
+        ${{
+          needs.tier0-outputs.result == 'success' &&
+          fromJson(needs.tier0-outputs.outputs.result).manifest.desktop ||
+          format('ghcr.io/{0}/desktop-bootc:{1}', github.repository_owner, github.ref_name)
+        }}
 
   tier1-outputs:
-    needs: [fetch-tier1]
+    needs: [build-tier1]
     runs-on: ubuntu-latest
+    if: needs.build-tier1.result == 'success'
     outputs:
-      result: "${{ needs.fetch-tier1.outputs.result }}"
+      result: "${{ steps.read.outputs.result }}"
     steps:
-      - name: Pass through outputs
-        run: |
-          echo "Tier1 result: ${{ needs.fetch-tier1.outputs.result }}"
+      - uses: cloudposse/github-action-matrix-outputs-read@v1
+        id: read
+        with:
+          matrix-step-name: ultramarine-tier1
 
   # Extra tiers for HWE variants, etc.
   build-tier2:
     uses: ./.github/workflows/reusable-build-image.yml
     secrets: inherit
-    needs: [detect-changes, tier1-outputs]
+    needs: [detect-changes, build-tier1, tier1-outputs]
     if: |
       needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
@@ -244,39 +188,22 @@ jobs:
         matrix.variant == 'steam' && 'linux/amd64' ||
         'linux/amd64,linux/arm64'
         }}
-      from: ${{ fromJson(needs.tier1-outputs.outputs.result).manifest[matrix.base-flavor] }}
+      from: >-
+        ${{
+          needs.tier1-outputs.result == 'success' &&
+          fromJson(needs.tier1-outputs.outputs.result).manifest[matrix.base-flavor] ||
+          format('ghcr.io/{0}/{1}-bootc:{2}', github.repository_owner, matrix.base-flavor, github.ref_name)
+        }}
       tag-suffix: "-${{ matrix.variant }}"
 
-  # Fetch tier2 images if we didn't build them
-  fetch-tier2:
+  tier2-outputs:
+    needs: [build-tier2]
     runs-on: ubuntu-latest
-    needs: [detect-changes, build-tier2]
-    if: always() && !cancelled()
+    if: needs.build-tier2.result == 'success'
     outputs:
-      result: ${{ steps.get-result.outputs.result }}
+      result: "${{ steps.read.outputs.result }}"
     steps:
       - uses: cloudposse/github-action-matrix-outputs-read@v1
-        if: needs.build-tier2.result == 'success'
-        id: read-matrix
+        id: read
         with:
           matrix-step-name: ultramarine-tier2
-
-      - name: Get tier2 results
-        id: get-result
-        run: |
-          if [[ "${{ needs.build-tier2.result }}" == "success" ]]; then
-            echo "result=${{ steps.read-matrix.outputs.result }}" >> $GITHUB_OUTPUT
-          else
-            # Tier2 images are optional variants, no fallback needed
-            echo 'result={}' >> $GITHUB_OUTPUT
-          fi
-
-  tier2-outputs:
-    needs: [fetch-tier2]
-    runs-on: ubuntu-latest
-    outputs:
-      result: "${{ needs.fetch-tier2.outputs.result }}"
-    steps:
-      - name: Pass through outputs
-        run: |
-          echo "Tier2 result: ${{ needs.fetch-tier2.outputs.result }}"
