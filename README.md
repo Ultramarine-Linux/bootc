@@ -53,6 +53,22 @@ just ball tier0/desktop
 just ball tier1/gnome
 ```
 
+## Building bootable images
+
+To build a bootable disk image off of the built images, use the `build-vm` or `build-vm-imb` Just recipes:
+
+```bash
+just build-vm tier1/gnome
+```
+
+```bash
+just build-vm-imb tier1/gnome
+```
+
+```bash
+just build-vm-imb tier1/gnome qcow2 # or raw, vhd, anaconda-iso, bootc-installer, etc.
+```
+
 ## Notes on building derivatives
 
 Ultramarine bootc stores two copies of the RPM database, one in `/usr/lib/sysimage/rpm` and one in `/usr/share/rpm`. The former is used by the system at runtime, while the latter is used by `rpm-ostree` for rechunking operations. This is a known quirk with rpm-ostree based systems.

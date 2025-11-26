@@ -110,5 +110,6 @@ build-vm-legacy image type="qcow2":
     quay.io/centos-bootc/bootc-image-builder:latest \
     --type {{ type }} \
     --rootfs btrfs \
+    --installer-payload-ref $TARGET_IMAGE \
     $TARGET_IMAGE
   sudo chown -R $USER:$USER output
