@@ -99,7 +99,8 @@ jobs:
     if: |
       !cancelled() &&
       needs.build-base.result != 'failure' &&
-      (needs.detect-changes.outputs.base == 'true' ||
+      (needs.build-base.result == 'success' ||
+      needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
       needs.detect-changes.outputs.workflows == 'true' ||
       github.event_name == 'schedule' ||
@@ -141,7 +142,8 @@ jobs:
       !cancelled() &&
       needs.build-tier0.result != 'failure' &&
       needs.tier0-outputs.result != 'failure' &&
-      (needs.detect-changes.outputs.base == 'true' ||
+      (needs.build-tier0.result == 'success' ||
+      needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
       needs.detect-changes.outputs.tier1 == 'true' ||
       needs.detect-changes.outputs.workflows == 'true' ||
@@ -188,7 +190,8 @@ jobs:
       !cancelled() &&
       needs.build-tier1.result != 'failure' &&
       needs.tier1-outputs.result != 'failure' &&
-      (needs.detect-changes.outputs.base == 'true' ||
+      (needs.build-tier1.result == 'success' ||
+      needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||
       needs.detect-changes.outputs.tier1 == 'true' ||
       needs.detect-changes.outputs.tier2 == 'true' ||
