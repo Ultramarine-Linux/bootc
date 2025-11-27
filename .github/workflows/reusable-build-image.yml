@@ -397,14 +397,19 @@ jobs:
       - name: Load Outputs
         if: github.event_name != 'pull_request'
         id: load-outputs
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
         run: |
           DIGESTS_JSON=$(jq -n '{}')
           for digest_file in /tmp/artifacts/*.txt; do
-            # Extract the platform from the file name
-            PLATFORM=$(basename $digest_file | rev | cut -d'-' -f1 | rev | cut -d'.' -f1)
-            DIGEST=$(cat $digest_file)
+            # Extract the platform from the file name by removing IMAGE_NAME- prefix and .txt suffix
+            # e.g., "imagename-linux-amd64.txt" -> "linux-amd64" or "imagename-amd64.txt" -> "amd64"
+            filename=$(basename "$digest_file")
+            platform="${filename#"${IMAGE_NAME}-"}"  # Remove IMAGE_NAME- prefix
+            platform="${platform%.txt}"               # Remove .txt suffix
+            digest=$(cat "$digest_file")
             # Add the platform and digest to the JSON object
-            DIGESTS_JSON=$(echo "$DIGESTS_JSON" | jq --arg key "$PLATFORM" --arg value "$DIGEST" '. + {($key): $value}')
+            DIGESTS_JSON=$(echo "$DIGESTS_JSON" | jq --arg key "$platform" --arg value "$digest" '. + {($key): $value}')
           done
           echo "DIGESTS_JSON=$(echo $DIGESTS_JSON | jq -c '.')" >> $GITHUB_OUTPUT
 
