@@ -285,7 +285,7 @@ jobs:
   manifest:
     name: Create ${{ inputs.image-name }} Manifest
     runs-on: ubuntu-latest
-    if: "!cancelled()"
+    if: "!cancelled() && needs.build_push.result == 'success'"
     needs:
       - generate_matrix
       - build_push
@@ -399,13 +399,35 @@ jobs:
         id: load-outputs
         run: |
           DIGESTS_JSON=$(jq -n '{}')
+          artifact_count=0
+
+          # Check if artifacts directory exists and has files
+          if [ ! -d "/tmp/artifacts" ] || [ -z "$(ls -A /tmp/artifacts/*.txt 2>/dev/null)" ]; then
+            echo "ERROR: No digest artifacts found in /tmp/artifacts/"
+            echo "This likely means the build_push job was skipped or failed"
+            ls -la /tmp/artifacts/ || echo "Directory does not exist"
+            exit 1
+          fi
+
           for digest_file in /tmp/artifacts/*.txt; do
             # Extract the platform from the file name
-            PLATFORM=$(basename $digest_file | rev | cut -d'-' -f1 | rev | cut -d'.' -f1)
+            # Format: ${IMAGE_NAME}-${RUN_ID}-${PLATFORM_SAFE}.txt
+            # Example: plasma-bootc-19700928260-linux-amd64.txt
+            filename=$(basename $digest_file .txt)
+            # Remove the known prefix: ${IMAGE_NAME}-${RUN_ID}-
+            # This leaves us with just the platform_safe part
+            prefix="${{ env.IMAGE_NAME }}-${{ github.run_id }}-"
+            PLATFORM="${filename#$prefix}"
             DIGEST=$(cat $digest_file)
+            echo "Loading digest for platform: $PLATFORM"
+            echo "Digest: $DIGEST"
             # Add the platform and digest to the JSON object
             DIGESTS_JSON=$(echo "$DIGESTS_JSON" | jq --arg key "$PLATFORM" --arg value "$DIGEST" '. + {($key): $value}')
+            artifact_count=$((artifact_count + 1))
           done
+
+          echo "Loaded $artifact_count digest(s)"
+          echo "Final DIGESTS_JSON: $DIGESTS_JSON"
           echo "DIGESTS_JSON=$(echo $DIGESTS_JSON | jq -c '.')" >> $GITHUB_OUTPUT
 
       - name: Create Manifest
@@ -425,13 +447,30 @@ jobs:
           DIGESTS=$(echo "$DIGESTS_JSON" | jq -c '.')
           # turn the comma separated string into a list
           platforms=()
-          IFS=',' read -r -a platforms <<< "${{ inputs.platforms }}"
-          for platform in ${platforms[@]}; do
+          # Trim whitespace from platforms string
+          platforms_trimmed=$(echo "${{ inputs.platforms }}" | xargs)
+          IFS=',' read -r -a platforms <<< "$platforms_trimmed"
+
+          echo "Processing platforms: $platforms_trimmed"
+          echo "Platform array: ${platforms[@]}"
+          echo "Available digests: $DIGESTS"
+
+          for platform in "${platforms[@]}"; do
+            # Trim whitespace from individual platform
+            platform=$(echo "$platform" | xargs)
+            echo "Processing platform: '$platform'"
             # Strip "linux/" prefix to get short arch name (e.g., "linux/arm64" -> "arm64")
             short_arch=$(echo "$platform" | sed 's|.*/||')
             # Sanitize platform name for lookup (replace / with -)
             platform_safe=$(echo "$platform" | tr '/' '-')
             digest=$(echo $DIGESTS | jq -r --arg key "$platform_safe" '.[$key]')
+            echo "Looking up digest for platform_safe: $platform_safe"
+            echo "Digest found: $digest"
+            if [ "$digest" = "null" ] || [ -z "$digest" ]; then
+              echo "ERROR: No digest found for platform $platform (sanitized: $platform_safe)"
+              echo "Available digests: $DIGESTS"
+              exit 1
+            fi
             echo "Adding ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@$digest for $platform (arch: $short_arch)"
             podman manifest add $MANIFEST ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@$digest --arch $short_arch --os linux
           done
