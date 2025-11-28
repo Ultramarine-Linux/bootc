@@ -4,3 +4,4 @@ output/
 cosign.key
 .env*
 katsu-work/
+*.iso

@@ -1,0 +1,14 @@
+# meh, this will be overriden with --from anyway
+FROM ghcr.io/ultramarine-linux/plasma-bootc:main
+
+# Experiment: Replace sudo with a minimal shim that delegates to run0
+# (wrapper around systemd-run)
+
+RUN rpm -e --nodeps sudo
+
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --setopt protected_packages= \
+    --allowerasing \
+    --action=install \
+    run0-sudo-shim
+    
