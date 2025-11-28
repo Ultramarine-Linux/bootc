@@ -501,6 +501,47 @@ jobs:
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
+  lint:
+    runs-on: ${{ contains(matrix.platform, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    needs: [manifest, generate_matrix]
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.generate_matrix.outputs.matrix)}}
+    steps:
+      - name: Install dependencies
+        if: matrix.platform == 'arm64'
+        run: |
+          sudo apt update -y
+          sudo apt install -y \
+            podman
+
+      - name: Lint Image
+        env:
+          IMAGE: ${{ needs.manifest.outputs.image }}
+          DIGEST: ${{ needs.manifest.outputs.digest }}
+        run: |
+          podman run --rm \
+            --privileged \
+            --pull=newer \
+            ${IMAGE}@${DIGEST} \
+            bootc container lint | tee /tmp/lint-output.txt
+
+      - name: Upload Lint Results
+        # let's heredoc the lint results to github summary
+        run: |
+          cat <<EOF >> $GITHUB_STEP_SUMMARY
+
+          ## Lint Results for `${{ needs.manifest.outputs.image }}@${{ needs.manifest.outputs.digest }}` on platform `${{ matrix.platform }}`
+
+          <details>
+          <summary>Lint Output</summary>
+
+          \`\`\`
+          $(cat /tmp/lint-output.txt)
+          \`\`\`
+          </details>
+          EOF
+
   write:
     runs-on: ubuntu-latest
     needs: [manifest]
