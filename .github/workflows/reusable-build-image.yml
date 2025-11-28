@@ -118,12 +118,6 @@ jobs:
       id-token: write
 
     steps:
-      - name: Install dependencies
-        if: matrix.platform == 'arm64'
-        run: |
-          sudo apt update -y
-          sudo apt install -y \
-            podman
 
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -515,13 +509,6 @@ jobs:
       fail-fast: false
       matrix: ${{fromJson(needs.generate_matrix.outputs.matrix)}}
     steps:
-      - name: Install dependencies
-        if: matrix.platform == 'arm64'
-        run: |
-          sudo apt update -y
-          sudo apt install -y \
-            podman
-
       - name: Lint Image
         env:
           IMAGE: ${{ needs.manifest.outputs.image }}

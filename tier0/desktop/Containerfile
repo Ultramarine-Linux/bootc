@@ -25,15 +25,14 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     @base-graphical && \
     dnf clean all
 
+    
+RUN RUN plymouth-set-default-theme bgrt
 # Recreate initramfs to add plymouth back
 RUN sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
-    dracut --force --no-hostonly --force-drivers erofs --reproducible --zstd --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
+    dracut --force --no-hostonly --force-add plymouth --force-drivers erofs --reproducible --zstd --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
 
 COPY live-setup.sh /tmp/live-setup.sh
 
 RUN chmod +x /tmp/live-setup.sh && \
     sh -c '/tmp/live-setup.sh && rm -f /tmp/live-setup.sh'
-
-
-RUN restorecon -RiF /
