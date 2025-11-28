@@ -5,6 +5,18 @@ image_suffix := "-bootc"
 
 ball variant: (build variant) (rechunk variant)
 
+
+katsu-live variant:
+    #!/usr/bin/bash -x
+    VARIANT_NAME=$(just parse_variant {{ variant }})
+    mkdir -p output/katsu-live
+    rsync -av scripts/katsu-template/ output/katsu-live/
+    
+    IMAGE_NAME="{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}"
+    sed -i "s|%BASE_IMAGE%|${IMAGE_NAME}|g" output/katsu-live/bootc-live.yaml
+    
+    katsu -o iso output/katsu-live/bootc-live.yaml
+
 parse_variant variant:
     #!/usr/bin/bash
     VARIANT="{{ variant }}"
