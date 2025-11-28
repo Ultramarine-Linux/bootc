@@ -10,6 +10,10 @@ cat >> /etc/fstab << EOF
 vartmp   /var/tmp    tmpfs   defaults   0  0
 EOF
 
+# Set the timezone explicitly to UTC
+# so Plasma won't complain about it not being set
+ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
+
 # work around for poor key import UI in PackageKit
 rm -f /var/lib/rpm/__db*
 
