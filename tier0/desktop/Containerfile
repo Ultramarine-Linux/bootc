@@ -18,6 +18,8 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     mkfstab \
     um \
     dive \
+    dracut-live \
+    dracut-network \
     dracut-strip-trigger \
     plymouth-system-theme \
     @base-graphical && \
