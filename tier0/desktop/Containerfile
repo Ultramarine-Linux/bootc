@@ -34,3 +34,6 @@ COPY live-setup.sh /tmp/live-setup.sh
 
 RUN chmod +x /tmp/live-setup.sh && \
     sh -c '/tmp/live-setup.sh && rm -f /tmp/live-setup.sh'
+
+
+RUN restorecon -RiF /
