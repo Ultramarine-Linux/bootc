@@ -118,7 +118,6 @@ jobs:
       id-token: write
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
@@ -127,7 +126,7 @@ jobs:
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
         with:
           remove-codeql: true
-          
+
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         env:
@@ -277,7 +276,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: ${{ env.IMAGE_NAME }}-${{ github.run_id }}-${{ matrix.platform_safe }}
+          name: ${{ env.IMAGE_NAME }}-${{ inputs.flavor }}${{ inputs.tag-suffix }}-${{ github.run_id }}-${{ matrix.platform_safe }}
           retention-days: 1
           if-no-files-found: error
           path: |
