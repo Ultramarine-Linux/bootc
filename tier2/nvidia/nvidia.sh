@@ -6,6 +6,14 @@
 # TOOD: Probably use terra-nvidia repo instead
 
 set -xeuo pipefail
+export DRACUT_NO_XATTR=1
+# TODO: refactor to dedicated file
+dracut_rebuild() {
+    KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/modules" -exec basename '{}' ';' | sort | tail -n 1)"
+    export DRACUT_NO_XATTR=1
+    dracut --no-hostonly --kver "$KERNEL_VERSION" --reproducible --zstd -v --add ostree -f "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"
+    chmod 0600 "/usr/lib/modules/${KERNEL_VERSION}/initramfs.img"
+}
 
 KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/modules" -exec basename '{}' ';' | sort | tail -n 1)"
 
@@ -70,3 +78,7 @@ systemctl disable akmods-keygen@akmods-keygen.service
 systemctl mask akmods-keygen@akmods-keygen.service
 systemctl disable akmods-keygen.target
 systemctl mask akmods-keygen.target
+
+# todo: refactor to dedicated file
+
+dracut_rebuild
