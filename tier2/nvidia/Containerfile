@@ -1,0 +1,16 @@
+FROM ghcr.io/ultramarine-linux/plasma-bootc:main
+
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --no-best \
+    --action=install \
+    terra-release-nvidia
+
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --no-best \
+    --allowerasing \
+    --action=install \
+    nvidia-driver \
+    nvidia-settings \
+    akmod-nvidia
+    
+RUN akmods --force --rebuild

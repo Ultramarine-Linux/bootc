@@ -212,6 +212,7 @@ jobs:
           # - rpi
           - run0
           - steam
+          - nvidia
     with:
       image-name: ultramarine-tier2
       flavor: ${{ matrix.base-flavor }}
