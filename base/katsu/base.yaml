@@ -43,6 +43,7 @@ dnf:
     # because dracut just doesn't like it if it's not there
     # plus iSCSI is useful sometimes
     - rsync
+    - kernel-devel-matched
     - iscsi-initiator-utils
     - libiscsi-utils
     - "@core"

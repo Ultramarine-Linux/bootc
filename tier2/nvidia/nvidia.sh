@@ -9,7 +9,6 @@ set -xeuo pipefail
 
 KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/modules" -exec basename '{}' ';' | sort | tail -n 1)"
 
-dnf install -y kernel-devel
 
 dnf config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-nvidia.repo
 dnf config-manager setopt fedora-nvidia.enabled=0
