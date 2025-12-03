@@ -18,18 +18,20 @@ dracut_rebuild() {
 KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/modules" -exec basename '{}' ';' | sort | tail -n 1)"
 
 
-dnf config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-nvidia.repo
-dnf config-manager setopt fedora-nvidia.enabled=0
-sed -i '/^enabled=/a\priority=90' /etc/yum.repos.d/fedora-nvidia.repo
+# dnf config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-nvidia.repo
+dnf install -y terra-release-nvidia
+dnf config-manager setopt terra-nvidia.enabled=0
+sed -i '/^enabled=/a\priority=90' /etc/yum.repos.d/terra-nvidia.repo
+echo "exclude=nvidia-container-toolkit" >> /etc/yum.repos.d/terra-nvidia.repo
 
-dnf -y install --enablerepo=fedora-nvidia akmod-nvidia
+dnf -y install --enablerepo=terra-nvidia akmod-nvidia-open --exclude=nvidia-container-toolkit
 mkdir -p /var/tmp # for akmods
 chmod 1777 /var/tmp
-sed -i "s/^MODULE_VARIANT=.*/MODULE_VARIANT=kernel-open/" /etc/nvidia/kernel.conf
-akmods --force --kernels "${KERNEL_VERSION}" --kmod "nvidia"
+# sed -i "s/^MODULE_VARIANT=.*/MODULE_VARIANT=kernel-open/" /etc/nvidia/kernel.conf
+akmods --force --kernels "${KERNEL_VERSION}" --kmod "nvidia-open"
 cat /var/cache/akmods/nvidia/*.failed.log || true
 
-dnf -y install --enablerepo=fedora-nvidia \
+dnf -y install --enablerepo=terra-nvidia --exclude=nvidia-container-toolkit \
     nvidia-driver-cuda libnvidia-fbc libva-nvidia-driver nvidia-driver nvidia-modprobe nvidia-persistenced nvidia-settings
 
 dnf config-manager addrepo --from-repofile=https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
