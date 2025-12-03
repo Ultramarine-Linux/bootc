@@ -174,14 +174,34 @@ jobs:
             # Set default context path if not provided
             BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
 
-            sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
-              --layers=true \
-              --cache-from $IMAGE_REGISTRY/$IMAGE_NAME \
-              --cache-to $IMAGE_REGISTRY/$IMAGE_NAME \
-              -t "localhost/${FLAVOR}-bootc:build" \
-              -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
-              $FROM_ARG \
-              "${BUILD_CONTEXT}"
+            local max_attempts=3
+            local attempt=1
+            local exit_code=0
+
+            while [ $attempt -le $max_attempts ]; do
+              echo "Build attempt $attempt of $max_attempts"
+              sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
+                --layers=true \
+                --cache-from $IMAGE_REGISTRY/$IMAGE_NAME \
+                --cache-to $IMAGE_REGISTRY/$IMAGE_NAME \
+                -t "localhost/${FLAVOR}-bootc:build" \
+                -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
+                $FROM_ARG \
+                "${BUILD_CONTEXT}"
+              exit_code=$?
+
+              if [ $exit_code -eq 0 ]; then
+                return 0
+              elif [ $exit_code -eq 125 ] && [ $attempt -lt $max_attempts ]; then
+                echo "Podman returned exit code 125, retrying..."
+                attempt=$((attempt + 1))
+                sleep 5
+              else
+                return $exit_code
+              fi
+            done
+
+            return $exit_code
           }
 
           build
