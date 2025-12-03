@@ -7,4 +7,4 @@ set -xeuo pipefail
 
 
 systemctl --global enable xdg-user-dirs.service || true
-systemctl disable --now sssd-kcm.service sssd-kcm.socket || true
+systemctl disable sssd-kcm.service sssd-kcm.socket || true
