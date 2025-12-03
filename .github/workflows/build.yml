@@ -188,8 +188,8 @@ jobs:
     needs: [normalize, detect-changes, build-tier1, tier1-outputs]
     if: |
       !cancelled() &&
-      needs.build-tier1.result == 'success' &&
-      needs.tier1-outputs.result == 'success' &&
+      (needs.build-tier1.result == 'success' || needs.build-tier1.result == 'skipped') &&
+      (needs.tier1-outputs.result == 'success' || needs.tier1-outputs.result == 'skipped') &&
       (needs.build-tier1.result == 'success' ||
       needs.detect-changes.outputs.base == 'true' ||
       needs.detect-changes.outputs.tier0 == 'true' ||

@@ -12,6 +12,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     nvidia-driver \
     nvidia-settings \
     akmod-nvidia \
-    --exclude=nvidia-container-toolkit
+    --exclude=nvidia-container-toolkit || true
 
 RUN akmods --force --rebuild
