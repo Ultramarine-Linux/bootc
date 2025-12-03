@@ -47,9 +47,9 @@ FROM quay.io/centos-bootc/centos-bootc:stream10 AS imagectl
 FROM scratch AS final
 
 COPY --from=builder-build /work/katsu-work/chroot /
+COPY . /usr/src/ultramarine-bootc/base
 
-RUN mkdir -p /sysroot/ostree
-RUN ln -srvf /sysroot/ostree /ostree
+RUN mkdir -p /sysroot/ostree && ln -srvf /sysroot/ostree /ostree
 # symlink rpmdb for ostree compatibility
 # hack: rechunk needs this to be happy
 # RUN mv /usr/lib/sysimage/rpm /usr/share/rpm

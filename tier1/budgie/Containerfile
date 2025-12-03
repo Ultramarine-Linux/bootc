@@ -1,5 +1,5 @@
 FROM ghcr.io/ultramarine-linux/desktop-bootc:latest
-
+COPY . /usr/src/ultramarine-bootc/tier1/budgie
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \

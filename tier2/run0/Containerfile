@@ -1,6 +1,6 @@
 # meh, this will be overriden with --from anyway
 FROM ghcr.io/ultramarine-linux/plasma-bootc:main
-
+COPY . /usr/src/ultramarine-bootc/tier2/run0
 # Experiment: Replace sudo with a minimal shim that delegates to run0
 # (wrapper around systemd-run)
 

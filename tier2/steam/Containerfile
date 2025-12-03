@@ -1,6 +1,6 @@
 # meh, this will be overriden with --from anyway
 FROM ghcr.io/ultramarine-linux/plasma-bootc:main
-
+COPY . /usr/src/ultramarine-bootc/tier2/steam
 # We exclude extest here since it's only required in GNOME
 # and some other desktops that don't work well with the Remote Desktop portal
 #

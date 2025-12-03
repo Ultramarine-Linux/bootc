@@ -1,4 +1,7 @@
 FROM ghcr.io/ultramarine-linux/base-bootc:main
+
+COPY . /usr/src/ultramarine-bootc/tier0/desktop
+
 COPY 20-rhgb.toml /usr/lib/bootc/kargs.d/
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \

@@ -6,4 +6,4 @@
 
 
 systemctl --global enable xdg-user-dirs.service || true
-
+systemctl disable --now sssd-kcm.service sssd-kcm.socket || true

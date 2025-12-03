@@ -1,5 +1,5 @@
 FROM ghcr.io/ultramarine-linux/plasma-bootc:main
-
+COPY . /usr/src/ultramarine-bootc/tier2/nvidia
 
 
 COPY nvidia.sh /tmp/nvidia.sh

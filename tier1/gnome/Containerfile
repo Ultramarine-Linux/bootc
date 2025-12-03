@@ -1,4 +1,5 @@
 FROM ghcr.io/ultramarine-linux/desktop-bootc:latest
+COPY . /usr/src/ultramarine-bootc/tier1/gnome
 
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
@@ -7,7 +8,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
         ultramarine-release-identity-basic \
     --action=install \
         ultramarine-release-identity-gnome \
-        gnome-software-rpm-ostree \
         @gnome-desktop \
         @ultramarine-gnome-product-environment \
         gnome-tweaks
