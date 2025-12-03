@@ -1,4 +1,5 @@
-#!/bin/bash -xeuo pipefail
+#!/bin/bash
+set -xeuo pipefail
 
 
 # TODO: Write a preset instead

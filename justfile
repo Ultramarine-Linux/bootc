@@ -2,60 +2,71 @@ base_dir := env("BUILD_BASE_DIR", justfile_directory())
 registry_prefix := "ghcr.io/ultramarine-linux"
 tag := "main"
 image_suffix := "-bootc"
+context := "base"
+variant := file_name(context)
+image_tag_override := ""
+full_tag := ""
+image_tag := if image_tag_override != "" {
+    image_tag_override
+} else {
+    registry_prefix + "/" + variant + image_suffix + ":" + tag
+}
+from := ""
+from_arg := if from != "" {
+    "--from=" + from
+} else {
+    ""
+}
 
-ball variant: (build variant) (rechunk variant)
+[private]
+test:
+    echo "Image Tag: {{ image_tag }}"
 
 
-katsu-live variant:
+ball: (build) (rechunk)
+
+
+katsu-live:
     #!/usr/bin/bash -x
-    VARIANT_NAME=$(just parse_variant {{ variant }})
     mkdir -p output/katsu-live
     rsync -av scripts/katsu-template/ output/katsu-live/
-    
-    IMAGE_NAME="{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}"
+
+    IMAGE_NAME="{{ image_tag }}"
     sed -i "s|%BASE_IMAGE%|${IMAGE_NAME}|g" output/katsu-live/bootc-live.yaml
-    
+
     katsu -o iso output/katsu-live/bootc-live.yaml
 
-parse_variant variant:
-    #!/usr/bin/bash
-    VARIANT="{{ variant }}"
-    VARIANT_NAME="${VARIANT##*/}"
-    echo "${VARIANT_NAME}"
 
-pull variant:
+pull:
     #!/usr/bin/bash
-    VARIANT_NAME=$(just parse_variant {{ variant }})
-    podman pull "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}"
+    podman pull "{{ image_tag }}"
 
-build variant: (parse_variant variant)
+build:
     #!/usr/bin/bash -x
-    VARIANT_NAME=$(just parse_variant {{ variant }})
     podman build \
     --device=/dev/fuse \
     --cap-add=all \
     --userns=host \
-    --cache-from={{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }} \
+    {{ from_arg }} \
+    --cache-from={{ registry_prefix }}/{{ variant }}{{ image_suffix }} \
     --cgroupns=host \
     --layers=true \
     --security-opt=label=disable -t \
-    {{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}  {{ variant }}
+    {{ image_tag }} {{ context }}
 
-rechunk variant:
+rechunk:
     #!/usr/bin/bash -x
-    VARIANT_NAME=$(just parse_variant {{ variant }})
     podman run --rm \
         --privileged \
         -v /var/lib/containers:/var/lib/containers \
         "quay.io/centos-bootc/centos-bootc:stream10" \
         /usr/libexec/bootc-base-imagectl rechunk \
-        "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}" \
-        "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}"
+        "{{ image_tag }}" \
+        "{{ image_tag }}"
 
-# bootc {variant} {args}
-bootc variant *ARGS:
+# bootc {args}
+bootc *ARGS:
     #!/usr/bin/bash -x
-    VARIANT_NAME=$(just parse_variant {{ variant }})
     podman run \
         --rm --privileged --pid=host \
         -it \
@@ -67,11 +78,10 @@ bootc variant *ARGS:
         -e RUST_LOG=debug \
         -v "{{base_dir}}:/data" \
         --security-opt label=type:unconfined_t \
-        "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}:{{ tag }}" bootc {{ARGS}}
+        "{{ image_tag }}" bootc {{ARGS}}
 
-priv-shell variant:
+priv-shell:
     #!/usr/bin/bash -x
-    VARIANT_NAME=$(just parse_variant {{ variant }})
     podman run \
         --rm --privileged --pid=host \
         -it \
@@ -82,20 +92,19 @@ priv-shell variant:
         -e RUST_LOG=debug \
         -v "{{base_dir}}:/data" \
         --security-opt label=type:unconfined_t \
-        "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}":{{ tag }} /bin/bash
+        "{{ image_tag }}" /bin/bash
 
-build-vm-imb variant type="qcow2":
+build-bib type="qcow2":
     #!/usr/bin/bash -x
-    VARIANT_NAME=$(just parse_variant {{ variant }})
-    just build-vm-legacy "{{ registry_prefix }}/${VARIANT_NAME}{{ image_suffix }}":{{ tag }} "{{ type }}"
+    just image_tag={{ image_tag }} build-vm-legacy {{ image_tag }} type={{ type }}
 
-build-vm variant:
+build-vm:
     #!/usr/bin/bash -x
     if [ ! -e "{{base_dir}}/output/bootable.img" ] ; then
         mkdir -p "{{base_dir}}/output"
         fallocate -l 20G "{{base_dir}}/output/bootable.img"
     fi
-    just bootc {{ variant }} install to-disk --via-loopback /data/output/bootable.img --filesystem btrfs --wipe
+    just image_tag="{{ image_tag }}" bootc install to-disk --via-loopback /data/output/bootable.img --filesystem btrfs --wipe
 
 build-vm-legacy image type="qcow2":
   #!/usr/bin/env bash

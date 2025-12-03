@@ -37,20 +37,20 @@ podman pull ghcr.io/ultramarine-linux/base-bootc:latest
 There's also a Just recipe to quickly pull the image:
 
 ```bash
-just pull base
+just context=base pull
 ```
 
 To build the base image locally, use the Just recipe:
 
 ```bash
-just ball base
+just context=base ball
 ```
 
 This will build the base image from scratch and rechunk it. You can then proceed to build the tier 0 and tier 1 images similarly:
 
 ```bash
-just ball tier0/desktop
-just ball tier1/gnome
+just context=tier0/desktop ball
+just context=tier1/gnome ball
 ```
 
 ## Building bootable images
@@ -58,15 +58,15 @@ just ball tier1/gnome
 To build a bootable disk image off of the built images, use the `build-vm` or `build-vm-imb` Just recipes:
 
 ```bash
-just build-vm tier1/gnome
+just context=tier1/gnome build-vm
 ```
 
 ```bash
-just build-vm-imb tier1/gnome
+just context=tier1/gnome build-vm-imb
 ```
 
 ```bash
-just build-vm-imb tier1/gnome qcow2 # or raw, vhd, anaconda-iso, bootc-installer, etc.
+just context=tier1/gnome build-vm-imb qcow2 # or raw, vhd, anaconda-iso, bootc-installer, etc.
 ```
 
 ## Notes on building derivatives
