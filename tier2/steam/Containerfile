@@ -31,4 +31,4 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     mangohud \
     terra-protontricks \
     gamescope-session-plus \
-    --exclude='extest*' \
+    --exclude='extest*'
