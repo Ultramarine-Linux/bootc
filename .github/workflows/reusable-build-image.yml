@@ -141,7 +141,7 @@ jobs:
         uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
         with:
           target-dir: /var/lib/containers
-          mount-opts: compress-force=zstd:2
+          mount-opts: compress-force=zstd:8
           loopback-free: 0.5
 
       - name: Build Image
