@@ -8,3 +8,7 @@ set -xeuo pipefail
 
 systemctl --global enable xdg-user-dirs.service || true
 systemctl disable sssd-kcm.service sssd-kcm.socket || true
+systemctl enable flatpak-add-flathub-repos.service
+
+# edit /etc/PacageKit/PackageKit.conf to use bootc backend
+sed -i 's/#DefaultBackend=.*/DefaultBackend=bootc/' /etc/PackageKit/PackageKit.conf

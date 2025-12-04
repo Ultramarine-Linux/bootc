@@ -142,7 +142,7 @@ jobs:
         with:
           target-dir: /var/lib/containers
           mount-opts: compress-force=zstd:8
-          loopback-free: 0.5
+          loopback-free: 0.8
 
       - name: Build Image
         id: build-image

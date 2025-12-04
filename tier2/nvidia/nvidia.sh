@@ -66,6 +66,8 @@ tee /usr/lib/systemd/system/nvctk-cdi.service <<'EOF'
 Description=nvidia container toolkit CDI auto-generation
 ConditionFileIsExecutable=/usr/bin/nvidia-ctk
 After=local-fs.target
+ConditionKernelCommandLine=!nomodeset
+ConditionPathExists=/proc/driver/nvidia/version
 
 [Service]
 Type=oneshot
