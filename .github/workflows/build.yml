@@ -220,7 +220,7 @@ jobs:
       platforms: >-
         ${{
         matrix.variant == 'rpi' && 'linux/arm64' ||
-        matrix.variant == 'steam' && 'linux/amd64' ||
+        (matrix.variant == 'steam' || matrix.variant == 'nvidia') && 'linux/amd64' ||
         'linux/amd64,linux/arm64'
         }}
       from: >-
