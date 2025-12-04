@@ -3,6 +3,7 @@ FROM ghcr.io/ultramarine-linux/base-bootc:main
 COPY . /usr/src/ultramarine-bootc/tier0/desktop
 COPY systemd/flatpak-add-flathub-repos.service /usr/lib/systemd/system/flatpak-add-flathub-repos.service
 COPY 20-rhgb.toml /usr/lib/bootc/kargs.d/
+COPY systemd/packagekit.service.d /usr/lib/systemd/system/packagekit.service.d/
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \
@@ -26,6 +27,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     ultramarine-repos-extras \
     dracut-strip-trigger \
     PackageKit \
+    PackageKit-bootc \
     plymouth-system-theme \
     @base-graphical && \
     dnf clean all
