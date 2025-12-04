@@ -566,7 +566,7 @@ jobs:
         id: out
         with:
           matrix-step-name: ${{ inputs.image-name }}
-          matrix-key: ${{ inputs.flavor }}
+          matrix-key: ${{ inputs.flavor }}${{ inputs.tag-suffix }}
           outputs: |
             image: "${{ needs.manifest.outputs.image }}"
             digest: "${{ needs.manifest.outputs.digest }}"
