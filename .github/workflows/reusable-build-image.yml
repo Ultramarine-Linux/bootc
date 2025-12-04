@@ -410,7 +410,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
         with:
-          pattern: ${{ env.IMAGE_NAME }}-*
+          pattern: ${{ env.IMAGE_NAME }}-${{ inputs.flavor }}${{ inputs.tag-suffix }}-${{ github.run_id }}-*
           merge-multiple: true
           path: /tmp/artifacts
 
