@@ -21,6 +21,10 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     speech-dispatcher-espeak-ng \
     mkfstab \
     um \
+    moby-engine \
+    moby-compose \
+    podman \
+    container-selinux \
     dive \
     dracut-live \
     dracut-network \
