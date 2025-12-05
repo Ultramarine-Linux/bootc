@@ -20,7 +20,8 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     mesa-libEGL.i686 \
     mesa-vulkan-drivers.i686 \
     vulkan-loader.i686 \
-    steam-device-rules \
+    udev-joystick-blacklist-rm \
+    steam-devices \
     steam-notif-daemon \
     terra-gamescope \
     gamescope-session-steam \
