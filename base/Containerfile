@@ -48,6 +48,7 @@ FROM scratch AS final
 
 COPY --from=builder-build /work/katsu-work/chroot /
 COPY . /usr/src/ultramarine-bootc/base
+COPY katsu/repodir/ultramarine-bootc.repo /etc/yum.repos.d/ultramarine-bootc.repo
 
 RUN mkdir -p /sysroot/ostree && ln -srvf /sysroot/ostree /ostree
 # symlink rpmdb for ostree compatibility

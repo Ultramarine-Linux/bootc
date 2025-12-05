@@ -1,0 +1,12 @@
+[ultramarine-bootc]
+name=Ultramarine Linux $releasever - bootc
+baseurl=https://repos.fyralabs.com/um$releasever-bootc
+metadata_expire=6h
+priority=80
+type=rpm
+skip_if_unavailable=True
+gpgcheck=1
+gpgkey=https://repos.fyralabs.com/um$releasever-bootc/key.asc
+repo_gpgcheck=1
+enabled=1
+enabled_metadata=1
