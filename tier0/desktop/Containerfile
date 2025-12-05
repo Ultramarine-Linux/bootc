@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     mkfstab \
     um \
     moby-engine \
-    moby-compose \
+    docker-compose \
     podman \
     container-selinux \
     dive \
