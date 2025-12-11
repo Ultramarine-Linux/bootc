@@ -12,10 +12,22 @@ is_live_env() {
     grep -q "rd.live.image" /proc/cmdline
 }
 
+is_in_container() {
+    if [ -n "$container" ]; then
+        return 0 # true
+    else
+        return 1 # false
+    fi
+}
+
 is_bootc_env() {
     # If we're in a live environment, we're definitely not in bootc
     if is_live_env; then
         return 1 # false
+    else
+        if is_in_container; then
+            return 1 # false
+        fi
     fi
 
     # Attempt to run bootc status --json
@@ -43,10 +55,10 @@ if ! is_live_env; then
     # Use rsync to synchronize files from SRC_DB to RPM_OSTREE_DB
     rsync -av "$RPM_MUT_DB/" "$RPM_OSTREE_DB/" 1>&2 2>/dev/null
     echo "log.INFO=Synchronized RPM database from $RPM_MUT_DB to $RPM_OSTREE_DB"
-    
+
     # resore SELinux contexts
     restorecon -RiF / 1>&2 2>/dev/null || true
     echo "log.INFO=Restored SELinux context on $RPM_OSTREE_DB"
 else
-    echo "log.INFO=In live environment, skipping restorecon as it's not needed"
+    echo "log.INFO=In non-bootc environment, skipping restorecon as it's not needed"
 fi

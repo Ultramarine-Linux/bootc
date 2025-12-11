@@ -4,7 +4,9 @@
 # in a standard installation.
 # 
 # This should only be run in a mutable installation context, not in an ostree-booted system.
+
 set -x
+source /usr/src/ultramarine-bootc/base/common.sh
 
 # Remove symlinks created by bootc
 rm -f /opt /root /home /ostree /srv
@@ -29,3 +31,10 @@ sed -i '/^HOME=\/var\/home$/d' /etc/default/useradd || true
 
 # Comment out PackageKit ostree backend
 sed -i 's/DefaultBackend=.*/#DefaultBackend=/' /etc/PackageKit/PackageKit.conf
+
+KERNEL_VERSION=$(get_kernel_version)
+
+# Reinstall the kernel to restore initramfs and grub entries
+kernel-install add $KERNEL_VERSION /lib/modules/$KERNEL_VERSION/vmlinuz
+
+rsync -av /usr/lib/ostree-boot /boot

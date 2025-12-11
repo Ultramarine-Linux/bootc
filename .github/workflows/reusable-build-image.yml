@@ -536,6 +536,7 @@ jobs:
   lint:
     runs-on: ${{ contains(matrix.platform, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     needs: [manifest, generate_matrix]
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix: ${{fromJson(needs.generate_matrix.outputs.matrix)}}

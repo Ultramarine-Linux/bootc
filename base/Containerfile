@@ -77,7 +77,7 @@ RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/fedora-cisco-openh264.repo
 # COPY rpmmacros.d/macros.111.bootc /usr/lib/rpm/macros.d/macros.111.bootc
 #
 # HACK: ostree and bootupd stuff
-RUN cp -a /boot /usr/lib/ostree-boot
+RUN mv -a /boot /usr/lib/ostree-boot
 RUN bootupctl backend generate-update-metadata
 # HACK: rechunk needs this to be happy
 # Sync the two rpmdb locations for compatibility with rpm-ostree
@@ -120,9 +120,6 @@ RUN semanage fcontext -a -e /home /var/home && \
 
 # let's clean up after ourselves
 RUN rm -rfv /var/log/* /var/cache/* /var/tmp/* /tmp/*
-
-RUN bootc container lint || true
-
 
 LABEL containers.bootc=1
 LABEL bootc.diskimage-builder=quay.io/centos-bootc/bootc-image-builder
