@@ -57,6 +57,11 @@ on:
         required: false
         type: boolean
         default: true
+      skip-cache-from:
+        description: "Skip using --cache-from (for scheduled builds to start fresh)"
+        required: false
+        type: boolean
+        default: false
     outputs:
       image:
         description: "The image name that was built"
@@ -180,9 +185,16 @@ jobs:
 
             while [ $attempt -le $max_attempts ]; do
               echo "Build attempt $attempt of $max_attempts"
+
+              # Conditionally add --cache-from based on skip-cache-from input
+              CACHE_FROM_ARG=""
+              if [ "${{ inputs.skip-cache-from }}" != "true" ]; then
+                CACHE_FROM_ARG="--cache-from $IMAGE_REGISTRY/$IMAGE_NAME"
+              fi
+
               sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
                 --layers=true \
-                --cache-from $IMAGE_REGISTRY/$IMAGE_NAME \
+                $CACHE_FROM_ARG \
                 --cache-to $IMAGE_REGISTRY/$IMAGE_NAME \
                 -t "localhost/${FLAVOR}-bootc:build" \
                 -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \

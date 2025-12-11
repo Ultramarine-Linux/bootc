@@ -89,6 +89,7 @@ jobs:
     with:
       image-name: ultramarine
       flavor: base
+      skip-cache-from: ${{ github.event_name == 'schedule' }}
 
   # todo: maybe tier0 for desktop base images?
   #
@@ -120,6 +121,7 @@ jobs:
           needs.build-base.outputs.manifest ||
           format('{0}/base-bootc:{1}', needs.normalize.outputs.registry, needs.normalize.outputs.tag)
         }}
+      skip-cache-from: ${{ github.event_name == 'schedule' }}
 
   tier0-outputs:
     needs: [build-tier0]
@@ -167,6 +169,7 @@ jobs:
           fromJson(needs.tier0-outputs.outputs.result).manifest.desktop ||
           format('{0}/desktop-bootc:{1}', needs.normalize.outputs.registry, needs.normalize.outputs.tag)
         }}
+      skip-cache-from: ${{ github.event_name == 'schedule' }}
 
   tier1-outputs:
     needs: [build-tier1]
@@ -231,6 +234,7 @@ jobs:
         }}
       tag-suffix: "-${{ matrix.variant }}"
       rechunk: ${{ matrix.variant == 'nvidia' && false || true }}
+      skip-cache-from: ${{ github.event_name == 'schedule' }}
 
   tier2-outputs:
     needs: [build-tier2]
