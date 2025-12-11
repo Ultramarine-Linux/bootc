@@ -39,10 +39,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
 
 
 RUN plymouth-set-default-theme bgrt
-# Recreate initramfs to add plymouth back
-RUN sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
-    dracut --force --no-hostonly --force-add plymouth --force-drivers erofs --reproducible --zstd --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
-
 
 COPY desktop.sh /tmp/desktop.sh
 RUN --mount=type=cache,target=/var/cache sh -c '/tmp/desktop.sh && rm -f /tmp/desktop.sh'

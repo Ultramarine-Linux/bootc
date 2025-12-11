@@ -26,3 +26,6 @@ rm -f /usr/lib/tmpfiles.d/bootc-base-dirs.conf
 
 # Restore default useradd HOME setting
 sed -i '/^HOME=\/var\/home$/d' /etc/default/useradd || true
+
+# Comment out PackageKit ostree backend
+sed -i 's/DefaultBackend=.*/#DefaultBackend=/' /etc/PackageKit/PackageKit.conf
