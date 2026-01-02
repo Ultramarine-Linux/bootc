@@ -96,7 +96,7 @@ priv-shell:
 
 build-bib type="qcow2":
     #!/usr/bin/bash -x
-    just image_tag={{ image_tag }} build-vm-legacy {{ image_tag }} type={{ type }}
+    just image_tag={{ image_tag }} build-vm-legacy {{ image_tag }} {{ type }}
 
 build-vm:
     #!/usr/bin/bash -x
