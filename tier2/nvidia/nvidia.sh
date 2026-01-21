@@ -18,11 +18,11 @@ dnf config-manager setopt terra-nvidia.enabled=0
 sed -i '/^enabled=/a\priority=90' /etc/yum.repos.d/terra-nvidia.repo
 echo "exclude=nvidia-container-toolkit" >> /etc/yum.repos.d/terra-nvidia.repo
 
-dnf -y install --enablerepo=terra-nvidia akmod-nvidia-open --exclude=nvidia-container-toolkit
+dnf -y install --enablerepo=terra-nvidia akmod-nvidia --exclude=nvidia-container-toolkit
 mkdir -p /var/tmp # for akmods
 chmod 1777 /var/tmp
 # sed -i "s/^MODULE_VARIANT=.*/MODULE_VARIANT=kernel-open/" /etc/nvidia/kernel.conf
-akmods --force --kernels "${KERNEL_VERSION}" --kmod "nvidia-open"
+akmods --force --kernels "${KERNEL_VERSION}" --kmod "nvidia"
 cat /var/cache/akmods/nvidia/*.failed.log || true
 
 dnf -y install --enablerepo=terra-nvidia --exclude=nvidia-container-toolkit \
@@ -39,8 +39,9 @@ curl --retry 3 -L https://raw.githubusercontent.com/NVIDIA/dgx-selinux/master/bi
 semodule -i nvidia-container.pp
 rm -f nvidia-container.pp
 
-tee /usr/lib/modprobe.d/00-nouveau-blacklist.conf <<'EOF'
+tee /usr/lib/modprobe.d/00-nouveau-nova-blacklist.conf <<'EOF'
 blacklist nouveau
+blacklist nova-core
 options nouveau modeset=0
 EOF
 
