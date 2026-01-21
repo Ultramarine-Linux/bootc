@@ -1,4 +1,6 @@
 FROM ghcr.io/ultramarine-linux/plasma-bootc:main
 COPY . /usr/src/ultramarine-bootc/tier2/nvidia
-    
+
+# Install prerequisites
+RUN --mount=type=cache,target=/var/cache dnf install -y terra-release-nvidia gcc-c++
 RUN --mount=type=cache,target=/var/cache /usr/src/ultramarine-bootc/tier2/nvidia/nvidia.sh

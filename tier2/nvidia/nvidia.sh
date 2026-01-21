@@ -13,10 +13,6 @@ KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/
 
 
 # dnf config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-nvidia.repo
-dnf install -y terra-release-nvidia
-dnf config-manager setopt terra-nvidia.enabled=0
-sed -i '/^enabled=/a\priority=90' /etc/yum.repos.d/terra-nvidia.repo
-echo "exclude=nvidia-container-toolkit" >> /etc/yum.repos.d/terra-nvidia.repo
 
 dnf -y install --enablerepo=terra-nvidia akmod-nvidia --exclude=nvidia-container-toolkit
 mkdir -p /var/tmp # for akmods
@@ -28,11 +24,7 @@ cat /var/cache/akmods/nvidia/*.failed.log || true
 dnf -y install --enablerepo=terra-nvidia --exclude=nvidia-container-toolkit \
     nvidia-driver-cuda libnvidia-fbc libva-nvidia-driver nvidia-driver nvidia-modprobe nvidia-persistenced nvidia-settings
 
-dnf config-manager addrepo --from-repofile=https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
-dnf config-manager setopt nvidia-container-toolkit.enabled=0
-dnf config-manager setopt nvidia-container-toolkit.gpgcheck=1
-
-dnf -y install --enablerepo=nvidia-container-toolkit \
+dnf -y install \
     nvidia-container-toolkit
 
 curl --retry 3 -L https://raw.githubusercontent.com/NVIDIA/dgx-selinux/master/bin/RHEL9/nvidia-container.pp -o nvidia-container.pp
