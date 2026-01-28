@@ -640,6 +640,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: iso-artifact-${{ github.run_id }}-${{ inputs.flavor }}
+          name: iso-artifact-${{ github.run_id }}-${{ inputs.flavor }}-${{ matrix.platform_safe }}
           path: ./*.iso
           compression-level: 0
