@@ -163,6 +163,7 @@ jobs:
       image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
       context-path: tier1/${{ matrix.flavor }}
+      build_iso: true
       from: >-
         ${{
           needs.tier0-outputs.result == 'success' &&
@@ -213,8 +214,8 @@ jobs:
           # - surface
           # - nvidia
           # - rpi
-          - run0
-          - steam
+          # - run0
+          # - steam
           - nvidia
     with:
       image-name: ultramarine-tier2
