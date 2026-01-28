@@ -597,11 +597,14 @@ jobs:
       manifest: ${{ fromJson(steps.out.outputs.result).manifest }}
       tags: ${{ fromJson(steps.out.outputs.result).tags }}
   build-iso:
-    runs-on: ubuntu-latest
+    runs-on: ${{ contains(matrix.platform, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    needs: [generate_matrix, manifest]
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.generate_matrix.outputs.matrix)}}
     container:
       image: ghcr.io/fyralabs/katsu:main
       options: --privileged --security-opt seccomp=unconfined
-    needs: [manifest]
     if: inputs.build_iso == true && !cancelled()
     permissions:
       contents: read
@@ -631,12 +634,12 @@ jobs:
       - name: Install dependencies
         run: |
           dnf install -y just
-        
+
       - name: Build ISO
         run: |
           set -x
           just image_tag=${{ needs.manifest.outputs.image }}@${{ needs.manifest.outputs.digest }} build-iso
-          
+
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
