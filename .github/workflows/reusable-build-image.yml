@@ -148,12 +148,12 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin $registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login -u ${{ github.actor }} --password-stdin $registry
 
-      - name: Mount BTRFS loopback
-        uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
-        with:
-          target-dir: /var/lib/containers
-          mount-opts: compress-force=zstd:8
-          loopback-free: 0.8
+      # - name: Mount BTRFS loopback
+      #   uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
+      #   with:
+      #     target-dir: /var/lib/containers
+      #     mount-opts: compress-force=zstd:8
+      #     loopback-free: 0.8
 
       - name: Build Image
         id: build-image
