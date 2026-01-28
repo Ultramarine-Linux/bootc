@@ -136,7 +136,8 @@ jobs:
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
         with:
           remove-codeql: true
-
+          remove-cached-tools: false
+          verbose: true
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         env:
@@ -618,6 +619,8 @@ jobs:
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
         with:
           remove-codeql: true
+          remove-cached-tools: false
+          verbose: true
       - name: Mount BTRFS loopback
         uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
         with:
