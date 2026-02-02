@@ -621,7 +621,7 @@ jobs:
           remove-codeql: true
           remove-cached-tools: false
           verbose: true
-          remove-docker: false
+          remove-docker-images: false
       - name: Mount BTRFS loopback
         uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
         with:
