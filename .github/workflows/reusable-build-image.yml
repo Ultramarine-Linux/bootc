@@ -628,7 +628,7 @@ jobs:
       - name: Build ISO
         run: |
           set -x
-          just image_tag=${{ needs.manifest.outputs.image }}@${{ needs.manifest.outputs.digest }} build-iso
+          just image_tag=${{ needs.manifest.outputs.image }}@${{ needs.manifest.outputs.digest }} katsu-live
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
