@@ -138,6 +138,7 @@ jobs:
           remove-codeql: true
           remove-cached-tools: false
           verbose: true
+          remove-docker-images: false
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         env:
