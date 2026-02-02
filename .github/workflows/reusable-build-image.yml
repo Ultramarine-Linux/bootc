@@ -561,18 +561,18 @@ jobs:
       - name: Upload Lint Results
         # let's heredoc the lint results to github summary
         run: |
-          cat <<EOF >> $GITHUB_STEP_SUMMARY
-
-          ## Lint Results for `${{ needs.manifest.outputs.image }}@${{ needs.manifest.outputs.digest }}` on platform `${{ matrix.platform }}`
-
-          <details>
-          <summary>Lint Output</summary>
-
-          \`\`\`
-          $(cat /tmp/lint-output.txt)
-          \`\`\`
-          </details>
-          EOF
+          {
+            echo ""
+            echo "## Lint Results for `${{ needs.manifest.outputs.image }}@${{ needs.manifest.outputs.digest }}` on platform `${{ matrix.platform }}`"
+            echo ""
+            echo "<details>"
+            echo "<summary>Lint Output</summary>"
+            echo ""
+            echo "```"
+            cat /tmp/lint-output.txt
+            echo "```"
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
 
   write:
     runs-on: ubuntu-latest
@@ -614,12 +614,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - name: Mount BTRFS loopback
-        uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
-        with:
-          target-dir: ${PWD}
-          mount-opts: compress-force=zstd:8
-          loopback-free: 0.8
+      # - name: Mount BTRFS loopback
+      #   uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
+      #   with:
+      #     target-dir: ${PWD}
+      #     mount-opts: compress-force=zstd:8
+      #     loopback-free: 0.8
 
       - name: Install dependencies
         run: |
