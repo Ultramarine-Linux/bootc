@@ -29,7 +29,7 @@ ball: (build) (rechunk)
 katsu-live:
     #!/usr/bin/bash -x
     mkdir -p output/katsu-live
-    rsync -av scripts/katsu-template/ output/katsu-live/
+    cp -r scripts/katsu-template/ output/katsu-live/
 
     IMAGE_NAME="{{ image_tag }}"
     sed -i "s|%BASE_IMAGE%|${IMAGE_NAME}|g" output/katsu-live/bootc-live.yaml
