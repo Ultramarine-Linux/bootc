@@ -28,7 +28,7 @@ ball: (build) (rechunk)
 
 katsu-live:
     #!/usr/bin/bash -x
-    mkdir -p output/katsu-live
+    mkdir -p output/
     cp -r scripts/katsu-template/ output/katsu-live/
 
     IMAGE_NAME="{{ image_tag }}"
