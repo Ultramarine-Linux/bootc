@@ -77,7 +77,7 @@ RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/fedora-cisco-openh264.repo
 # COPY rpmmacros.d/macros.111.bootc /usr/lib/rpm/macros.d/macros.111.bootc
 #
 # HACK: ostree and bootupd stuff
-RUN cp -av /boot /usr/lib/ostree-boot
+RUN mv /boot /usr/lib/ostree-boot
 RUN bootupctl backend generate-update-metadata
 # HACK: rechunk needs this to be happy
 # Sync the two rpmdb locations for compatibility with rpm-ostree
