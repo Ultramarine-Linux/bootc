@@ -136,9 +136,9 @@ jobs:
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
         with:
           remove-codeql: true
+          remove-docker-images: false
           remove-cached-tools: false
           verbose: true
-          remove-docker-images: false
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         env:
