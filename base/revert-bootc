@@ -9,10 +9,10 @@ set -x
 source /usr/src/ultramarine-bootc/base/common.sh
 
 # Remove symlinks created by bootc
-rm -f /opt /root /home /ostree /srv
+rm -rf /opt /root /home /ostree /srv
 
 # remove rechunk-prep action
-rm -f /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
+rm -rf /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
 # delete dummy rpm database
 rm -rf /usr/share/rpm
 
@@ -24,7 +24,7 @@ chmod 0755 /home /opt /usr/local /srv
 chmod 0700 /root
 
 # Remove tmpfiles configuration
-rm -f /usr/lib/tmpfiles.d/bootc-base-dirs.conf
+rm -rf /usr/lib/tmpfiles.d/bootc-base-dirs.conf
 
 # Restore default useradd HOME setting
 sed -i '/^HOME=\/var\/home$/d' /etc/default/useradd || true
@@ -37,4 +37,16 @@ KERNEL_VERSION=$(get_kernel_version)
 # Reinstall the kernel to restore initramfs and grub entries
 kernel-install add $KERNEL_VERSION /lib/modules/$KERNEL_VERSION/vmlinuz
 
-rsync -av /usr/lib/ostree-boot /boot
+rsync -av /usr/lib/ostree-boot/ /boot/
+
+mkdir -p /boot/efi
+# Copy EFI files
+rsync -av /usr/lib/efi/*/*/EFI/ /boot/efi/EFI/
+
+# copy GRUB files
+
+rsync -av /usr/lib/grub/ /boot/grub2/
+# Regenerate GRUB configuration
+grub-mkconfig -o /boot/grub2/grub.cfg
+grub2-editenv create
+grub2-editenv set menu_auto_hide=0

@@ -9,3 +9,5 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     ultramarine-release-identity-budgie \
     @ultramarine-budgie-product-environment \
     --exclude='budgie-desktop-defaults'
+
+LABEL readymade.prettyname="Ultramarine Budgie Edition"
