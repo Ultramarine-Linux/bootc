@@ -606,7 +606,7 @@ jobs:
       matrix: ${{fromJson(needs.generate_matrix.outputs.matrix)}}
     container:
       image: ghcr.io/fyralabs/katsu:main
-      options: --privileged --security-opt seccomp=unconfined
+      options: --privileged --security-opt seccomp=unconfined -v /usr:/hostusr -v /:/hostfs
     if: inputs.build_iso == true && !cancelled()
     permissions:
       contents: read
@@ -621,12 +621,24 @@ jobs:
       #     target-dir: ${PWD}
       #     mount-opts: compress-force=zstd:8
       #     loopback-free: 0.8
-      - name: Maximize build space
-        uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
-        with:
-          remove-codeql: true
-          remove-cached-tools: false
-          verbose: true
+      - name: Clean up space before build
+        run: |
+          df -h
+          # Wipe stuff in our host /usr to make some space
+
+          # We don't need the android SDK
+          rm -rf /hostusr/local/lib/android
+          # We're a Rust shop, not a Haskell shop
+          rm -rf /hostusr/local/.ghcup
+          rm -rf /hostfs/opt/ghc
+          # We don't even use .NET
+          rm -rf /hostusr/share/dotnet
+          # We don't need CodeQL in this action
+          rm -rf /hostfs/opt/hostedtoolcache/CodeQL
+
+
+          echo "After cleanup:"
+          df -h
       - name: Install dependencies
         run: |
           dnf install -y just
