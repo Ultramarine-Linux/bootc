@@ -92,6 +92,7 @@ env:
   IMAGE_DESC: ${{ inputs.image-desc }}
   IMAGE_REGISTRY: "ghcr.io/ultramarine-linux"
   PLATFORMS: ${{ inputs.platforms }}
+  PODMAN_CACHE_TAG: "quay.io/fyralabs/ultramarine-bootc-cache"
 
 jobs:
   generate_matrix:
@@ -148,6 +149,16 @@ jobs:
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin $registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login -u ${{ github.actor }} --password-stdin $registry
+      - name: Login to Quay.io
+        if: github.event_name != 'pull_request'
+        env:
+          registry: quay.io
+          username: fyralabs+ultramarine_gha
+          password: ${{ secrets.QUAY_TOKEN }}
+        run: |
+          echo ${{ secrets.QUAY_TOKEN }} | sudo podman login -u $username --password-stdin $registry
+          echo ${{ secrets.QUAY_TOKEN }} | docker login -u $username --password-stdin $registry
+
 
       # - name: Mount BTRFS loopback
       #   uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
@@ -196,12 +207,13 @@ jobs:
               # Conditionally add --cache-from based on skip-cache-from input
               CACHE_FROM_ARG=""
               if [ "${{ inputs.skip-cache-from }}" != "true" ]; then
-                CACHE_FROM_ARG="--cache-from $IMAGE_REGISTRY/$IMAGE_NAME"
+                CACHE_FROM_ARG="--cache-from ${PODMAN_CACHE_TAG}"
               fi
 
               sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
                 --layers=true \
                 $CACHE_FROM_ARG \
+                --cache-to ${PODMAN_CACHE_TAG} \
                 -t "localhost/${FLAVOR}-bootc:build" \
                 -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
                 $FROM_ARG \
