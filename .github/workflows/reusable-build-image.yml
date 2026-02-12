@@ -169,7 +169,7 @@ jobs:
 
       - name: Build Image
         id: build-image
-        shell: bash
+        uses: nick-fields/retry@v3
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
@@ -179,62 +179,64 @@ jobs:
           FROM_IMAGE: ${{ inputs.from }}
           CONTAINERFILE: ${{ inputs.containerfile }}
           CONTEXT_PATH: ${{ inputs.context-path }}
-        run: |
-          set -x
+        with:
+          retry_on_exit_code: 125
+          command: |
+            set -x
 
-          function build() {
-            # Normalize platform to linux/ARCH format
-            BUILD_PLATFORM="${PLATFORM}"
-            if [[ "$BUILD_PLATFORM" != linux/* ]]; then
-              BUILD_PLATFORM="linux/${BUILD_PLATFORM}"
-            fi
-
-            FROM_ARG=""
-            if [ -n "$FROM_IMAGE" ]; then
-              FROM_ARG="--from=$FROM_IMAGE"
-            fi
-
-            # Set default context path if not provided
-            BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
-
-            local max_attempts=3
-            local attempt=1
-            local exit_code=0
-
-            while [ $attempt -le $max_attempts ]; do
-              echo "Build attempt $attempt of $max_attempts"
-
-              # Conditionally add --cache-from based on skip-cache-from input
-              CACHE_FROM_ARG=""
-              if [ "${{ inputs.skip-cache-from }}" != "true" ]; then
-                CACHE_FROM_ARG="--cache-from ${PODMAN_CACHE_TAG}"
+            function build() {
+              # Normalize platform to linux/ARCH format
+              BUILD_PLATFORM="${PLATFORM}"
+              if [[ "$BUILD_PLATFORM" != linux/* ]]; then
+                BUILD_PLATFORM="linux/${BUILD_PLATFORM}"
               fi
 
-              sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
-                --layers=true \
-                $CACHE_FROM_ARG \
-                --cache-to ${PODMAN_CACHE_TAG} \
-                -t "localhost/${FLAVOR}-bootc:build" \
-                -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
-                $FROM_ARG \
-                "${BUILD_CONTEXT}"
-              exit_code=$?
-
-              if [ $exit_code -eq 0 ]; then
-                return 0
-              elif [ $exit_code -eq 125 ] && [ $attempt -lt $max_attempts ]; then
-                echo "Podman returned exit code 125, retrying..."
-                attempt=$((attempt + 1))
-                sleep 5
-              else
-                return $exit_code
+              FROM_ARG=""
+              if [ -n "$FROM_IMAGE" ]; then
+                FROM_ARG="--from=$FROM_IMAGE"
               fi
-            done
 
-            return $exit_code
-          }
+              # Set default context path if not provided
+              BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
 
-          build
+              local max_attempts=3
+              local attempt=1
+              local exit_code=0
+
+              while [ $attempt -le $max_attempts ]; do
+                echo "Build attempt $attempt of $max_attempts"
+
+                # Conditionally add --cache-from based on skip-cache-from input
+                CACHE_FROM_ARG=""
+                if [ "${{ inputs.skip-cache-from }}" != "true" ]; then
+                  CACHE_FROM_ARG="--cache-from ${PODMAN_CACHE_TAG}"
+                fi
+
+                sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
+                  --layers=true \
+                  $CACHE_FROM_ARG \
+                  --cache-to ${PODMAN_CACHE_TAG} \
+                  -t "localhost/${FLAVOR}-bootc:build" \
+                  -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
+                  $FROM_ARG \
+                  "${BUILD_CONTEXT}"
+                exit_code=$?
+
+                if [ $exit_code -eq 0 ]; then
+                  return 0
+                elif [ $exit_code -eq 125 ] && [ $attempt -lt $max_attempts ]; then
+                  echo "Podman returned exit code 125, retrying..."
+                  attempt=$((attempt + 1))
+                  sleep 5
+                else
+                  return $exit_code
+                fi
+              done
+
+              return $exit_code
+            }
+
+            build
 
       # - name: Run Rechunker
       #   if: github.event_name != 'pull_request'
