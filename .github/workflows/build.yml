@@ -217,6 +217,7 @@ jobs:
           # - run0
           # - steam
           - nvidia
+          - standard
     with:
       image-name: ultramarine-tier2
       flavor: ${{ matrix.base-flavor }}
@@ -237,14 +238,14 @@ jobs:
       rechunk: ${{ matrix.variant == 'nvidia' && false || true }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
 
-  tier2-outputs:
-    needs: [build-tier2]
-    runs-on: ubuntu-latest
-    if: needs.build-tier2.result == 'success'
-    outputs:
-      result: "${{ steps.read.outputs.result }}"
-    steps:
-      - uses: cloudposse/github-action-matrix-outputs-read@v1
-        id: read
-        with:
-          matrix-step-name: ultramarine-tier2
+  # tier2-outputs:
+  #   needs: [build-tier2]
+  #   runs-on: ubuntu-latest
+  #   if: needs.build-tier2.result == 'success'
+  #   outputs:
+  #     result: "${{ steps.read.outputs.result }}"
+  #   steps:
+  #     - uses: cloudposse/github-action-matrix-outputs-read@v1
+  #       id: read
+  #       with:
+  #         matrix-step-name: ultramarine-tier2

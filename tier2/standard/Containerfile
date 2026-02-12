@@ -1,0 +1,4 @@
+# meh, this will be overriden with --from anyway
+FROM ghcr.io/ultramarine-linux/plasma-bootc:main
+
+RUN /usr/libexec/revert-bootc
