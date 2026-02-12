@@ -181,6 +181,8 @@ jobs:
           CONTEXT_PATH: ${{ inputs.context-path }}
         with:
           retry_on_exit_code: 125
+          timeout_minutes: 120
+          max_attempts: 5
           command: |
             set -x
 
