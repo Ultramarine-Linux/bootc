@@ -47,6 +47,6 @@ rsync -av /usr/lib/efi/*/*/EFI/ /boot/efi/EFI/
 
 rsync -av /usr/lib/grub/ /boot/grub2/
 # Regenerate GRUB configuration
-grub-mkconfig -o /boot/grub2/grub.cfg
+grub2-mkconfig -o /boot/grub2/grub.cfg
 grub2-editenv create
-grub2-editenv set menu_auto_hide=0
+# grub2-editenv set menu_auto_hide=0
