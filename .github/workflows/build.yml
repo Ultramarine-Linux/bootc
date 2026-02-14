@@ -235,7 +235,7 @@ jobs:
           format('{0}/{1}-bootc:{2}', needs.normalize.outputs.registry, matrix.base-flavor, needs.normalize.outputs.tag)
         }}
       tag-suffix: "-${{ matrix.variant }}"
-      rechunk: ${{ matrix.variant == 'nvidia' && false || true }}
+      rechunk: ${{ matrix.variant == 'standard' && false || true }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
 
   # tier2-outputs:
