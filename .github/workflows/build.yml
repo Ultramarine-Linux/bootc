@@ -163,7 +163,7 @@ jobs:
       image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
       context-path: tier1/${{ matrix.flavor }}
-      build_iso: true
+      build_iso: false
       from: >-
         ${{
           needs.tier0-outputs.result == 'success' &&

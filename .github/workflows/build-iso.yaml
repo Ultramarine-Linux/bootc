@@ -1,0 +1,63 @@
+name: Build ISO images with katsu
+permissions: write-all
+on:
+  schedule:
+    - cron: "0 4 * * *" # every day at 4am UTC
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64]
+        variant:
+          - name: gnome
+            image: ghcr.io/ultramarine-linux/gnome-bootc:latest
+          - name: plasma
+            image: ghcr.io/ultramarine-linux/plasma-bootc:latest
+          - name: xfce
+            image: ghcr.io/ultramarine-linux/xfce-bootc:latest
+          - name: budgie
+            image: ghcr.io/ultramarine-linux/budgie-bootc:latest
+    name: Build ISO images with katsu
+    runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+
+    container:
+      image: ghcr.io/fyralabs/katsu:main
+      options: --privileged --security-opt seccomp=unconfined -v /usr:/hostusr -v /:/hostfs
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Clean up space before build
+        run: |
+          df -h
+          # Wipe stuff in our host /usr to make some space
+
+          # We don't need the android SDK
+          rm -rf /hostusr/local/lib/android
+          # We're a Rust shop, not a Haskell shop
+          rm -rf /hostusr/local/.ghcup
+          rm -rf /hostfs/opt/ghc
+          # We don't even use .NET
+          rm -rf /hostusr/share/dotnet
+          # We don't need CodeQL in this action
+          rm -rf /hostfs/opt/hostedtoolcache/CodeQL
+
+
+          echo "After cleanup:"
+          df -h
+      - name: Install dependencies
+        run: |
+          dnf install -y just
+      - name: Build ISO
+        run: |
+          set -x
+          just image_tag=${{ matrix.variant.image }} katsu-live
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: iso-artifact-${{ github.run_id }}-${{ matrix.variant.name }}-${{ matrix.arch }}
+          path: ./*.iso
+          compression-level: 0
