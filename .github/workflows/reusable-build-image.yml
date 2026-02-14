@@ -367,7 +367,8 @@ jobs:
             crun \
             netavark \
             libstdc++ \
-            fuse-overlayfs
+            fuse-overlayfs \
+            skopeo
           ln -sf /bin/bash /bin/sh
           mkdir -p /etc/containers
           echo '{"default":[{"type":"insecureAcceptAnything"}]}' | jq . > /etc/containers/policy.json
