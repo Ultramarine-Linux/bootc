@@ -419,8 +419,8 @@ jobs:
         with:
           tags: |
             type=raw,value=${{ env.BASE_TAG }}${{ env.TAG_SUFFIX }}
-            type=raw,value=latest${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
-            type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable={{is_default_branch}}
+            type=raw,value=latest${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == 'main' }}
+            type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == 'main' }}
             type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
 
           labels: |
