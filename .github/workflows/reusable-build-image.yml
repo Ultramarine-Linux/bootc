@@ -529,7 +529,7 @@ jobs:
 
           # Push manifest once to get the digest
           first_tag=$(echo "$TAGS" | head -n1)
-          podman manifest push --all=false --digestfile=/tmp/digestfile $MANIFEST $IMAGE_REGISTRY/$IMAGE_NAME:$first_tag
+          podman manifest push --all --digestfile=/tmp/digestfile $MANIFEST $IMAGE_REGISTRY/$IMAGE_NAME:$first_tag
           DIGEST=$(cat /tmp/digestfile)
           echo "Pushed manifest with digest: $DIGEST"
 
@@ -568,12 +568,21 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
 
-      - name: Sign Manifest
+      - name: Sign Manifest and Tags
         run: |
+          # Sign the manifest digest
           cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE@$DIGEST
+          
+          # Sign each tag
+          IFS=',' read -r -a tag_array <<< "$TAGS"
+          for tag in "${tag_array[@]}"; do
+            echo "Signing tag: $tag"
+            cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE:$tag
+          done
         env:
           DIGEST: ${{ needs.manifest.outputs.digest }}
           IMAGE: ${{ needs.manifest.outputs.image }}
+          TAGS: ${{ needs.manifest.outputs.tags }}
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
@@ -601,7 +610,7 @@ jobs:
         run: |
           {
             echo ""
-            echo "## Lint Results for `${{ needs.manifest.outputs.image }}@${{ needs.manifest.outputs.digest }}` on platform `${{ matrix.platform }}`"
+            echo "## Lint Results for \`${{ needs.manifest.outputs.image }}@${{ needs.manifest.outputs.digest }}\` on platform \`${{ matrix.platform }}\`"
             echo ""
             echo "<details>"
             echo "<summary>Lint Output</summary>"
