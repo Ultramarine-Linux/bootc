@@ -551,40 +551,45 @@ jobs:
 
   # Cosign throws errors when ran inside the Fedora container for one reason or another
   # so we move this to another step in order to run on Ubuntu
-  sign:
-    needs: manifest
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    steps:
-      - name: Login to GHCR
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login -u ${{ github.actor }} --password-stdin ghcr.io
-          echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin ghcr.io
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+  # Signing actually messes up tagging and causes pulls to be broken, so let's not do it for now until we can figure out a better solution. The main issue is that Cosign creates a new manifest list with the signature annotations, but it doesn't preserve the original tags. This causes the original image@digest reference to break since the digest changes when the manifest is modified. We would need to re-tag the signed manifest with all the original tags, but that adds complexity and potential for errors. For now, it's safer to skip signing until we can find a more robust solution that doesn't interfere with the image references.
+  # tracking issue #21 https://github.com/Ultramarine-Linux/bootc/issues/21
 
-      - name: Sign Manifest and Tags
-        run: |
-          # Sign the manifest digest
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE@$DIGEST
+
+  # sign:
+  #   needs: manifest
+  #   if: github.event_name != 'pull_request'
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #     id-token: write
+  #   steps:
+  #     - name: Login to GHCR
+  #       run: |
+  #         echo ${{ secrets.GITHUB_TOKEN }} | docker login -u ${{ github.actor }} --password-stdin ghcr.io
+  #         echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin ghcr.io
+
+  #     - name: Install Cosign
+  #       uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+
+  #     - name: Sign Manifest and Tags
+  #       run: |
+  #         # Sign the manifest digest
+  #         cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE@$DIGEST
           
-          # Sign each tag
-          IFS=',' read -r -a tag_array <<< "$TAGS"
-          for tag in "${tag_array[@]}"; do
-            echo "Signing tag: $tag"
-            cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE:$tag
-          done
-        env:
-          DIGEST: ${{ needs.manifest.outputs.digest }}
-          IMAGE: ${{ needs.manifest.outputs.image }}
-          TAGS: ${{ needs.manifest.outputs.tags }}
-          COSIGN_EXPERIMENTAL: false
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+  #         # Sign each tag
+  #         IFS=',' read -r -a tag_array <<< "$TAGS"
+  #         for tag in "${tag_array[@]}"; do
+  #           echo "Signing tag: $tag"
+  #           cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE:$tag
+  #         done
+  #       env:
+  #         DIGEST: ${{ needs.manifest.outputs.digest }}
+  #         IMAGE: ${{ needs.manifest.outputs.image }}
+  #         TAGS: ${{ needs.manifest.outputs.tags }}
+  #         COSIGN_EXPERIMENTAL: false
+  #         COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
   lint:
     runs-on: ${{ contains(matrix.platform, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
