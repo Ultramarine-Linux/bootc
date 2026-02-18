@@ -621,7 +621,7 @@ jobs:
             echo "<summary>Lint Output</summary>"
             echo ""
             echo "```"
-            cat /tmp/lint-output.txt
+            $(cat /tmp/lint-output.txt)
             echo "```"
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
