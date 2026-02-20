@@ -525,36 +525,47 @@ jobs:
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
         run: |
-          set -x
+          set -euo pipefail
+          mapfile -t tag_array <<< "$TAGS"
 
-          # Push manifest once to get the digest
-          first_tag=$(echo "$TAGS" | head -n1)
-          podman manifest push --all --digestfile=/tmp/digestfile $MANIFEST $IMAGE_REGISTRY/$IMAGE_NAME:$first_tag
+          if [ ${#tag_array[@]} -eq 0 ]; then
+            echo "No tags were generated; refusing to push." >&2
+            exit 1
+          fi
+
+          # Push manifest once to capture the digest
+          first_tag=${tag_array[0]}
+          podman manifest push --all --digestfile=/tmp/digestfile "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$first_tag"
           DIGEST=$(cat /tmp/digestfile)
           echo "Pushed manifest with digest: $DIGEST"
 
-          # Copy the same manifest digest to all other tags
-          remaining_tags=$(echo "$TAGS" | tail -n +2)
-          if [ -n "$remaining_tags" ]; then
-            while IFS= read -r tag; do
-              echo "Copying manifest to tag: $tag"
-              skopeo copy --all docker://$IMAGE_REGISTRY/$IMAGE_NAME@$DIGEST docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag
-            done <<< "$remaining_tags"
+          # Push the same manifest to every other tag
+          if [ ${#tag_array[@]} -gt 1 ]; then
+            for tag in "${tag_array[@]:1}"; do
+              echo "Pushing manifest to tag: $tag"
+              podman manifest push --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag"
+            done
           fi
+
+          # Verify all tags now point at the expected digest (catches stale latest/main drift)
+          for tag in "${tag_array[@]}"; do
+            remote_digest=$(skopeo inspect --format '{{.Digest}}' "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag")
+            if [ "$remote_digest" != "$DIGEST" ]; then
+              echo "ERROR: tag $tag points to $remote_digest (expected $DIGEST)" >&2
+              exit 1
+            fi
+          done
 
           echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
           echo "IMAGE=$IMAGE_REGISTRY/$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "MANIFEST=$IMAGE_REGISTRY/$IMAGE_NAME@$DIGEST" >> $GITHUB_OUTPUT
-          TAGS=$(echo "$TAGS" | tr '\n' ',')
-          TAGS=${TAGS%,}
-          echo "TAGS=$TAGS" >> $GITHUB_OUTPUT
+          echo "TAGS=$(IFS=','; echo "${tag_array[*]}")" >> $GITHUB_OUTPUT
 
   # Cosign throws errors when ran inside the Fedora container for one reason or another
   # so we move this to another step in order to run on Ubuntu
 
   # Signing actually messes up tagging and causes pulls to be broken, so let's not do it for now until we can figure out a better solution. The main issue is that Cosign creates a new manifest list with the signature annotations, but it doesn't preserve the original tags. This causes the original image@digest reference to break since the digest changes when the manifest is modified. We would need to re-tag the signed manifest with all the original tags, but that adds complexity and potential for errors. For now, it's safer to skip signing until we can find a more robust solution that doesn't interfere with the image references.
   # tracking issue #21 https://github.com/Ultramarine-Linux/bootc/issues/21
-
 
   # sign:
   #   needs: manifest
@@ -577,7 +588,7 @@ jobs:
   #       run: |
   #         # Sign the manifest digest
   #         cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE@$DIGEST
-          
+
   #         # Sign each tag
   #         IFS=',' read -r -a tag_array <<< "$TAGS"
   #         for tag in "${tag_array[@]}"; do
