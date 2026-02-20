@@ -528,6 +528,16 @@ jobs:
           set -euo pipefail
           mapfile -t tag_array <<< "$TAGS"
 
+            # Defensive: if a suffix was requested, refuse to publish unsuffixed tags (prevents nvidia images from clobbering plain latest)
+            if [ -n "${TAG_SUFFIX:-}" ]; then
+              for t in "${tag_array[@]}"; do
+                if [[ "$t" =~ (^latest$|^${BASE_TAG}$) ]]; then
+                  echo "ERROR: unexpected unsuffixed tag '$t' generated while tag-suffix='$TAG_SUFFIX'" >&2
+                  exit 1
+                fi
+              done
+            fi
+
           if [ ${#tag_array[@]} -eq 0 ]; then
             echo "No tags were generated; refusing to push." >&2
             exit 1
