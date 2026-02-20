@@ -132,6 +132,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
+      - name: Set tag variables
+        run: |
+          TAG_SUFFIX="${{ inputs.tag-suffix }}"
+          echo "TAG_SUFFIX=$TAG_SUFFIX" >> $GITHUB_ENV
+
+          if [ -n "${{ inputs.tag }}" ]; then
+            BASE_TAG="${{ inputs.tag }}"
+          else
+            BASE_TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
+
       # Only uncomment if necessary, your builds are super small anyways
       - name: Maximize build space
         uses: ublue-os/remove-unwanted-software@695eb75bc387dbcd9685a8e72d23439d8686cba6 # v10
@@ -294,7 +306,7 @@ jobs:
 
           for i in {1..3}; do
             # TODO: use docker:// or not use
-            sudo podman push --digestfile=/tmp/digestfile "$LOCAL_IMAGE" "${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}" && break || sleep $((5 * i));
+            sudo podman push --digestfile=/tmp/digestfile "$LOCAL_IMAGE" docker://"${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}" && break || sleep $((5 * i));
           done
 
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
