@@ -524,6 +524,8 @@ jobs:
           TAGS: ${{ steps.metadata.outputs.tags }}
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          TAG_SUFFIX: ${{ env.TAG_SUFFIX }}
+          BASE_TAG: ${{ env.BASE_TAG }}
         run: |
           set -euo pipefail
           mapfile -t tag_array <<< "$TAGS"
@@ -565,6 +567,19 @@ jobs:
               exit 1
             fi
           done
+
+            # if we're on main, re-push the canonical main tag to the corresponding latest tag
+            # to ensure the last manifest wins (even if something else raced earlier in the workflow).
+            if [ "${BASE_TAG:-}" = "main" ]; then
+              latest_tag="latest${TAG_SUFFIX:-}"
+              echo "Force-syncing $latest_tag to digest $DIGEST"
+              podman manifest push --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag"
+              synced=$(skopeo inspect --format '{{.Digest}}' "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag")
+              if [ "$synced" != "$DIGEST" ]; then
+                echo "ERROR: $latest_tag still points to $synced after sync (expected $DIGEST)" >&2
+                exit 1
+              fi
+            fi
 
           echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
           echo "IMAGE=$IMAGE_REGISTRY/$IMAGE_NAME" >> $GITHUB_OUTPUT
