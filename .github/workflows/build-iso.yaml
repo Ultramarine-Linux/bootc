@@ -60,7 +60,7 @@ jobs:
       - name: Build ISO
         run: |
           set -x
-          just image_tag=${{ matrix.variant.image }} katsu-live
+          just image_tag=${{ matrix.variant.image }}:${{ github.base_ref || 'main' }} katsu-live
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
