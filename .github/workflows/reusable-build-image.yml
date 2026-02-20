@@ -280,15 +280,21 @@ jobs:
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           PLATFORM: ${{ matrix.platform }}
+          BASE_TAG: ${{ env.BASE_TAG }}
+          TAG_SUFFIX: ${{ env.TAG_SUFFIX }}
         run: |
           set -x
           # Push the local image directly by digest
           # The manifest job will reference these by digest to create the multi-arch manifest
           LOCAL_IMAGE="localhost/${IMAGE_NAME}:build"
 
+          # Tag name that is unique per arch to avoid collisions with multi-arch tags.
+          platform_safe=$(echo "$PLATFORM" | tr '/' '-')
+          arch_tag="${BASE_TAG}${TAG_SUFFIX:+${TAG_SUFFIX}}-${platform_safe}"
+
           for i in {1..3}; do
             # TODO: use docker:// or not use
-            sudo podman push --digestfile=/tmp/digestfile "$LOCAL_IMAGE" "${IMAGE_REGISTRY}/${IMAGE_NAME}" && break || sleep $((5 * i));
+            sudo podman push --digestfile=/tmp/digestfile "$LOCAL_IMAGE" "${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}" && break || sleep $((5 * i));
           done
 
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
