@@ -13,8 +13,6 @@ rm -rf /opt /root /home /ostree /srv
 
 # remove rechunk-prep action
 rm -rf /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
-# delete dummy rpm database
-rm -rf /usr/share/rpm
 
 # Recreate the original directories
 mkdir -p /home /root /usr/local /srv /opt
