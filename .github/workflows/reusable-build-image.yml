@@ -142,7 +142,15 @@ jobs:
           else
             BASE_TAG="${GITHUB_REF_NAME}"
           fi
+
+          # Normalize: lowercase and replace slashes with dashes so branch names like feature/foo become feature-foo
+          BASE_TAG=$(echo "$BASE_TAG" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
           echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
+
+          # Default branch to gate latest tagging
+          DEFAULT_BRANCH="${{ github.event.repository.default_branch || 'main' }}"
+          DEFAULT_BRANCH=$(echo "$DEFAULT_BRANCH" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
 
       # Only uncomment if necessary, your builds are super small anyways
       - name: Maximize build space
@@ -429,7 +437,14 @@ jobs:
             # Use branch name as default
             BASE_TAG="${GITHUB_REF_NAME}"
           fi
+
+          # Normalize: lowercase and replace slashes with dashes so branch names like feature/foo become feature-foo
+          BASE_TAG=$(echo "$BASE_TAG" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
           echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
+
+          DEFAULT_BRANCH="${{ github.event.repository.default_branch || 'main' }}"
+          DEFAULT_BRANCH=$(echo "$DEFAULT_BRANCH" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
 
       - name: Image Metadata
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
@@ -437,16 +452,16 @@ jobs:
         with:
           tags: |
             type=raw,value=${{ env.BASE_TAG }}${{ env.TAG_SUFFIX }}
-            type=raw,value=latest${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == 'main' }}
-            type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == 'main' }}
+            type=raw,value=latest${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == env.DEFAULT_BRANCH }}
+            type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == env.DEFAULT_BRANCH }}
             type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
 
           labels: |
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/main/README.md
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/${{ env.DEFAULT_BRANCH }}/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
             org.opencontainers.image.documentation=https://wiki.ultramarine-linux.org/
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/blob/main/Containerfile
+            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/blob/${{ env.DEFAULT_BRANCH }}/Containerfile
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.url=https://ultramarine-linux.org/
             org.opencontainers.image.vendor=${{ github.repository_owner }}
@@ -586,9 +601,9 @@ jobs:
             fi
           done
 
-            # if we're on main, re-push the canonical main tag to the corresponding latest tag
+            # if we're on the default branch, re-push the canonical tag to the corresponding latest tag
             # to ensure the last manifest wins (even if something else raced earlier in the workflow).
-            if [ "${BASE_TAG:-}" = "main" ]; then
+            if [ "${BASE_TAG:-}" = "${DEFAULT_BRANCH:-}" ]; then
               latest_tag="latest${TAG_SUFFIX:-}"
               echo "Force-syncing $latest_tag to digest $DIGEST"
               podman manifest push --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag"
