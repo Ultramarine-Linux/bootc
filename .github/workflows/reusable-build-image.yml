@@ -282,14 +282,6 @@ jobs:
           set -xeuo pipefail
 
           IMAGE_REF="localhost/${{ inputs.flavor }}-bootc:build"
-          # sudo podman run --rm \
-          # --privileged \
-          # -v /var/lib/containers:/var/lib/containers \
-          # "quay.io/centos-bootc/centos-bootc:stream10" \
-          # /usr/libexec/bootc-base-imagectl rechunk \
-          # "localhost/${{ inputs.flavor }}-bootc:build" \
-          # "localhost/${{ inputs.flavor }}-bootc:build" || exit 1
-
           sudo podman run --rm --mount=type=image,source=$IMAGE_REF,target=/chunkah \
             -e CHUNKAH_CONFIG_STR="$(sudo podman inspect $IMAGE_REF)" \
             quay.io/jlebon/chunkah build --label ostree.bootable=1 | sudo podman load > /tmp/podman_load_output.txt
