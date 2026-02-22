@@ -30,7 +30,7 @@ jobs:
     runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
     container:
-      image: ghcr.io/fyralabs/katsu:main
+      image: ${{ matrix.variant.image }}
       options: --privileged --security-opt seccomp=unconfined -v /usr:/hostusr -v /:/hostfs
 
     steps:
@@ -54,10 +54,7 @@ jobs:
 
           echo "After cleanup:"
           df -h
-      - name: Install dependencies
-        run: |
-          dnf install -y just
-      - name: Build ISO
+      - name: Build disk image
         run: |
           set -euxo pipefail
           IMAGE_TAG=${{ matrix.variant.image }}
