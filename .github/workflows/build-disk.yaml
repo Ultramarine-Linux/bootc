@@ -31,7 +31,7 @@ jobs:
 
     container:
       image: ${{ matrix.variant.image }}
-      options: --privileged --security-opt seccomp=unconfined -v /usr:/hostusr -v /:/hostfs
+      options: --privileged --security-opt seccomp=unconfined -v /usr:/hostusr -v /:/hostfs -v /dev:/dev
 
     steps:
       - name: Checkout
@@ -66,7 +66,6 @@ jobs:
           # Build disk image using bootc install to-disk
 
           bootc install to-disk $PWD/disk.raw \
-            --source-imgref docker://${IMAGE_TAG} \
             --via-loopback \
             --generic-image \
             --filesystem $FILESYSTEM
