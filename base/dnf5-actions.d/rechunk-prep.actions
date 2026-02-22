@@ -1,2 +1,0 @@
-# Automatically copy RPMDB to a /usr/share/rpm for rpm-ostree compatibility
-post_transaction:*:::/usr/libexec/rpmdb-rechunk-prep

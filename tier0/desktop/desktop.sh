@@ -13,4 +13,6 @@ systemctl enable flatpak-add-flathub-repos.service
 # edit /etc/PacageKit/PackageKit.conf to use bootc backend
 sed -i 's/#DefaultBackend=.*/DefaultBackend=bootc/' /etc/PackageKit/PackageKit.conf
 
+setfattr -n user.component -v "packagekit-config" /etc/PackageKit/PackageKit.conf
+
 dracut_rebuild
