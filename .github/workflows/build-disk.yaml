@@ -66,6 +66,7 @@ jobs:
           # Build disk image using bootc install to-disk
 
           bootc install to-disk $PWD/disk.raw \
+            --source-imgref docker://${IMAGE_TAG} \
             --via-loopback \
             --generic-image \
             --filesystem $FILESYSTEM
