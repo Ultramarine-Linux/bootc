@@ -4,6 +4,17 @@ COPY . /usr/src/ultramarine-bootc/tier0/desktop
 COPY systemd/flatpak-add-flathub-repos.service /usr/lib/systemd/system/flatpak-add-flathub-repos.service
 COPY 20-rhgb.toml /usr/lib/bootc/kargs.d/
 COPY systemd/packagekit.service.d /usr/lib/systemd/system/packagekit.service.d/
+
+RUN <<EOF
+    set -euxo pipefail
+
+    setfattr -n user.component -v "ultramarine-desktop" /usr/lib/bootc/kargs.d/20-rhgb.toml
+    setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/flatpak-add-flathub-repos.service
+    setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/packagekit.service.d
+
+    setfattr -n user.component -v "ultramarine-desktop-config" /usr/src/ultramarine-bootc/tier0/desktop
+EOF
+
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \
@@ -41,6 +52,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
 RUN plymouth-set-default-theme bgrt
 
 COPY desktop.sh /tmp/desktop.sh
+
 RUN --mount=type=cache,target=/var/cache sh -c '/tmp/desktop.sh && rm -f /tmp/desktop.sh'
 
 COPY live-setup.sh /tmp/live-setup.sh

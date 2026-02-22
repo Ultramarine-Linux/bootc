@@ -67,15 +67,24 @@ COPY repos-override.d/50-ultramarine.repo /usr/share/dnf5/repos.override.d/
 # HACK: Disable OpenH264
 RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/fedora-cisco-openh264.repo
 
+# Initramfs needs to be here so OSTree and bootupd can find it
+# We'll delete the ones generated in /boot by default later
+RUN bash -c 'source /usr/src/ultramarine-bootc/base/common.sh; dracut_rebuild'
+
 # COPY rpmmacros.d/macros.111.bootc /usr/lib/rpm/macros.d/macros.111.bootc
 #
 # HACK: ostree and bootupd stuff
 RUN mv /boot /usr/lib/ostree-boot
-RUN bootupctl backend generate-update-metadata
 
-# Initramfs needs to be here so OSTree and bootupd can find it
-# We'll delete the ones generated in /boot by default later
-RUN bash -c 'source /usr/src/ultramarine-bootc/base/common.sh; dracut_rebuild'
+# set fattrs so we can split those big files later with chunkah
+RUN <<EOF
+set -euxo pipefail
+setfattr -n user.component -v "bootupd" /usr/lib/ostree-boot
+setfattr -n user.component -v "bootupd-efi" /usr/lib/ostree-boot/efi
+setfattr -n user.component -v "ultramarine-base-config" /usr/src/ultramarine-bootc/base
+
+EOF
+RUN bootupctl backend generate-update-metadata
 
 # TODO: Probably somehow handle this for standard installs too?
 # 
