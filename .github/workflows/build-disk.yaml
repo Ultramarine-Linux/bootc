@@ -1,0 +1,86 @@
+name: Build disk images
+permissions: write-all
+on:
+  schedule:
+    - cron: "0 4 * * *" # every day at 4am UTC
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build bootc images"]
+    types:
+      - completed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  build-iso:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64]
+        variant:
+          - name: gnome
+            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ github.ref_name || 'main' }} 
+          - name: plasma
+            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ github.ref_name || 'main' }} 
+          - name: xfce
+            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ github.ref_name || 'main' }} 
+          - name: budgie
+            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ github.ref_name || 'main' }} 
+    name: Build ISO images with katsu
+    runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+
+    container:
+      image: ghcr.io/fyralabs/katsu:main
+      options: --privileged --security-opt seccomp=unconfined -v /usr:/hostusr -v /:/hostfs
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Clean up space before build
+        run: |
+          df -h
+          # Wipe stuff in our host /usr to make some space
+
+          # We don't need the android SDK
+          rm -rf /hostusr/local/lib/android
+          # We're a Rust shop, not a Haskell shop
+          rm -rf /hostusr/local/.ghcup
+          rm -rf /hostfs/opt/ghc
+          # We don't even use .NET
+          rm -rf /hostusr/share/dotnet
+          # We don't need CodeQL in this action
+          rm -rf /hostfs/opt/hostedtoolcache/CodeQL
+
+
+          echo "After cleanup:"
+          df -h
+      - name: Install dependencies
+        run: |
+          dnf install -y just
+      - name: Build ISO
+        run: |
+          set -euxo pipefail
+          IMAGE_TAG=${{ matrix.variant.image }}
+          IMAGE_SIZE=10G
+          FILESYSTEM=btrfs
+          
+          # Create disk image
+          fallocate -l $IMAGE_SIZE disk.raw
+          # Build disk image using bootc install to-disk
+
+          bootc install to-disk $PWD/disk.raw \
+            --source-imgref docker://${IMAGE_TAG} \
+            --via-loopback \
+            --generic-image \
+            --filesystem $FILESYSTEM
+          
+          xz -9 -T0 disk.raw
+
+
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: iso-artifact-${{ github.run_id }}-${{ matrix.variant.name }}-${{ matrix.arch }}
+          path: ./*.xz
+          compression-level: 0
