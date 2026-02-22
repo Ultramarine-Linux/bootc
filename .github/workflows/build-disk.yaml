@@ -58,7 +58,7 @@ jobs:
         run: |
           set -euxo pipefail
           IMAGE_TAG=${{ matrix.variant.image }}
-          IMAGE_SIZE=10G
+          IMAGE_SIZE=16G
           FILESYSTEM=btrfs
           
           # Create disk image
