@@ -26,7 +26,7 @@ jobs:
             image: ghcr.io/ultramarine-linux/xfce-bootc:${{ github.ref_name || 'main' }} 
           - name: budgie
             image: ghcr.io/ultramarine-linux/budgie-bootc:${{ github.ref_name || 'main' }} 
-    name: Build ISO images with katsu
+    name: Build disk images
     runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
     container:
