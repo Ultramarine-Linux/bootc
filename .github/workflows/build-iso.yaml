@@ -19,13 +19,13 @@ jobs:
         arch: [x86_64, aarch64]
         variant:
           - name: gnome
-            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ github.base_ref || 'main' }} 
+            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ github.ref_name || 'main' }} 
           - name: plasma
-            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ github.base_ref || 'main' }} 
+            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ github.ref_name || 'main' }} 
           - name: xfce
-            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ github.base_ref || 'main' }} 
+            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ github.ref_name || 'main' }} 
           - name: budgie
-            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ github.base_ref || 'main' }} 
+            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ github.ref_name || 'main' }} 
     name: Build ISO images with katsu
     runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
