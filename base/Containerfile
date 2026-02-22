@@ -78,11 +78,10 @@ RUN mv /boot /usr/lib/ostree-boot
 
 # set fattrs so we can split those big files later with chunkah
 RUN <<EOF
-set -euxo pipefail
-setfattr -n user.component -v "bootupd" /usr/lib/ostree-boot
-setfattr -n user.component -v "bootupd-efi" /usr/lib/ostree-boot/efi
-setfattr -n user.component -v "ultramarine-base-config" /usr/src/ultramarine-bootc/base
-
+    set -euxo pipefail
+    setfattr -n user.component -v "bootupd" /usr/lib/ostree-boot
+    setfattr -n user.component -v "bootupd-efi" /usr/lib/ostree-boot/efi
+    setfattr -n user.component -v "ultramarine-base-config" /usr/src/ultramarine-bootc/base
 EOF
 RUN bootupctl backend generate-update-metadata
 
