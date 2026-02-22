@@ -281,10 +281,11 @@ jobs:
         run: |
           set -xeuo pipefail
 
+          MAX_LAYERS=100
           IMAGE_REF="localhost/${{ inputs.flavor }}-bootc:build"
           sudo podman run --rm --mount=type=image,source=$IMAGE_REF,target=/chunkah \
             -e CHUNKAH_CONFIG_STR="$(sudo podman inspect $IMAGE_REF)" \
-            quay.io/jlebon/chunkah build --label ostree.bootable=1 | sudo podman load > /tmp/podman_load_output.txt
+            quay.io/jlebon/chunkah build --label ostree.bootable=1 --max-layers $MAX_LAYERS | sudo podman load > /tmp/podman_load_output.txt
 
           cat /tmp/podman_load_output.txt
 
