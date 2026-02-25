@@ -63,6 +63,7 @@ dnf:
     # bootc
     - bootc
     - dnf-bootc
+    - systemd-boot-unsigned
     - system-reinstall-bootc
     - bootupd
     - libdnf5-plugin-actions
