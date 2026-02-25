@@ -39,6 +39,9 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     PackageKit \
     fuse-libs \
     PackageKit-bootc \
+    tuned-ppd \
+    powertop \
+    tuned-profiles-atomic \
     plymouth-system-theme \
     @base-graphical && \
     dnf clean all
