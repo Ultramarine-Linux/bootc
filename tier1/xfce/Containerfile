@@ -8,7 +8,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     --action=install \
     ultramarine-release-identity-xfce \
     @ultramarine-xfce-product-environment \
-    --exclude='suppakit-chalermlarp-th-sarabun-psk-fonts' \ 
     --exclude='initial-setup*' \
     --exclude='desktop-backgrounds*' \
     --setopt=install_weak_deps=False
