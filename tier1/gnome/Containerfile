@@ -10,7 +10,8 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
         ultramarine-release-identity-gnome \
         @gnome-desktop \
         @ultramarine-gnome-product-environment \
-        gnome-tweaks
+        gnome-tweaks \
+    --exclude='suppakit-chalermlarp-th-sarabun-psk-fonts'
 
 
 LABEL readymade.prettyname="Ultramarine GNOME Edition"

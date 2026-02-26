@@ -8,6 +8,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     --action=install \
     ultramarine-release-identity-budgie \
     @ultramarine-budgie-product-environment \
+    --exclude='suppakit-chalermlarp-th-sarabun-psk-fonts' \
     --exclude='budgie-desktop-defaults'
 
 LABEL readymade.prettyname="Ultramarine Budgie Edition"
