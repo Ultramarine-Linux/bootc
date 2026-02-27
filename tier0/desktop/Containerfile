@@ -5,6 +5,7 @@ COPY systemd/flatpak-add-flathub-repos.service /usr/lib/systemd/system/flatpak-a
 COPY 20-rhgb.toml /usr/lib/bootc/kargs.d/
 COPY systemd/packagekit.service.d /usr/lib/systemd/system/packagekit.service.d/
 COPY libdnf.conf.d/ /usr/share/dnf5/libdnf.conf.d/
+COPY repos.override.d/ /usr/share/dnf5/repos.override.d/
 
 RUN setfattr -n user.component -v "ultramarine-desktop" /usr/lib/bootc/kargs.d/20-rhgb.toml && \
     setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/flatpak-add-flathub-repos.service && \
@@ -43,6 +44,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     PackageKit-bootc \
     tuned-ppd \
     powertop \
+    btop \
     tuned-profiles-atomic \
     plymouth-system-theme \
     @base-graphical && \
