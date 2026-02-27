@@ -1,7 +1,7 @@
 builder: dnf
 
 dnf:
-  releasever: 43
+  releasever: 44
   exec: dnf
   repodir: repodir
   options:
