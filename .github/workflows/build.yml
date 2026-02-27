@@ -13,11 +13,7 @@ on:
       - "tier1/**"
       - "tier2/**"
       - ".github/workflows/**"
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
   schedule:
     - cron: "0 1 * * TUE" # Every Tuesday at 1am UTC
   merge_group:
