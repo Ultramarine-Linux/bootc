@@ -1,5 +1,10 @@
 name: Build disk images
 permissions: write-all
+
+env:
+  FALLBACK_BRANCH: "44"
+  BUILD_TAG: ${{ github.ref_name || env.FALLBACK_BRANCH }}
+
 on:
   schedule:
     - cron: "0 4 * * *" # every day at 4am UTC
@@ -19,13 +24,13 @@ jobs:
         arch: [x86_64, aarch64]
         variant:
           - name: gnome
-            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ github.ref_name || 'main' }} 
+            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ env.BUILD_TAG }}
           - name: plasma
-            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ github.ref_name || 'main' }} 
+            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ env.BUILD_TAG }}
           - name: xfce
-            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ github.ref_name || 'main' }} 
+            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ env.BUILD_TAG }}
           - name: budgie
-            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ github.ref_name || 'main' }} 
+            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ env.BUILD_TAG }}
     name: Build disk images
     runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
@@ -60,7 +65,7 @@ jobs:
           IMAGE_TAG=${{ matrix.variant.image }}
           IMAGE_SIZE=24G
           FILESYSTEM=btrfs
-          
+
           # Create disk image
           fallocate -l $IMAGE_SIZE disk.raw
           # Build disk image using bootc install to-disk
@@ -70,7 +75,7 @@ jobs:
             --via-loopback \
             --generic-image \
             --filesystem $FILESYSTEM
-          
+
           xz -9 -T0 disk.raw
 
 
