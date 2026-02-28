@@ -6,6 +6,7 @@ COPY 20-rhgb.toml /usr/lib/bootc/kargs.d/
 COPY systemd/packagekit.service.d /usr/lib/systemd/system/packagekit.service.d/
 COPY libdnf.conf.d/ /usr/share/dnf5/libdnf.conf.d/
 COPY repos.override.d/ /usr/share/dnf5/repos.override.d/
+COPY yum.repos.d/ /etc/yum.repos.d/
 
 RUN setfattr -n user.component -v "ultramarine-desktop" /usr/lib/bootc/kargs.d/20-rhgb.toml && \
     setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/flatpak-add-flathub-repos.service && \
