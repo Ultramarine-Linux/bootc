@@ -460,9 +460,12 @@ jobs:
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
         id: metadata
         with:
+          # Tag 43 for now
+          # new default branch will be 44 later so main is 43 at the moment
           tags: |
             type=raw,value=${{ env.BASE_TAG }}${{ env.TAG_SUFFIX }}
             type=raw,value=latest${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == env.DEFAULT_BRANCH }}
+            type=raw,value=43${{ env.TAG_SUFFIX }}
             type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == env.DEFAULT_BRANCH }}
             type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
 
