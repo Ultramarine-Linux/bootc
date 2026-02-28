@@ -57,13 +57,7 @@ COPY desktop.sh /tmp/desktop.sh
 
 RUN --mount=type=cache,target=/var/cache sh -c '/tmp/desktop.sh && rm -f /tmp/desktop.sh'
 
-
-# Remove all taidan tweaks, this is bootc
-RUN rm -rfv /usr/share/taidan/tweaks/*
-
 COPY live-setup.sh /tmp/live-setup.sh
 
 RUN chmod +x /tmp/live-setup.sh && \
-sh -c '/tmp/live-setup.sh && rm -f /tmp/live-setup.sh'
-
-RUN bootc internals relabel /
+    sh -c '/tmp/live-setup.sh && rm -f /tmp/live-setup.sh'
