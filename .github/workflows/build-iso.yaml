@@ -61,6 +61,7 @@ jobs:
         run: |
           set -x
           just image_tag=${{ matrix.variant.image }} katsu-live
+          mv out.iso ./${{ matrix.variant.name }}-${{ matrix.arch }}.iso
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
