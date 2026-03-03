@@ -3,7 +3,9 @@ permissions: write-all
 
 env:
   FALLBACK_BRANCH: "44"
-  BUILD_TAG: ${{ github.ref_name || env.FALLBACK_BRANCH }}
+
+# BUILD_TAG will be calculated within a job because the top-level
+# env section can't reference other env variables in expressions.
 
 on:
   schedule:
@@ -18,6 +20,9 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-iso:
+    # BUILD_TAG computed here where env references are allowed
+    env:
+      BUILD_TAG: ${{ github.ref_name || env.FALLBACK_BRANCH }}
     strategy:
       fail-fast: false
       matrix:
@@ -79,8 +84,6 @@ jobs:
           xz -9 -T0 disk.raw
 
           mv disk.raw.xz ./${{ matrix.variant.name }}-${{ matrix.arch }}.img.xz
-
-
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
