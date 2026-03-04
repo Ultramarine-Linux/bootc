@@ -1,5 +1,6 @@
 FROM ghcr.io/ultramarine-linux/desktop-bootc:main
 COPY . /usr/src/ultramarine-bootc/tier1/plasma
+# Milou is required module for KRunner, upstream packaging forgot to depend
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \
@@ -11,6 +12,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     plasma-discover-packagekit \
     @ultramarine-plasma-product-environment \
     @ultramarine-plasma-no-flatpak-apps \
+    plasma-milou \
     --exclude='desktop-backgrounds*' \
     --setopt=install_weak_deps=False
 
