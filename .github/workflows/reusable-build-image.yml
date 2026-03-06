@@ -465,7 +465,6 @@ jobs:
           tags: |
             type=raw,value=${{ env.BASE_TAG }}${{ env.TAG_SUFFIX }}
             type=raw,value=latest${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == env.DEFAULT_BRANCH }}
-            type=raw,value=43${{ env.TAG_SUFFIX }}
             type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == env.DEFAULT_BRANCH }}
             type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
 
