@@ -13,6 +13,9 @@ RUN setfattr -n user.component -v "ultramarine-desktop" /usr/lib/bootc/kargs.d/2
     setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/packagekit.service.d && \
     setfattr -n user.component -v "ultramarine-desktop-config" /usr/src/ultramarine-bootc/tier0/desktop
 
+
+# todo: move the udev rules stuff into a hardware support group
+    
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \
@@ -32,6 +35,10 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     speech-dispatcher-espeak-ng \
     mkfstab \
     um \
+    steam-device-rules \
+    8bitdo-udev-rules \
+    udev-joystick-blacklist \
+    android-udev-rules \
     moby-engine \
     docker-compose \
     podman \
