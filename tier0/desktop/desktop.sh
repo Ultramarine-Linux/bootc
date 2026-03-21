@@ -15,6 +15,9 @@ sed -i 's/#DefaultBackend=.*/DefaultBackend=bootc/' /etc/PackageKit/PackageKit.c
 
 setfattr -n user.component -v "packagekit-config" /etc/PackageKit/PackageKit.conf
 
+# Remove DNF backend from PackageKit for good measure, this will be re-installed on `standard`
+rm -f /usr/lib64/packagekit-backend/libpk_backend_dnf.so
+
 echo ntsync | tee /usr/lib/modules-load.d/ntsync.conf
 
 dracut_rebuild
