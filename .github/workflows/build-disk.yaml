@@ -4,9 +4,6 @@ permissions: write-all
 env:
   FALLBACK_BRANCH: "44"
 
-# BUILD_TAG will be calculated within a job because the top-level
-# env section can't reference other env variables in expressions.
-
 on:
   schedule:
     - cron: "0 4 * * *" # every day at 4am UTC
@@ -15,27 +12,26 @@ on:
     workflows: ["Build bootc images"]
     types:
       - completed
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
+
 jobs:
   build-iso:
-    # BUILD_TAG computed here where env references are allowed
-    env:
-      BUILD_TAG: ${{ github.ref_name || env.FALLBACK_BRANCH }}
     strategy:
       fail-fast: false
       matrix:
         arch: [x86_64, aarch64]
         variant:
           - name: gnome
-            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ env.BUILD_TAG }}
+            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ github.ref_name }}
           - name: plasma
-            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ env.BUILD_TAG }}
+            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ github.ref_name }}
           - name: xfce
-            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ env.BUILD_TAG }}
+            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ github.ref_name }}
           - name: budgie
-            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ env.BUILD_TAG }}
+            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ github.ref_name }}
     name: Build disk images
     runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
