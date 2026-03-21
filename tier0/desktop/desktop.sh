@@ -15,4 +15,6 @@ sed -i 's/#DefaultBackend=.*/DefaultBackend=bootc/' /etc/PackageKit/PackageKit.c
 
 setfattr -n user.component -v "packagekit-config" /etc/PackageKit/PackageKit.conf
 
+echo ntsync | tee /usr/lib/modules-load.d/ntsync.conf
+
 dracut_rebuild
