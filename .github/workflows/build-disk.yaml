@@ -1,5 +1,9 @@
 name: Build disk images
 permissions: write-all
+
+env:
+  FALLBACK_BRANCH: "44"
+
 on:
   schedule:
     - cron: "0 4 * * *" # every day at 4am UTC
@@ -8,9 +12,11 @@ on:
     workflows: ["Build bootc images"]
     types:
       - completed
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
+
 jobs:
   build-iso:
     strategy:
@@ -19,13 +25,13 @@ jobs:
         arch: [x86_64, aarch64]
         variant:
           - name: gnome
-            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ github.ref_name || 'main' }} 
+            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ github.ref_name }}
           - name: plasma
-            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ github.ref_name || 'main' }} 
+            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ github.ref_name }}
           - name: xfce
-            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ github.ref_name || 'main' }} 
+            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ github.ref_name }}
           - name: budgie
-            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ github.ref_name || 'main' }} 
+            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ github.ref_name }}
     name: Build disk images
     runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 

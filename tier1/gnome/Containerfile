@@ -10,6 +10,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
         ultramarine-release-identity-gnome \
         @gnome-desktop \
         @ultramarine-gnome-product-environment \
+        @ultramarine-gnome-no-flatpak-apps \
         gnome-tweaks
 
 

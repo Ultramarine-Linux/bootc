@@ -56,7 +56,8 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     btop \
     tuned-profiles-atomic \
     plymouth-system-theme \
-    @base-graphical && \
+    @base-graphical \
+    --exclude='PackageKit-command-not-found' && \
     dnf clean all
 
 
@@ -70,3 +71,4 @@ COPY live-setup.sh /tmp/live-setup.sh
 
 RUN chmod +x /tmp/live-setup.sh && \
     sh -c '/tmp/live-setup.sh && rm -f /tmp/live-setup.sh'
+
