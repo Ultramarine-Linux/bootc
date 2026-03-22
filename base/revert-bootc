@@ -29,7 +29,7 @@ sed -i '/^HOME=\/var\/home$/d' /etc/default/useradd || true
 
 # Comment out PackageKit ostree backend
 sed -i 's/DefaultBackend=.*/#DefaultBackend=/' /etc/PackageKit/PackageKit.conf
-dnf do --action=install PackageKit-command-not-found --action=reinstall PackageKit
+dnf do --action=install PackageKit-command-not-found appstream-data --action=reinstall PackageKit
 dnf clean all
 
 KERNEL_VERSION=$(get_kernel_version)

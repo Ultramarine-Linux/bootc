@@ -15,7 +15,7 @@ RUN setfattr -n user.component -v "ultramarine-desktop" /usr/lib/bootc/kargs.d/2
 
 
 # todo: move the udev rules stuff into a hardware support group
-    
+
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \
@@ -58,6 +58,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     plymouth-system-theme \
     @base-graphical \
     --exclude='PackageKit-command-not-found' && \
+    --exclude='appstream-data' && \
     dnf clean all
 
 
@@ -71,4 +72,3 @@ COPY live-setup.sh /tmp/live-setup.sh
 
 RUN chmod +x /tmp/live-setup.sh && \
     sh -c '/tmp/live-setup.sh && rm -f /tmp/live-setup.sh'
-
