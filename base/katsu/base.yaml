@@ -13,6 +13,7 @@ dnf:
     #- --setopt=multilib_policy=all
     # HACK: use packages in Terra when Fusion is broken
     - --nobest
+    - --nogpgcheck
   exclude:
     - fedora-release*
     - generic-release*
