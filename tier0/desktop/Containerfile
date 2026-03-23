@@ -57,7 +57,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     tuned-profiles-atomic \
     plymouth-system-theme \
     @base-graphical \
-    --exclude='PackageKit-command-not-found' && \
+    --exclude='PackageKit-command-not-found' \
     --exclude='appstream-data' && \
     dnf clean all
 
