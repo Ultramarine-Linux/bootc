@@ -70,5 +70,7 @@ RUN --mount=type=cache,target=/var/cache sh -c '/tmp/desktop.sh && rm -f /tmp/de
 
 COPY live-setup.sh /tmp/live-setup.sh
 
+COPY taidan.toml /etc/taidan.toml
+
 RUN chmod +x /tmp/live-setup.sh && \
     sh -c '/tmp/live-setup.sh && rm -f /tmp/live-setup.sh'
