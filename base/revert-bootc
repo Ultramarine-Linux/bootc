@@ -43,6 +43,9 @@ mkdir -p /boot/efi
 # Copy EFI files
 rsync -av /usr/lib/efi/*/*/EFI/ /boot/efi/EFI/
 
+# taidan - remove custom config
+rm -f /etc/taidan.toml
+
 # copy GRUB files
 
 rsync -av /usr/lib/grub/ /boot/grub2/
