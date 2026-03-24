@@ -58,6 +58,11 @@ RUN mkdir -p /sysroot/ostree && ln -srvf /sysroot/ostree /ostree
 COPY prepare-root.conf /usr/lib/ostree/prepare-root.conf
 COPY dracut/55-ostree.conf /usr/lib/dracut/dracut.conf.d/55-ostree.conf
 
+# This is required for an nss-altfiles to non-nss-altfiles transition
+COPY files/rechunker-fix/rechunker-group-fix /usr/bin/rechunker-group-fix
+COPY ./files/rechunker-fix/rechunker-group-fix.service /usr/lib/systemd/system/rechunker-group-fix.service
+RUN systemctl enable rechunker-group-fix
+
 COPY revert-bootc /usr/libexec/revert-bootc
 
 
