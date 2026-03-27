@@ -108,6 +108,7 @@ jobs:
       matrix:
         flavor:
           - desktop
+          - server
     with:
       image-name: ultramarine-tier0
       flavor: ${{ matrix.flavor }}
