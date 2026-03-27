@@ -2,7 +2,7 @@
 
 # Revert the ostree-specific changes made in the Dockerfile, so that the image can be used
 # in a standard installation.
-# 
+#
 # This should only be run in a mutable installation context, not in an ostree-booted system.
 
 set -x
@@ -29,7 +29,7 @@ sed -i '/^HOME=\/var\/home$/d' /etc/default/useradd || true
 
 # Comment out PackageKit ostree backend
 sed -i 's/DefaultBackend=.*/#DefaultBackend=/' /etc/PackageKit/PackageKit.conf
-dnf do --action=install PackageKit-command-not-found appstream-data --action=reinstall PackageKit
+dnf do --action=install PackageKit-command-not-found --action=reinstall PackageKit appstream-data
 dnf clean all
 
 KERNEL_VERSION=$(get_kernel_version)
