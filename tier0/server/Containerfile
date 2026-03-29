@@ -28,5 +28,4 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     cockpit-networkmanager \
     cockpit-storaged \
     tailscale \
-    podlet \
-    containers-common-extras
+    podlet
