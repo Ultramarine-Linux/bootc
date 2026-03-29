@@ -1,0 +1,31 @@
+FROM ghcr.io/ultramarine-linux/base-bootc:main
+
+COPY . /usr/src/ultramarine-bootc/tier0/server
+
+
+
+# todo: move the udev rules stuff into a hardware support group
+
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --no-best \
+    --allowerasing \
+    --action install \
+    speech-dispatcher-espeak-ng \
+    moby-engine \
+    docker-compose \
+    podman \
+    container-selinux \
+    tuned-ppd \
+    powertop \
+    btop \
+    tuned-profiles-atomic \
+    tuned-profiles-cpu-partitioning \
+    tuned-profiles-realtime \
+    cockpit \
+    cockpit-ws-selinux \
+    cockpit-podman \
+    cockpit-ostree \
+    cockpit-networkmanager \
+    cockpit-storaged \
+    tailscale \
+    podlet
