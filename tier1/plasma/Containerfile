@@ -16,6 +16,14 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     --exclude='desktop-backgrounds*' \
     --setopt=install_weak_deps=False
 
+    
+# HACK:
+# for some reason qtvirtualkeyboard is not getting installed properly
+# but it is required for plasma-keyboard to actually work
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --action=reinstall \
+    qt6-qtvirtualkeyboard
+    
 RUN sed -i 's/^livesys_session=.*/livesys_session="kde"/' /etc/sysconfig/livesys
 
 
