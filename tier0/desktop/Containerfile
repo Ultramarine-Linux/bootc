@@ -60,9 +60,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     --exclude='PackageKit-command-not-found' && \
     dnf clean all
 
-# HACK: Remove the SW Catalog, will confuse users and wont work in bootc anyway
-# we'll reinstall it on standard builds
-RUN rm -rf /usr/share/swcatalog
 
 RUN plymouth-set-default-theme bgrt
 
