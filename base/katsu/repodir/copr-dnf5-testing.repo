@@ -1,0 +1,11 @@
+[copr:copr.fedorainfracloud.org:rpmsoftwaremanagement:dnf5-testing]
+name=Copr repo for dnf5-testing owned by rpmsoftwaremanagement
+baseurl=https://download.copr.fedorainfracloud.org/results/rpmsoftwaremanagement/dnf5-testing/fedora-$releasever-$basearch/
+type=rpm-md
+skip_if_unavailable=True
+gpgcheck=1
+gpgkey=https://download.copr.fedorainfracloud.org/results/rpmsoftwaremanagement/dnf5-testing/pubkey.gpg
+repo_gpgcheck=0
+enabled=1
+enabled_metadata=1
+priority=50
