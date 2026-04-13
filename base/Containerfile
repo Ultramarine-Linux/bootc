@@ -88,9 +88,9 @@ RUN setfattr -n user.component -v "bootupd" /usr/lib/ostree-boot \
 RUN bootupctl backend generate-update-metadata
 
 # TODO: Probably somehow handle this for standard installs too?
-# 
+#
 # Consider making readymade revert these changes for standard mode? Or a script to run post-deploy?
-# 
+#
 # # Right now we just have post-deploy script that does this for us, but consider
 # handling this properly somehow
 RUN echo "HOME=/var/home" | tee "/etc/default/useradd"
@@ -116,8 +116,9 @@ RUN ln -sf /var/opt /opt && \
     ln -sf /var/media /media
 
 # Add Nix support
-RUN mkdir -p /var/nix && ln -srf /var/nix /nix && chmod 1777 /var/nix
-    
+RUN mkdir -p /var/nix /nix
+COPY files/nix/nix.mount /etc/systemd/system/nix.mount
+
 # Tmpfiles configuration
 RUN echo "$(for dir in opt usrlocal home srv mnt nix ; do echo "d /var/$dir 0755 root root -" ; done)" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf && \
     echo "d /var/roothome 0700 root root -" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf && \
