@@ -571,6 +571,7 @@ jobs:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           TAG_SUFFIX: ${{ env.TAG_SUFFIX }}
           BASE_TAG: ${{ env.BASE_TAG }}
+          PODMAN_COMPRESSION: "--add-compression zstd:chunked --add-compression zstd --compression-format zstd:chunked"
         run: |
           set -euo pipefail
           mapfile -t tag_array <<< "$TAGS"
@@ -592,7 +593,7 @@ jobs:
 
           # Push manifest once to capture the digest
           first_tag=${tag_array[0]}
-          podman manifest push --all --digestfile=/tmp/digestfile "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$first_tag"
+          podman manifest push $PODMAN_COMPRESSION --all --digestfile=/tmp/digestfile "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$first_tag"
           DIGEST=$(cat /tmp/digestfile)
           echo "Pushed manifest with digest: $DIGEST"
 
@@ -600,7 +601,7 @@ jobs:
           if [ ${#tag_array[@]} -gt 1 ]; then
             for tag in "${tag_array[@]:1}"; do
               echo "Pushing manifest to tag: $tag"
-              podman manifest push --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag"
+              podman manifest push $PODMAN_COMPRESSION --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag"
             done
           fi
 
@@ -618,7 +619,7 @@ jobs:
             if [ "${BASE_TAG:-}" = "${DEFAULT_BRANCH:-}" ]; then
               latest_tag="latest${TAG_SUFFIX:-}"
               echo "Force-syncing $latest_tag to digest $DIGEST"
-              podman manifest push --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag"
+              podman manifest push $PODMAN_COMPRESSION --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag"
               synced=$(skopeo inspect --format '{{.Digest}}' "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag")
               if [ "$synced" != "$DIGEST" ]; then
                 echo "ERROR: $latest_tag still points to $synced after sync (expected $DIGEST)" >&2
