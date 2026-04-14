@@ -68,7 +68,7 @@ chunkah:
     #!/usr/bin/bash
     IMG="{{ image_tag }}"
     export CHUNKAH_CONFIG_STR=$(podman inspect $IMG)
-    podman run --rm --mount=type=image,src=$IMG,dest=/chunkah -e CHUNKAH_CONFIG_STR quay.io/jlebon/chunkah build | podman load
+    podman run --rm --mount=type=image,src=$IMG,dest=/chunkah -e CHUNKAH_CONFIG_STR quay.io/coreos/chunkah build | podman load
 
 # bootc {args}
 bootc *ARGS:
