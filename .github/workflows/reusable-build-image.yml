@@ -188,7 +188,7 @@ jobs:
 
       - name: Build Image
         id: build-image
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
@@ -715,7 +715,7 @@ jobs:
       ## Write for matrix outputs workaround
       # todo: refer to https://github.com/marketplace/actions/matrix-outputs-write
       # https://github.com/cloudposse/github-action-matrix-outputs-read
-      - uses: cloudposse/github-action-matrix-outputs-write@v1
+      - uses: cloudposse/github-action-matrix-outputs-write@ed06cf3a6bf23b8dce36d1cf0d63123885bb8375
         id: out
         with:
           matrix-step-name: ${{ inputs.image-name }}
@@ -782,8 +782,9 @@ jobs:
           just image_tag=${{ needs.manifest.outputs.image }}@${{ needs.manifest.outputs.digest }} katsu-live
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: iso-artifact-${{ github.run_id }}-${{ inputs.flavor }}-${{ matrix.platform_safe }}
           path: ./*.iso
           compression-level: 0
+          archive: false
