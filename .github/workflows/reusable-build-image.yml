@@ -445,7 +445,6 @@ jobs:
 
       - name: Create Job Outputs
         # if: github.event_name != 'pull_request'
-        shell: /usr/bin/bash
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           PLATFORM: ${{ matrix.platform }}
