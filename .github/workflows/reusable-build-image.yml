@@ -456,7 +456,7 @@ jobs:
 
       - name: Upload Output Artifacts
         # if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           name: ${{ env.IMAGE_NAME }}-${{ inputs.flavor }}${{ inputs.tag-suffix }}-${{ github.run_id }}-${{ matrix.platform_safe }}
           retention-days: 1
