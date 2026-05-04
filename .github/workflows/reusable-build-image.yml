@@ -145,7 +145,9 @@ jobs:
       - name: Install dependencies
         run: |
           apt update
-          apt install -y --no-install-recommends git make podman buildah jq sudo ca-certificates udev fuse-overlayfs
+          apt install -y --no-install-recommends git make podman buildah jq sudo ca-certificates udev fuse-overlayfs \
+            python3 python3-pip python3-pefile python3-pyelftools python3-cryptography \
+            systemd-container bubblewrap ovmf ukify
           # hack to let the mkosi action work later
           mkdir -p /usr/lib/tmpfiles.d/
           touch /usr/lib/tmpfiles.d/static-nodes-permissions.conf
