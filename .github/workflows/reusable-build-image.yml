@@ -142,21 +142,23 @@ jobs:
       options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse -v /var/tmp:/var/tmp -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys:/sys --cgroupns=host
 
     steps:
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
       - name: Install dependencies
         run: |
           # install mkosi to get deps
           dnf install -y sudo fuse-overlayfs mkosi podman
           # then remove mkosi without removing the deps
           rpm -e mkosi
+          # enable cgroup delegation for rootless podman
+          sudo mkdir -p /sys/fs/cgroup/libpod_parent
+          echo "+cpuset +cpu +io +memory +pids" | \
+            sudo tee /sys/fs/cgroup/cgroup.subtree_control
           # configure podman to use cgroupfs (no systemd init in GHA runner)
           mkdir -p /etc/containers
-          cat >> /etc/containers/containers.conf << 'EOF'
-          [engine]
-          cgroup_manager = "cgroupfs"
-          events_logger = "file"
-          EOF
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+          cp .github/containers.ci.conf /etc/containers/containers.conf
 
       - name: Set tag variables
         run: |
@@ -401,6 +403,7 @@ jobs:
         # if: github.event_name != 'pull_request'
 
       - name: Sign Image
+        shell: bash
         # if: github.event_name != 'pull_request'
         run: |
           IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${IMAGE_NAME}"
@@ -412,6 +415,7 @@ jobs:
 
       - name: Create Job Outputs
         # if: github.event_name != 'pull_request'
+        shell: bash
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           PLATFORM: ${{ matrix.platform }}
@@ -451,7 +455,7 @@ jobs:
       manifest: ${{ steps.push_manifest.outputs.MANIFEST }}
       tags: ${{ steps.push_manifest.outputs.TAGS }}
     steps:
-      - name: Install dependencies
+      - name: Install dependencies  
         run: |
           apk add \
             jq \
@@ -469,7 +473,7 @@ jobs:
           mkdir -p /etc/containers
           echo '{"default":[{"type":"insecureAcceptAnything"}]}' | jq . > /etc/containers/policy.json
 
-      - name: Exit on failure
+      - name: Exit on failure  
         env:
           JOBS: ${{ toJson(needs) }}
         run: |
@@ -484,7 +488,7 @@ jobs:
             fi
           done
 
-      - name: Get current date
+      - name: Get current date  
         id: date
         run: |
           # Should generate a timestamp like what is defined on the ArtifactHub documentation
@@ -493,7 +497,7 @@ jobs:
           # https://linux.die.net/man/1/date
           echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
 
-      - name: Set tag variables
+      - name: Set tag variables  
         id: set-tags
         run: |
           # Set tag suffix
