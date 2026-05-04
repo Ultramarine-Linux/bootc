@@ -146,6 +146,10 @@ jobs:
         run: |
           apt update
           apt install -y --no-install-recommends git make podman buildah jq sudo ca-certificates
+          # hack to let the mkosi action work later
+          mkdir -p /usr/lib/tmpfiles.d/
+          touch /usr/lib/tmpfiles.d/static-nodes-permissions.conf
+          mkdir -p /etc/udev/rules.d/
 
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
