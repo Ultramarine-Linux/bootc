@@ -145,7 +145,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt update
-          apt install -y --no-install-recommends git make podman buildah jq sudo ca-certificates
+          apt install -y --no-install-recommends git make podman buildah jq sudo ca-certificates udev
           # hack to let the mkosi action work later
           mkdir -p /usr/lib/tmpfiles.d/
           touch /usr/lib/tmpfiles.d/static-nodes-permissions.conf
