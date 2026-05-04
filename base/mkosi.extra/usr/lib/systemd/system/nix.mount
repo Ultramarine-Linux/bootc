@@ -1,0 +1,12 @@
+[Unit]
+Description=Nix compatibility mount
+After=local-fs.target
+
+[Mount]
+What=/var/nix
+Where=/nix
+Type=none
+Options=bind
+
+[Install]
+WantedBy=local-fs.target
