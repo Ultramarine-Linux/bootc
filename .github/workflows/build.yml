@@ -87,6 +87,7 @@ jobs:
       flavor: base
       tag: ${{ needs.normalize.outputs.tag }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
+      mkosi: true
 
   # todo: maybe tier0 for desktop base images?
   #
