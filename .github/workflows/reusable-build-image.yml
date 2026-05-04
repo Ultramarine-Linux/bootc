@@ -484,9 +484,6 @@ jobs:
       manifest: ${{ steps.push_manifest.outputs.MANIFEST }}
       tags: ${{ steps.push_manifest.outputs.TAGS }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
       - name: Install dependencies
         run: |
           apk add \
@@ -501,6 +498,12 @@ jobs:
             libstdc++ \
             fuse-overlayfs \
             skopeo
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Configure containers
+        run: |
           ln -sf /bin/bash /bin/sh
           mkdir -p /etc/containers/registries.d
           echo '{"default":[{"type":"insecureAcceptAnything"}]}' | jq . > /etc/containers/policy.json
