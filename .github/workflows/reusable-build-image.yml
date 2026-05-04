@@ -147,7 +147,7 @@ jobs:
           apt update
           apt install -y --no-install-recommends git make podman buildah jq sudo ca-certificates udev fuse-overlayfs \
             python3 python3-pip python3-pefile python3-pyelftools python3-cryptography \
-            systemd-container bubblewrap ovmf
+            systemd-container bubblewrap ovmf debian-archive-keyring
           # hack to let the mkosi action work later
           mkdir -p /usr/lib/tmpfiles.d/
           touch /usr/lib/tmpfiles.d/static-nodes-permissions.conf
@@ -280,7 +280,7 @@ jobs:
           mkdir -p /usr/local/src
           git clone https://github.com/systemd/mkosi /usr/local/src/mkosi
           cd /usr/local/src/mkosi
-          git checkout 84af20892b61c8e177e391f997ded8b4cb5514f2
+          git checkout 9a28ad20bbea61894ea7b971d318a71f4374cf3b
           ln -sv $PWD/bin/mkosi /usr/bin/mkosi
           chmod +x /usr/bin/mkosi
           ln -sv $PWD/bin/mkosi-addon /usr/bin/mkosi-addon
