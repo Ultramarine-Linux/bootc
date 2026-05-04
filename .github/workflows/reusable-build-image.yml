@@ -139,13 +139,13 @@ jobs:
       id-token: write
     container:
       image: ubuntu:24.04
-      options: --privileged --security-opt label=disable
+      options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse
 
     steps:
       - name: Install dependencies
         run: |
           apt update
-          apt install -y --no-install-recommends git make podman buildah jq sudo ca-certificates udev
+          apt install -y --no-install-recommends git make podman buildah jq sudo ca-certificates udev fuse-overlayfs
           # hack to let the mkosi action work later
           mkdir -p /usr/lib/tmpfiles.d/
           touch /usr/lib/tmpfiles.d/static-nodes-permissions.conf
@@ -274,8 +274,19 @@ jobs:
 
             build
       - name: setup-mkosi
-        uses: systemd/mkosi@84af20892b61c8e177e391f997ded8b4cb5514f2
         if: inputs.mkosi == true
+        run: |
+          mkdir -p /usr/local/src
+          git clone https://github.com/systemd/mkosi /usr/local/src/mkosi
+          cd /usr/local/src/mkosi
+          git checkout 84af20892b61c8e177e391f997ded8b4cb5514f2
+          ln -s $PWD/mkosi/bin/mkosi /usr/bin/mkosi
+          ln -s $PWD/mkosi/bin/mkosi-addon /usr/bin/mkosi-addon
+          ln -s $PWD/mkosi/bin/mkosi-initrd /usr/bin/mkosi-initrd
+          ln -s $PWD/mkosi/bin/mkosi-sandbox /usr/bin/mkosi-sandbox
+          mkosi --version || true
+
+        shell: bash
         
       - name: Build Image (mkosi)
         id: build-image
@@ -299,7 +310,6 @@ jobs:
           DIGEST=$(cat /tmp/digest)
           sudo podman tag "${DIGEST}" "localhost/${FLAVOR}-bootc:build"
           
-            
 
 
       # - name: Run Rechunker
