@@ -25,6 +25,8 @@ test:
 
 ball: (build) (rechunk)
 
+mkosi-build:
+    mkosi -C {{ context }} build -B
 
 katsu-live:
     #!/usr/bin/bash -x
