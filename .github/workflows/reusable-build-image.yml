@@ -192,7 +192,6 @@ jobs:
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin $registry
 
-
       # - name: Mount BTRFS loopback
       #   uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
       #   with:
@@ -280,18 +279,17 @@ jobs:
           git clone https://github.com/systemd/mkosi /usr/local/src/mkosi
           cd /usr/local/src/mkosi
           git checkout 84af20892b61c8e177e391f997ded8b4cb5514f2
-          ln -sv $PWD/mkosi/bin/mkosi /usr/bin/mkosi
+          ln -sv $PWD/bin/mkosi /usr/bin/mkosi
           chmod +x /usr/bin/mkosi
-          ln -sv $PWD/mkosi/bin/mkosi-addon /usr/bin/mkosi-addon
+          ln -sv $PWD/bin/mkosi-addon /usr/bin/mkosi-addon
           chmod +x /usr/bin/mkosi-addon
-          ln -sv $PWD/mkosi/bin/mkosi-initrd /usr/bin/mkosi-initrd
+          ln -sv $PWD/bin/mkosi-initrd /usr/bin/mkosi-initrd
           chmod +x /usr/bin/mkosi-initrd
-          ln -sv $PWD/mkosi/bin/mkosi-sandbox /usr/bin/mkosi-sandbox
+          ln -sv $PWD/bin/mkosi-sandbox /usr/bin/mkosi-sandbox
           chmod +x /usr/bin/mkosi-sandbox
           mkosi --version
-
         shell: bash
-        
+
       - name: Build Image (mkosi)
         id: build-image
         if: inputs.mkosi == true
@@ -313,8 +311,6 @@ jobs:
           sudo podman pull "oci:${OUTPUT_DIR}" > /tmp/digest
           DIGEST=$(cat /tmp/digest)
           sudo podman tag "${DIGEST}" "localhost/${FLAVOR}-bootc:build"
-          
-
 
       # - name: Run Rechunker
       #   if: github.event_name != 'pull_request'
