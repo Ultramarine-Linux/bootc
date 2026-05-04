@@ -145,7 +145,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt update
-          apt install -y --no-install-recommends git make podman buildah jq sudo
+          apt install -y --no-install-recommends git make podman buildah jq sudo ca-certificates
 
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
