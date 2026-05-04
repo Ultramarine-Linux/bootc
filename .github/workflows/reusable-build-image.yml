@@ -187,7 +187,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin $registry
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login -u ${{ github.actor }} --password-stdin $registry
       - name: Login to Quay.io
         # if: github.event_name != 'pull_request'
         env:
@@ -196,7 +195,7 @@ jobs:
           password: ${{ secrets.QUAY_TOKEN }}
         run: |
           echo ${{ secrets.QUAY_TOKEN }} | sudo podman login -u $username --password-stdin $registry
-          echo ${{ secrets.QUAY_TOKEN }} | docker login -u $username --password-stdin $registry
+
 
       # - name: Mount BTRFS loopback
       #   uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
