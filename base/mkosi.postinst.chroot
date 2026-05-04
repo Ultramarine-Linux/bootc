@@ -1,0 +1,49 @@
+#!/bin/bash
+set -xeuo pipefail
+
+KERNEL_PATH="$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)"
+dracut --force "${KERNEL_PATH}/initramfs.img" --kver "$(basename "${KERNEL_PATH}")"
+
+# THIS IS A HACK: remove when fedora verssion being used starts using standard `/usr/lib/efi/` components (post 43)
+mv /boot /usr/lib/ostree-boot
+
+bootupctl backend generate-update-metadata
+
+# Necessary for general behavior expected by image-based systems
+sed -i 's|^HOME=.*|HOME=/var/home|' "/etc/default/useradd"
+
+rm -rf /home /root /usr/local /srv /opt /mnt /usr/local /boot
+mkdir -p /boot /var /sysroot/ostree
+ln -sT /sysroot/ostree /ostree
+ln -sT var/home /home
+ln -sT var/mnt /mnt
+ln -sT var/opt /opt
+ln -sT var/roothome /root
+ln -sT var/srv /srv
+ln -sT ../../var/usrlocal /usr/local
+
+setfattr -n user.component -v "bootupd" /usr/lib/ostree-boot
+setfattr -n user.component -v "bootupd-efi" /usr/lib/ostree-boot/efi
+
+# Automatic updates without rebooting the system all the time
+sed -i 's|^OnUnitInactiveSec=.*|OnUnitInactiveSec=7d\nPersistent=true|' /usr/lib/systemd/system/bootc-fetch-apply-updates.timer
+sed -i 's|#AutomaticUpdatePolicy.*|AutomaticUpdatePolicy=stage|' /etc/rpm-ostreed.conf
+sed -i 's|#LockLayering.*|LockLayering=true|' /etc/rpm-ostreed.conf
+
+# For rootless podman
+chmod 0755 /usr/bin/newuidmap /usr/bin/newgidmap
+chmod u-s /usr/bin/newuidmap
+chmod u-s /usr/bin/newgidmap
+
+# This is done manually on fedora-bootc images, we need this for SELinux modules to be loaded from `/etc` instead of `/var` because we don't redistribute any state from there.
+printf "\n%s\n" "store-root=/etc/selinux" | tee -a /etc/selinux/semanage.conf
+cp -r "/var/lib/selinux/targeted/active" "/etc/selinux/targeted/"
+cp -r "/var/lib/selinux/final" "/etc/selinux/"
+
+stat "/etc/selinux/targeted/active/modules"
+stat "/etc/selinux/targeted/active/booleans.local"
+stat "/etc/selinux/targeted/active/file_contexts"
+stat "/etc/selinux/targeted/active/file_contexts.homedirs"
+stat "/etc/selinux/targeted/active/modules/100/bootupd/cil"
+stat "/etc/selinux/targeted/active/modules/100/bootupd/hll"
+stat "/etc/selinux/targeted/active/modules/100/bootupd/lang_ext"
