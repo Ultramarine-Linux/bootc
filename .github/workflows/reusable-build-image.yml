@@ -283,7 +283,7 @@ jobs:
         run: |
           set -euxo pipefail
           BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
-          mkosi -C "${BUILD_CONTEXT}" build -B
+          sudo mkosi -C "${BUILD_CONTEXT}" build -B
           # find output directory in ${CONTEXT_PATH}/mkosi.output/
           OUTPUT_DIR=$(find ${BUILD_CONTEXT}/mkosi.output/ -type d  | head -n 2 | tail -n 1)
           sudo podman pull "oci:${OUTPUT_DIR}" > /tmp/digest
