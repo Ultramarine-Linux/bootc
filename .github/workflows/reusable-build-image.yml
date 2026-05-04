@@ -403,7 +403,7 @@ jobs:
         # if: github.event_name != 'pull_request'
 
       - name: Sign Image
-        shell: bash
+        shell: /usr/bin/bash
         # if: github.event_name != 'pull_request'
         run: |
           IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${IMAGE_NAME}"
@@ -415,7 +415,7 @@ jobs:
 
       - name: Create Job Outputs
         # if: github.event_name != 'pull_request'
-        shell: bash
+        shell: /usr/bin/bash
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           PLATFORM: ${{ matrix.platform }}
