@@ -384,7 +384,12 @@ jobs:
 
 
           # write the secret to a file
-          echo "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key
+          SIGN_ARG=""
+          if [ -n "${COSIGN_PRIVATE_KEY:-}" ]; then
+            echo "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key
+            trap 'rm -f /tmp/cosign.key' EXIT
+            SIGN_ARG="--sign-by-sigstore-private-key=/tmp/cosign.key"
+          fi
 
           # Tag name that is unique per arch to avoid collisions with multi-arch tags.
           platform_safe=$(echo "$PLATFORM" | tr '/' '-')
@@ -392,7 +397,7 @@ jobs:
 
           for i in {1..3}; do
             # TODO: use docker:// or not use
-            sudo podman --sign-by-sigstore-private-key=/tmp/cosign.key push --digestfile=/tmp/digestfile "$LOCAL_IMAGE" docker://"${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}" && break || sleep $((5 * i));
+            sudo podman push $SIGN_ARG --digestfile=/tmp/digestfile "$LOCAL_IMAGE" docker://"${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}" && break || sleep $((5 * i));
           done
 
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
