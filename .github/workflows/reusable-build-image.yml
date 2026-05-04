@@ -280,11 +280,15 @@ jobs:
           git clone https://github.com/systemd/mkosi /usr/local/src/mkosi
           cd /usr/local/src/mkosi
           git checkout 84af20892b61c8e177e391f997ded8b4cb5514f2
-          ln -s $PWD/mkosi/bin/mkosi /usr/bin/mkosi
-          ln -s $PWD/mkosi/bin/mkosi-addon /usr/bin/mkosi-addon
-          ln -s $PWD/mkosi/bin/mkosi-initrd /usr/bin/mkosi-initrd
-          ln -s $PWD/mkosi/bin/mkosi-sandbox /usr/bin/mkosi-sandbox
-          mkosi --version || true
+          ln -sv $PWD/mkosi/bin/mkosi /usr/bin/mkosi
+          chmod +x /usr/bin/mkosi
+          ln -sv $PWD/mkosi/bin/mkosi-addon /usr/bin/mkosi-addon
+          chmod +x /usr/bin/mkosi-addon
+          ln -sv $PWD/mkosi/bin/mkosi-initrd /usr/bin/mkosi-initrd
+          chmod +x /usr/bin/mkosi-initrd
+          ln -sv $PWD/mkosi/bin/mkosi-sandbox /usr/bin/mkosi-sandbox
+          chmod +x /usr/bin/mkosi-sandbox
+          mkosi --version
 
         shell: bash
         
