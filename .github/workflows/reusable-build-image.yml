@@ -72,6 +72,11 @@ on:
         required: false
         type: boolean
         default: false
+      maximize-build-space:
+        description: "Whether to maximize build space"
+        required: false
+        type: boolean
+        default: true
     outputs:
       image:
         description: "The image name that was built"
@@ -132,6 +137,9 @@ jobs:
       contents: read
       packages: write
       id-token: write
+    container:
+      image: ubuntu:24.04
+      options: --privileged --security-opt label=disable
 
     steps:
       - name: Checkout
@@ -159,6 +167,7 @@ jobs:
 
       # Only uncomment if necessary, your builds are super small anyways
       - name: Maximize build space
+        if: inputs.maximize-build-space
         uses: ublue-os/remove-unwanted-software@695eb75bc387dbcd9685a8e72d23439d8686cba6 # v10
         with:
           remove-codeql: true
