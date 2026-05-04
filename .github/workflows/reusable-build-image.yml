@@ -284,7 +284,7 @@ jobs:
           set -euxo pipefail
           mkosi -C ${CONTEXT_PATH} build -B
           # find output directory in ${CONTEXT_PATH}/mkosi.output/
-          OUTPUT_DIR=$(find ${CONTEXT_PATH}/mkosi.output/ -type d | head -n 1)
+          OUTPUT_DIR=$(find ${CONTEXT_PATH}/mkosi.output/ -type d  | head -n 2 | tail -n 1)
           sudo podman pull oci:${OUTPUT_DIR} > /tmp/digest
           DIGEST=$(cat /tmp/digest)
           sudo podman tag ${DIGEST} "localhost/${FLAVOR}-bootc:build"
