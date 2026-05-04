@@ -301,7 +301,7 @@ jobs:
           CONTAINERFILE: ${{ inputs.containerfile }}
           CONTEXT_PATH: ${{ inputs.context-path }}
         run: |
-          set -euxo pipefail
+          set -eux
           BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
           sudo mkosi -C "${BUILD_CONTEXT}" build -B
           # find output directory in ${CONTEXT_PATH}/mkosi.output/
@@ -332,7 +332,7 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
           FLAVOR: ${{ inputs.flavor }}
         run: |
-          set -xeuo pipefail
+          set -xeu
 
           MAX_LAYERS=128
           IMAGE_REF="localhost/${{ inputs.flavor }}-bootc:build"
@@ -629,7 +629,7 @@ jobs:
           BASE_TAG: ${{ env.BASE_TAG }}
           PODMAN_COMPRESSION: "--add-compression zstd:chunked --add-compression zstd --compression-format zstd:chunked"
         run: |
-          set -euo pipefail
+          set -eu
           mapfile -t tag_array <<< "$TAGS"
 
             # Defensive: if a suffix was requested, refuse to publish unsuffixed tags (prevents nvidia images from clobbering plain latest)
