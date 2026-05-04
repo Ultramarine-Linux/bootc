@@ -187,14 +187,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin $registry
-      - name: Login to Quay.io
-        # if: github.event_name != 'pull_request'
-        env:
-          registry: quay.io
-          username: fyralabs+ultramarine_gha
-          password: ${{ secrets.QUAY_TOKEN }}
-        run: |
-          echo ${{ secrets.QUAY_TOKEN }} | sudo podman login -u $username --password-stdin $registry
 
 
       # - name: Mount BTRFS loopback
