@@ -142,7 +142,6 @@ jobs:
       options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse -v /var/tmp:/var/tmp -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys:/sys --cgroupns=host
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
@@ -157,8 +156,10 @@ jobs:
           echo "+cpuset +cpu +io +memory +pids" | \
             sudo tee /sys/fs/cgroup/cgroup.subtree_control
           # configure podman to use cgroupfs (no systemd init in GHA runner)
-          mkdir -p /etc/containers
+          mkdir -p /etc/containers/registries.d
           cp .github/containers.ci.conf /etc/containers/containers.conf
+          cp .github/ghcr.io.yaml /etc/containers/registries.d/ghcr.io.yaml
+          ln -sf /usr/bin/bash /bin/sh
 
       - name: Set tag variables
         run: |
@@ -374,11 +375,16 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
           BASE_TAG: ${{ env.BASE_TAG }}
           TAG_SUFFIX: ${{ env.TAG_SUFFIX }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
         run: |
           set -x
           # Push the local image directly by digest
           # The manifest job will reference these by digest to create the multi-arch manifest
           LOCAL_IMAGE="localhost/${IMAGE_NAME}:build"
+
+
+          # write the secret to a file
+          echo "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key
 
           # Tag name that is unique per arch to avoid collisions with multi-arch tags.
           platform_safe=$(echo "$PLATFORM" | tr '/' '-')
@@ -386,7 +392,7 @@ jobs:
 
           for i in {1..3}; do
             # TODO: use docker:// or not use
-            sudo podman push --digestfile=/tmp/digestfile "$LOCAL_IMAGE" docker://"${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}" && break || sleep $((5 * i));
+            sudo podman --sign-by-sigstore-private-key=/tmp/cosign.key push --digestfile=/tmp/digestfile "$LOCAL_IMAGE" docker://"${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}" && break || sleep $((5 * i));
           done
 
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
@@ -394,24 +400,23 @@ jobs:
           echo "Pushed image with digest: $REMOTE_IMAGE_DIGEST"
           cat /tmp/digestfile
 
-      # This section is optional and only needs to be enabled in you plan on distributing
-      # your project to others to consume. You will need to create a public and private key
-      # using Cosign and save the private key as a repository secret in Github for this workflow
-      # to consume. For more details, review the image signing section of the README.
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
-        # if: github.event_name != 'pull_request'
+      # # This section is optional and only needs to be enabled in you plan on distributing
+      # # your project to others to consume. You will need to create a public and private key
+      # # using Cosign and save the private key as a repository secret in Github for this workflow
+      # # to consume. For more details, review the image signing section of the README.
+      # - name: Install Cosign
+      #   uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+      #   # if: github.event_name != 'pull_request'
 
-      - name: Sign Image
-        shell: /usr/bin/bash
-        # if: github.event_name != 'pull_request'
-        run: |
-          IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${IMAGE_NAME}"
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${IMAGE_FULL}@${{ steps.push.outputs.remote_image_digest }}
-        env:
-          TAGS: ${{ steps.push.outputs.digest }}
-          COSIGN_EXPERIMENTAL: false
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+      # - name: Sign Image
+      #   # if: github.event_name != 'pull_request'
+      #   run: |
+      #     IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${IMAGE_NAME}"
+      #     cosign sign -y --key env://COSIGN_PRIVATE_KEY ${IMAGE_FULL}@${{ steps.push.outputs.remote_image_digest }}
+      #   env:
+      #     TAGS: ${{ steps.push.outputs.digest }}
+      #     COSIGN_EXPERIMENTAL: false
+      #     COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
       - name: Create Job Outputs
         # if: github.event_name != 'pull_request'
@@ -455,7 +460,10 @@ jobs:
       manifest: ${{ steps.push_manifest.outputs.MANIFEST }}
       tags: ${{ steps.push_manifest.outputs.TAGS }}
     steps:
-      - name: Install dependencies  
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Install dependencies
         run: |
           apk add \
             jq \
@@ -470,10 +478,11 @@ jobs:
             fuse-overlayfs \
             skopeo
           ln -sf /bin/bash /bin/sh
-          mkdir -p /etc/containers
+          mkdir -p /etc/containers/registries.d
           echo '{"default":[{"type":"insecureAcceptAnything"}]}' | jq . > /etc/containers/policy.json
+          cp .github/ghcr.io.yaml /etc/containers/registries.d/ghcr.io.yaml
 
-      - name: Exit on failure  
+      - name: Exit on failure
         env:
           JOBS: ${{ toJson(needs) }}
         run: |
@@ -488,7 +497,7 @@ jobs:
             fi
           done
 
-      - name: Get current date  
+      - name: Get current date
         id: date
         run: |
           # Should generate a timestamp like what is defined on the ArtifactHub documentation
@@ -497,7 +506,7 @@ jobs:
           # https://linux.die.net/man/1/date
           echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
 
-      - name: Set tag variables  
+      - name: Set tag variables
         id: set-tags
         run: |
           # Set tag suffix
@@ -635,9 +644,20 @@ jobs:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           TAG_SUFFIX: ${{ env.TAG_SUFFIX }}
           BASE_TAG: ${{ env.BASE_TAG }}
+          SIGNING_SECRET: ${{ secrets.SIGNING_SECRET }}
           PODMAN_COMPRESSION: "--add-compression zstd:chunked --add-compression zstd --compression-format zstd:chunked"
         run: |
           set -eu
+
+          # Write signing key to a temp file; trap ensures cleanup on exit
+          SIGN_KEY_FILE=$(mktemp /tmp/cosign.XXXXXX.key)
+          trap 'rm -f "$SIGN_KEY_FILE"' EXIT
+          SIGN_ARG=""
+          if [ -n "${SIGNING_SECRET:-}" ]; then
+            echo "${SIGNING_SECRET}" > "$SIGN_KEY_FILE"
+            SIGN_ARG="--sign-by-sigstore-private-key=${SIGN_KEY_FILE}"
+          fi
+
           mapfile -t tag_array <<< "$TAGS"
 
             # Defensive: if a suffix was requested, refuse to publish unsuffixed tags (prevents nvidia images from clobbering plain latest)
@@ -657,7 +677,7 @@ jobs:
 
           # Push manifest once to capture the digest
           first_tag=${tag_array[0]}
-          podman manifest push $PODMAN_COMPRESSION --all --digestfile=/tmp/digestfile "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$first_tag"
+          podman manifest push $PODMAN_COMPRESSION $SIGN_ARG --all --digestfile=/tmp/digestfile "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$first_tag"
           DIGEST=$(cat /tmp/digestfile)
           echo "Pushed manifest with digest: $DIGEST"
 
@@ -665,7 +685,7 @@ jobs:
           if [ ${#tag_array[@]} -gt 1 ]; then
             for tag in "${tag_array[@]:1}"; do
               echo "Pushing manifest to tag: $tag"
-              podman manifest push $PODMAN_COMPRESSION --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag"
+              podman manifest push $PODMAN_COMPRESSION $SIGN_ARG --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag"
             done
           fi
 
@@ -683,7 +703,7 @@ jobs:
             if [ "${BASE_TAG:-}" = "${DEFAULT_BRANCH:-}" ]; then
               latest_tag="latest${TAG_SUFFIX:-}"
               echo "Force-syncing $latest_tag to digest $DIGEST"
-              podman manifest push $PODMAN_COMPRESSION --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag"
+              podman manifest push $PODMAN_COMPRESSION $SIGN_ARG --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag"
               synced=$(skopeo inspect --format '{{.Digest}}' "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag")
               if [ "$synced" != "$DIGEST" ]; then
                 echo "ERROR: $latest_tag still points to $synced after sync (expected $DIGEST)" >&2
