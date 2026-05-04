@@ -139,7 +139,7 @@ jobs:
       id-token: write
     container:
       image: ghcr.io/ultramarine-linux/ultramarine:43
-      options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse
+      options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse -v /var/tmp:/var/tmp -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys:/sys
 
     steps:
       - name: Install dependencies
