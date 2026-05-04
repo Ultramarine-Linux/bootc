@@ -193,7 +193,7 @@ jobs:
 
       - name: Build Image (Containerfile)
         if: inputs.mkosi == false
-        id: build-image
+        id: build-image-mkosi
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
