@@ -139,7 +139,7 @@ jobs:
       id-token: write
     container:
       image: ghcr.io/ultramarine-linux/ultramarine:43
-      options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse -v /var/tmp:/var/tmp -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys:/sys
+      options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse -v /var/tmp:/var/tmp -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys:/sys --cgroupns=host
 
     steps:
       - name: Install dependencies
@@ -148,6 +148,13 @@ jobs:
           dnf install -y sudo fuse-overlayfs mkosi podman
           # then remove mkosi without removing the deps
           rpm -e mkosi
+          # configure podman to use cgroupfs (no systemd init in GHA runner)
+          mkdir -p /etc/containers
+          cat >> /etc/containers/containers.conf << 'EOF'
+          [engine]
+          cgroup_manager = "cgroupfs"
+          events_logger = "file"
+          EOF
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
