@@ -285,7 +285,7 @@ jobs:
           BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
           mkosi -C ${BUILD_CONTEXT} build -B
           # find output directory in ${CONTEXT_PATH}/mkosi.output/
-          OUTPUT_DIR=$(find ${CONTEXT_PATH}/mkosi.output/ -type d  | head -n 2 | tail -n 1)
+          OUTPUT_DIR=$(find ${BUILD_CONTEXT}/mkosi.output/ -type d  | head -n 2 | tail -n 1)
           sudo podman pull oci:${OUTPUT_DIR} > /tmp/digest
           DIGEST=$(cat /tmp/digest)
           sudo podman tag ${DIGEST} "localhost/${FLAVOR}-bootc:build"
