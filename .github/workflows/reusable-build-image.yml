@@ -67,6 +67,11 @@ on:
         required: false
         type: boolean
         default: false
+      mkosi:
+        description: "Whether to use mkosi for building the image"
+        required: false
+        type: boolean
+        default: false
     outputs:
       image:
         description: "The image name that was built"
@@ -92,7 +97,7 @@ env:
   IMAGE_DESC: ${{ inputs.image-desc }}
   IMAGE_REGISTRY: "ghcr.io/ultramarine-linux"
   PLATFORMS: ${{ inputs.platforms }}
-  PODMAN_CACHE_TAG: "quay.io/fyralabs/ultramarine-bootc-cache"
+  PODMAN_CACHE_TAG: "ghcr.io/ultramarine-linux/bootc/cache"
 
 jobs:
   generate_matrix:
@@ -186,7 +191,8 @@ jobs:
       #     mount-opts: compress-force=zstd:8
       #     loopback-free: 0.8
 
-      - name: Build Image
+      - name: Build Image (Containerfile)
+        if: inputs.mkosi == false
         id: build-image
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         env:
@@ -258,6 +264,33 @@ jobs:
             }
 
             build
+      - name: setup-mkosi
+        uses: systemd/mkosi@84af20892b61c8e177e391f997ded8b4cb5514f2
+        if: inputs.mkosi == true
+        
+      - name: Build Image (mkosi)
+        id: build-image
+        if: inputs.mkosi == true
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+          FLAVOR: ${{ inputs.flavor }}
+          PLATFORM: ${{ matrix.platform }}
+          IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
+          FROM_IMAGE: ${{ inputs.from }}
+          CONTAINERFILE: ${{ inputs.containerfile }}
+          CONTEXT_PATH: ${{ inputs.context-path }}
+        run: |
+          set -euxo pipefail
+          mkosi -C ${CONTEXT_PATH} build -B
+          # find output directory in ${CONTEXT_PATH}/mkosi.output/
+          OUTPUT_DIR=$(find ${CONTEXT_PATH}/mkosi.output/ -type d | head -n 1)
+          sudo podman pull oci:${OUTPUT_DIR} > /tmp/digest
+          DIGEST=$(cat /tmp/digest)
+          sudo podman tag ${DIGEST} "localhost/${FLAVOR}-bootc:build"
+          
+            
+
 
       # - name: Run Rechunker
       #   if: github.event_name != 'pull_request'
