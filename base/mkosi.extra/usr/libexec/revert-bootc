@@ -8,11 +8,13 @@
 set -x
 source /usr/src/ultramarine-bootc/base/common.sh
 
+: ${ONLINE:=0}
+
 # Remove symlinks created by bootc
 rm -rf /opt /root /home /ostree /srv
 
 # remove rechunk-prep action
-rm -rf /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
+rm -f /etc/dnf/libdnf5-plugins/actions.d/rechunk-prep.actions
 
 # Recreate the original directories
 mkdir -p /home /root /usr/local /srv /opt
@@ -22,15 +24,17 @@ chmod 0755 /home /opt /usr/local /srv
 chmod 0700 /root
 
 # Remove tmpfiles configuration
-rm -rf /usr/lib/tmpfiles.d/bootc-base-dirs.conf
+rm -f /usr/lib/tmpfiles.d/bootc-base-dirs.conf
 
 # Restore default useradd HOME setting
 sed -i '/^HOME=\/var\/home$/d' /etc/default/useradd || true
 
 # Comment out PackageKit ostree backend
 sed -i 's/DefaultBackend=.*/#DefaultBackend=/' /etc/PackageKit/PackageKit.conf
-dnf do --action=install PackageKit-command-not-found --action=reinstall PackageKit appstream-data
-dnf clean all
+if [ "$ONLINE" -eq 1 ]; then
+    dnf do --action=install PackageKit-command-not-found --action=reinstall PackageKit appstream-data
+    dnf clean all
+fi
 
 KERNEL_VERSION=$(get_kernel_version)
 
