@@ -8,10 +8,7 @@ on:
   schedule:
     - cron: "0 4 * * *" # every day at 4am UTC
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Build bootc images"]
-    types:
-      - completed
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
