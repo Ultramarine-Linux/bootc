@@ -54,7 +54,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     PackageKit-bootc \
     tuned-ppd \
     powertop \
-    btop \
     tuned-profiles-atomic \
     plymouth-system-theme \
     @base-graphical \
