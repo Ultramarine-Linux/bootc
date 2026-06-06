@@ -17,7 +17,10 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     --exclude='desktop-backgrounds*' \
     --setopt=install_weak_deps=False
 
-    
+
+# HACK: Disable PackageKit backend for bootc installs
+RUN mv /usr/lib64/qt6/plugins/discover/packagekit-backend.so /usr/lib64/qt6/plugins/discover/packagekit-backend.so.disabled
+
 # HACK:
 # for some reason qtvirtualkeyboard is not getting installed properly
 # but it is required for plasma-keyboard to actually work

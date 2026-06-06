@@ -36,6 +36,11 @@ if [ "$ONLINE" -eq 1 ]; then
     dnf clean all
 fi
 
+# Restore PackageKit backend
+if [ -f /usr/lib64/qt6/plugins/discover/packagekit-backend.so.disabled ]; then
+    mv /usr/lib64/qt6/plugins/discover/packagekit-backend.so.disabled /usr/lib64/qt6/plugins/discover/packagekit-backend.so
+fi
+
 KERNEL_VERSION=$(get_kernel_version)
 
 # Reinstall the kernel to restore initramfs and grub entries
