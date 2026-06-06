@@ -51,7 +51,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     dracut-strip-trigger \
     PackageKit \
     fuse-libs \
-    PackageKit-bootc \
     tuned-ppd \
     powertop \
     tuned-profiles-atomic \
