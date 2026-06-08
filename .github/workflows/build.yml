@@ -41,6 +41,8 @@ jobs:
 
           # Convert ref name to lowercase and replace slashes with dashes
           TAG=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          # Strip leading 'um' prefix (e.g. um44 -> 44)
+          TAG=${TAG#um}
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Normalized tag: ${TAG}"
 
