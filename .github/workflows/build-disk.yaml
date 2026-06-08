@@ -33,7 +33,8 @@ jobs:
     runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
     container:
-      image: ${{ matrix.variant.image }}
+      # image: ${{ matrix.variant.image }}
+      image: ghcr.io/fyralabs/katsu:main
       options: --privileged --security-opt seccomp=unconfined -v /usr:/hostusr -v /:/hostfs -v /dev:/dev
 
     steps:
@@ -57,6 +58,9 @@ jobs:
 
           echo "After cleanup:"
           df -h
+      - name: Pull image
+        run: |
+          sudo podman pull ${{ matrix.variant.image }}
       - name: Build disk image
         run: |
           set -euxo pipefail
@@ -68,7 +72,15 @@ jobs:
           fallocate -l $IMAGE_SIZE disk.raw
           # Build disk image using bootc install to-disk
 
-          bootc install to-disk $PWD/disk.raw \
+          sudo podman run \
+          --rm \
+          --privileged \
+          --pid=host \
+          -v /var/lib/containers:/var/lib/containers \
+          -v /dev:/dev \
+          -v $PWD:/workdir \
+          --security-opt \
+          label=type:unconfined_t ${{ matrix.variant.image }} bootc install to-disk /workdir/disk.raw \
             --source-imgref docker://${IMAGE_TAG} \
             --via-loopback \
             --generic-image \
