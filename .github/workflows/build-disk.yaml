@@ -3,6 +3,8 @@ permissions: write-all
 
 env:
   FALLBACK_BRANCH: "44"
+  IMAGE_SIZE: 24G
+  FILESYSTEM: btrfs
 
 on:
   schedule:
@@ -65,8 +67,8 @@ jobs:
         run: |
           set -euxo pipefail
           IMAGE_TAG=${{ matrix.variant.image }}
-          IMAGE_SIZE=24G
-          FILESYSTEM=btrfs
+          IMAGE_SIZE=${{ env.IMAGE_SIZE }}
+          FILESYSTEM=${{ env.FILESYSTEM }}
 
           # Create disk image
           fallocate -l $IMAGE_SIZE disk.raw
