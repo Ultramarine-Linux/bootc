@@ -35,7 +35,7 @@ jobs:
     container:
       # image: ${{ matrix.variant.image }}
       image: ghcr.io/fyralabs/katsu:main
-      options: --privileged --security-opt seccomp=unconfined -v /usr:/hostusr -v /:/hostfs -v /dev:/dev
+      options: --privileged --security-opt seccomp=unconfined -v /usr:/hostusr -v /:/hostfs -v /dev:/dev -v /var/lib/containers:/var/lib/containers
 
     steps:
       - name: Checkout
