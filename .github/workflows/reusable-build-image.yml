@@ -139,7 +139,7 @@ jobs:
       id-token: write
     container:
       image: ghcr.io/ultramarine-linux/ultramarine:43
-      options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse -v /var/tmp:/var/tmp -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys:/sys --cgroupns=host
+      options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse -v /var/tmp:/var/tmp -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys:/sys --cgroupns=host -v /var/lib/containers:/var/lib/containers -v /:/hostfs
 
     steps:
       - name: Checkout
@@ -190,6 +190,27 @@ jobs:
           remove-docker-images: false
           remove-cached-tools: false
           verbose: true
+
+      - name: Clean up space before build
+        run: |
+          df -h
+          # Wipe stuff in our host /usr to make some space
+
+          # We don't need the android SDK
+          rm -rf /hostfs/usr/local/lib/android
+          # We're a Rust shop, not a Haskell shop
+          rm -rf /hostfs/usr/local/.ghcup
+          rm -rf /hostfs/opt/ghc
+          # We don't even use .NET
+          rm -rf /hostfs/usr/share/dotnet
+          # We don't need CodeQL in this action
+          rm -rf /hostfs/opt/hostedtoolcache/CodeQL
+
+
+          echo "After cleanup:"
+          df -h
+
+
       - name: Login to GitHub Container Registry
         # if: github.event_name != 'pull_request'
         env:
