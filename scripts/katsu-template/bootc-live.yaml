@@ -4,3 +4,4 @@ distro: Ultramarine Atomic
 
 bootc:
   image: "%BASE_IMAGE%"
+  embed_image: false
