@@ -53,6 +53,16 @@ jobs:
       - name: Install dependencies
         run: |
           dnf install -y just
+      - name: Disable zstd:chunked partial pulls
+        run: |
+          mkdir -p /etc/containers
+          cat > /etc/containers/storage.conf <<'EOF'
+          [storage]
+          driver = "overlay"
+
+          [storage.options.pull_options]
+          enable_partial_images = "false"
+          EOF
       - name: Normalize tag
         id: normalize
         run: |
