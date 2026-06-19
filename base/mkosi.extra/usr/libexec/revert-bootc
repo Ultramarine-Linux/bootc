@@ -59,7 +59,7 @@ rm -f /etc/taidan.toml
 
 rsync -av /usr/lib/grub/ /boot/grub2/
 
-if [ -f /run/.containerenv ] || [ -f /.dockerenv ]; then
+if [ -f /run/.containerenv ] || [ -f /.dockerenv ] || [ "$NOGRUB" == "1" ]; then
     # Do not generate grub.cfg or grubenv during a container build. GRUB sees
     # the backing filesystem as "overlay" and cannot canonicalize it as an
     # installable boot device. The external installer runs with the target disk
