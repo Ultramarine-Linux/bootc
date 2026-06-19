@@ -34,14 +34,18 @@ jobs:
           # Wipe stuff in our host /usr to make some space
 
           # We don't need the android SDK
-          rm -rf /hostusr/local/lib/android
+          rm -rf /hostfs/usr/local/lib/android
           # We're a Rust shop, not a Haskell shop
-          rm -rf /hostusr/local/.ghcup
+          rm -rf /hostfs/usr/local/.ghcup
           rm -rf /hostfs/opt/ghc
+          # or Swift either
+          rm -rf /hostfs/usr/share/swift
+          # nor Java
+          rm -rf /hostfs/usr/lib/jvm
           # We don't even use .NET
-          rm -rf /hostusr/share/dotnet
-          # We don't need CodeQL in this action
-          rm -rf /hostfs/opt/hostedtoolcache/CodeQL
+          rm -rf /hostfs/usr/share/dotnet
+          # We don't need tools we're in a container
+          rm -rf /hostfs/opt/hostedtoolcache
 
 
           echo "After cleanup:"
