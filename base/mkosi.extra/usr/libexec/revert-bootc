@@ -58,7 +58,17 @@ rm -f /etc/taidan.toml
 # copy GRUB files
 
 rsync -av /usr/lib/grub/ /boot/grub2/
-# Regenerate GRUB configuration
-grub2-mkconfig -o /boot/grub2/grub.cfg
-grub2-editenv create
-# grub2-editenv set menu_auto_hide=0
+
+if [ -f /run/.containerenv ] || [ -f /.dockerenv ]; then
+    # Do not generate grub.cfg or grubenv during a container build. GRUB sees
+    # the backing filesystem as "overlay" and cannot canonicalize it as an
+    # installable boot device. The external installer runs with the target disk
+    # mounted and is responsible for generating GRUB config.
+    echo "Skipping GRUB config generation inside container build"
+    echo "Run grub2-mkconfig and grub2-editenv from the external installer instead"
+else
+    # Regenerate GRUB configuration
+    grub2-mkconfig -o /boot/grub2/grub.cfg
+    grub2-editenv create
+    # grub2-editenv set menu_auto_hide=0
+fi
