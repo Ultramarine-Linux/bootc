@@ -4,7 +4,11 @@ set -xeuo pipefail
 KERNEL_PATH="$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)"
 dracut --force "${KERNEL_PATH}/initramfs.img" --kver "$(basename "${KERNEL_PATH}")"
 
-# THIS IS A HACK: remove when fedora verssion being used starts using standard `/usr/lib/efi/` components (post 43)
+#put efi in the right place
+mkdir -p /boot/efi/EFI
+cp -r /usr/lib/efi/shim/*/EFI/* /boot/efi/EFI/
+cp -r /usr/lib/efi/grub2/*/EFI/* /boot/efi/EFI/
+
 mv /boot /usr/lib/ostree-boot
 
 bootupctl backend generate-update-metadata
