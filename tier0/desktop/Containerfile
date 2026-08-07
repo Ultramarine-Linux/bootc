@@ -17,11 +17,21 @@ RUN setfattr -n user.component -v "ultramarine-desktop" /usr/lib/bootc/kargs.d/2
 
 # todo: move the udev rules stuff into a hardware support group
 
-RUN --mount=type=cache,target=/var/cache dnf do -y \
+RUN EXTRA_MESA_PACKAGES=""; \
+    if [ "$(rpm --eval '%{_arch}')" = "x86_64" ]; then \
+        EXTRA_MESA_PACKAGES="mesa-compat-libOSMesa mesa-dri-drivers.i686 mesa-filesystem.i686 mesa-libGL.i686 mesa-libgbm.i686 mesa-vulkan-drivers.i686"; \
+    fi; \
+    dnf do -y \
     --no-best \
     --allowerasing \
     --action install \
     taidan \
+    mesa-dri-drivers \
+    mesa-filesystem \
+    mesa-libGL \
+    mesa-libgbm \
+    mesa-vulkan-drivers \
+    $EXTRA_MESA_PACKAGES \
     readymade \
     readymade-config-ultramarine \
     @multimedia \
