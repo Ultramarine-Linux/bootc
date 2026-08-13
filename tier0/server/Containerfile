@@ -31,4 +31,4 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     cloud-init \
     podlet
 
-RUN systemctl enable cloud-config
+RUN systemctl enable cloud-init-local cloud-init cloud-config cloud-final
