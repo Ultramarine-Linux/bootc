@@ -28,4 +28,7 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     cockpit-networkmanager \
     cockpit-storaged \
     tailscale \
+    cloud-init \
     podlet
+
+RUN systemctl enable cloud-config
