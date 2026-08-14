@@ -32,6 +32,7 @@ jobs:
     outputs:
       registry: ${{ steps.normalize.outputs.registry }}
       tag: ${{ steps.normalize.outputs.tag }}
+      release: ${{ steps.normalize.outputs.release }}
     steps:
       - name: Normalize values
         id: normalize
@@ -47,6 +48,13 @@ jobs:
           TAG=${TAG#um}
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Normalized tag: ${TAG}"
+
+          # Derive the Fedora/Ultramarine release from the version branch.
+          RELEASE="${{ github.event.repository.default_branch || github.ref_name }}"
+          RELEASE=$(echo "$RELEASE" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          RELEASE=${RELEASE#um}
+          echo "release=${RELEASE}" >> $GITHUB_OUTPUT
+          echo "Normalized release: ${RELEASE}"
 
   # Detect which paths changed to enable incremental builds
   detect-changes:
@@ -89,6 +97,7 @@ jobs:
     with:
       image-name: ultramarine
       flavor: base
+      release: ${{ needs.normalize.outputs.release }}
       tag: ${{ needs.normalize.outputs.tag }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
       mkosi: true
@@ -118,6 +127,7 @@ jobs:
     with:
       image-name: ultramarine-tier0
       flavor: ${{ matrix.flavor }}
+      release: ${{ needs.normalize.outputs.release }}
       context-path: tier0/${{ matrix.flavor }}
       from: >-
         ${{
@@ -167,6 +177,7 @@ jobs:
     with:
       image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
+      release: ${{ needs.normalize.outputs.release }}
       context-path: tier1/${{ matrix.flavor }}
       build_iso: false
       from: >-
@@ -227,6 +238,7 @@ jobs:
     with:
       image-name: ultramarine-tier2
       flavor: ${{ matrix.base-flavor }}
+      release: ${{ needs.normalize.outputs.release }}
       context-path: tier2/${{ matrix.variant }}
       platforms: >-
         ${{

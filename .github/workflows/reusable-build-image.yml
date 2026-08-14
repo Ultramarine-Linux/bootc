@@ -52,6 +52,10 @@ on:
         required: false
         type: string
         default: ""
+      release:
+        description: "Fedora/Ultramarine release number used to isolate build caches"
+        required: true
+        type: string
       rechunk:
         description: "Whether to run the rechunker step (true/false)"
         required: false
@@ -175,11 +179,14 @@ jobs:
 
           # Normalize: lowercase and replace slashes with dashes so branch names like feature/foo become feature-foo
           BASE_TAG=$(echo "$BASE_TAG" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          # Version branches use the umNN convention, while image tags use NN.
+          BASE_TAG=${BASE_TAG#um}
           echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
 
           # Default branch to gate latest tagging
           DEFAULT_BRANCH="${{ github.event.repository.default_branch || 'main' }}"
           DEFAULT_BRANCH=$(echo "$DEFAULT_BRANCH" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          DEFAULT_BRANCH=${DEFAULT_BRANCH#um}
           echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
 
       # Only uncomment if necessary, your builds are super small anyways
@@ -341,9 +348,9 @@ jobs:
           path: |
             ${{ env.MKOSI_CONTEXT }}/mkosi.cache
             ${{ env.MKOSI_CONTEXT }}/mkosi.tools
-          key: mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-${{ hashFiles(format('{0}/**', env.MKOSI_CONTEXT)) }}
+          key: mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-${{ inputs.release }}-${{ hashFiles(format('{0}/**', env.MKOSI_CONTEXT)) }}
           restore-keys: |
-            mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-
+            mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-${{ inputs.release }}-
 
       - name: Build Image (mkosi)
         id: build-image
@@ -590,10 +597,13 @@ jobs:
 
           # Normalize: lowercase and replace slashes with dashes so branch names like feature/foo become feature-foo
           BASE_TAG=$(echo "$BASE_TAG" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          # Version branches use the umNN convention, while image tags use NN.
+          BASE_TAG=${BASE_TAG#um}
           echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
 
           DEFAULT_BRANCH="${{ github.event.repository.default_branch || 'main' }}"
           DEFAULT_BRANCH=$(echo "$DEFAULT_BRANCH" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          DEFAULT_BRANCH=${DEFAULT_BRANCH#um}
           echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
 
       - name: Image Metadata
