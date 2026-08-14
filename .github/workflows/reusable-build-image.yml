@@ -214,7 +214,6 @@ jobs:
           echo "After cleanup:"
           df -h
 
-
       - name: Login to GitHub Container Registry
         # if: github.event_name != 'pull_request'
         env:
@@ -636,6 +635,10 @@ jobs:
           done
           echo "DIGESTS_JSON=$(echo $DIGESTS_JSON | jq -c '.')" >> $GITHUB_OUTPUT
 
+      - name: Login to GHCR
+        # Authenticate before manifest add performs registry lookups.
+        run: echo ${{ secrets.GITHUB_TOKEN }} | podman login -u ${{ github.actor }} --password-stdin ghcr.io
+
       - name: Create Manifest
         # if: github.event_name != 'pull_request'
         id: create-manifest
@@ -681,10 +684,6 @@ jobs:
             echo "Applying label $label to manifest"
             podman manifest annotate --index --annotation "$label" $MANIFEST
           done <<< "$LABELS"
-
-      - name: Login to GHCR
-        # if: github.event_name != 'pull_request'
-        run: echo ${{ secrets.GITHUB_TOKEN }} | podman login -u ${{ github.actor }} --password-stdin ghcr.io
 
       - name: Push Manifest
         # if: github.event_name != 'pull_request'
