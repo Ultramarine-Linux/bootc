@@ -32,4 +32,4 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     podlet \
     tetra
 
-RUN systemctl enable cloud-init-local cloud-init cloud-config cloud-final tetra
+RUN systemctl enable cloud-init-local cloud-init-main cloud-config cloud-final tetra
