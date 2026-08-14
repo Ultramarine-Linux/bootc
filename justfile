@@ -69,8 +69,8 @@ rechunk:
 chunkah:
     #!/usr/bin/bash
     IMG="{{ image_tag }}"
-    export CHUNKAH_CONFIG_STR=$(podman inspect $IMG)
-    podman run --rm --mount=type=image,src=$IMG,dest=/chunkah -e CHUNKAH_CONFIG_STR quay.io/coreos/chunkah build | podman load
+    export CHUNKAH_CONFIG_STR="$(podman inspect "$IMG")"
+    podman run --rm --mount=type=image,src="$IMG",dest=/chunkah -e CHUNKAH_CONFIG_STR quay.io/coreos/chunkah build | podman load
 
 # bootc {args}
 bootc *ARGS:
@@ -117,11 +117,11 @@ build-vm:
 build-vm-legacy image type="qcow2":
   #!/usr/bin/env bash
   set -euo pipefail
-  TARGET_IMAGE={{ image }}
+  TARGET_IMAGE="{{ image }}"
 
-  if ! sudo podman image exists $TARGET_IMAGE ; then
+  if ! sudo podman image exists "$TARGET_IMAGE" ; then
     echo "Ensuring image is on root storage"
-    sudo podman image scp $USER@localhost::$TARGET_IMAGE root@localhost::
+    sudo podman image scp "$USER@localhost::$TARGET_IMAGE" root@localhost::
   fi
 
   echo "Cleaning up previous build"
@@ -139,6 +139,6 @@ build-vm-legacy image type="qcow2":
     quay.io/centos-bootc/bootc-image-builder:latest \
     --type {{ type }} \
     --rootfs btrfs \
-    --installer-payload-ref $TARGET_IMAGE \
-    $TARGET_IMAGE
-  sudo chown -R $USER:$USER output
+    --installer-payload-ref "$TARGET_IMAGE" \
+    "$TARGET_IMAGE"
+  sudo chown -R "$USER:$USER" output

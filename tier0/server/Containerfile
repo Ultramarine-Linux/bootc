@@ -29,7 +29,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     cockpit-storaged \
     tailscale \
     cloud-init \
-    podlet \
-    tetra
+    podlet
 
 RUN systemctl enable cloud-init-local cloud-init-main cloud-config cloud-final tetra

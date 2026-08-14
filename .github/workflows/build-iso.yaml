@@ -1,5 +1,7 @@
 name: Build ISO images with katsu
-permissions: write-all
+permissions:
+  contents: read
+  packages: read
 on:
   schedule:
     - cron: "0 4 * * *" # every day at 4am UTC
@@ -69,6 +71,12 @@ jobs:
           TAG=$(echo "${{ github.ref_name || 'main' }}" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
           TAG=${TAG#um}
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
+      - name: Login to GHCR
+        env:
+          REGISTRY: ghcr.io
+          USERNAME: ${{ github.actor }}
+          PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s\n' "$PASSWORD" | podman login -u "$USERNAME" --password-stdin "$REGISTRY"
       - name: Build ISO
         run: |
           set -euxo pipefail

@@ -4,7 +4,7 @@
 > This is an experimental version of Ultramarine Linux, based on the new [bootc](https://github.com/containers/bootc) project.
 > Do not expect it to be stable or usable for anything other than testing. You have been warned.
 >
-> Supercedes [Ultramarine-Linux/ostree](https://github.com/Ultramarine-linux/ostree).
+> Supersedes [Ultramarine-Linux/ostree](https://github.com/Ultramarine-linux/ostree).
 
 Experimental version of Ultramarine Linux, based on bootc.
 
@@ -20,13 +20,20 @@ The base image is an OCI/Docker image, which can be consumed to build a disk ima
 
 ## Building
 
-The build process is separated into *tiers*, which depend on each other in a linear fashion, starting with the bare minimum base, building up to a full Ultramarine system, desktop variants, and HWE sub-variants for those images.
+The build process is separated into _tiers_, which depend on each other in a linear fashion, starting with the bare minimum base, building up to a full Ultramarine system, desktop variants, and HWE sub-variants for those images.
 
-Currently there are three tiers:
+### Prerequisites
 
-- Base: The bare minimum bootc-compatible base image
-- Tier 0: Stage 2 image, containing minimum variations, a common base for the tier 1 images. Currently only the desktop common base is built.
-- Tier 1: Primary Ultramarine images, including but not limited to desktop variants. This is what you will typically use standalone or as a base for your own derivatives.
+Local builds require Podman, `just`, and a Linux host with the privileges needed for rootful/privileged container builds. Building bootable images additionally requires access to `/dev` and the container storage volume used by Podman. The CI workflows provide the required build tools inside their build containers.
+
+Version branches use the `umNN` convention. This repository is currently on `um44`; a new version branch is created from the previous version and its release references are updated there.
+
+The image tiers are:
+
+- Base: The bare minimum bootc-compatible base image.
+- Tier 0: Stage 2 images containing common server and desktop variations.
+- Tier 1: Primary Ultramarine desktop images: GNOME, Xfce, Plasma, and Budgie.
+- Tier 2: Hardware or deployment variants built from Tier 1, including standard and NVIDIA images. Additional variants may be present but disabled in CI.
 
 We provide pre-built base images on GHCR, which can be pulled with Podman or Docker:
 
@@ -46,11 +53,12 @@ To build the base image locally, use the Just recipe:
 just context=base ball
 ```
 
-This will build the base image from scratch and rechunk it. You can then proceed to build the tier 0 and tier 1 images similarly:
+This will build the base image from scratch and rechunk it. You can then proceed to build the tier 0, tier 1, and tier 2 images similarly:
 
 ```bash
 just context=tier0/desktop ball
 just context=tier1/gnome ball
+just context=tier2/standard ball from=ghcr.io/ultramarine-linux/gnome-bootc:main
 ```
 
 ## Building bootable images

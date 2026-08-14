@@ -1,8 +1,9 @@
 name: Build disk images
-permissions: write-all
+permissions:
+  contents: read
+  packages: read
 
 env:
-  FALLBACK_BRANCH: "44"
   IMAGE_SIZE: 24G
   FILESYSTEM: btrfs
 
@@ -11,26 +12,25 @@ on:
     - cron: "0 4 * * *" # every day at 4am UTC
   workflow_dispatch:
 
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-  build-iso:
+  build-disk:
     strategy:
       fail-fast: false
       matrix:
         arch: [x86_64, aarch64]
         variant:
           - name: gnome
-            image: ghcr.io/ultramarine-linux/gnome-bootc:${{ github.ref_name }}
+            image: ghcr.io/ultramarine-linux/gnome-bootc:44
           - name: plasma
-            image: ghcr.io/ultramarine-linux/plasma-bootc:${{ github.ref_name }}
+            image: ghcr.io/ultramarine-linux/plasma-bootc:44
           - name: xfce
-            image: ghcr.io/ultramarine-linux/xfce-bootc:${{ github.ref_name }}
+            image: ghcr.io/ultramarine-linux/xfce-bootc:44
           - name: budgie
-            image: ghcr.io/ultramarine-linux/budgie-bootc:${{ github.ref_name }}
+            image: ghcr.io/ultramarine-linux/budgie-bootc:44
     name: Build disk images
     runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
@@ -63,9 +63,15 @@ jobs:
 
           echo "After cleanup:"
           df -h
+      - name: Login to GHCR
+        env:
+          REGISTRY: ghcr.io
+          USERNAME: ${{ github.actor }}
+          PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s\n' "$PASSWORD" | sudo podman login -u "$USERNAME" --password-stdin "$REGISTRY"
       - name: Pull image
         run: |
-          sudo podman pull ${{ matrix.variant.image }}
+          sudo podman pull "${{ matrix.variant.image }}"
       - name: Build disk image
         run: |
           set -euxo pipefail
@@ -98,7 +104,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: iso-artifact-${{ github.run_id }}-${{ matrix.variant.name }}-${{ matrix.arch }}
+          name: disk-artifact-${{ github.run_id }}-${{ matrix.variant.name }}-${{ matrix.arch }}
           path: ./*.xz
           archive: false
           compression-level: 0

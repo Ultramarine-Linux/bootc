@@ -16,7 +16,6 @@ on:
       - "tier1/**"
       - "tier2/**"
       - ".github/workflows/**"
-  pull_request:
   schedule:
     - cron: "0 1 * * TUE" # Every Tuesday at 1am UTC
   merge_group:
