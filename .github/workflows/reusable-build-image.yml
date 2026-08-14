@@ -56,6 +56,10 @@ on:
         description: "Fedora/Ultramarine release number used to isolate build caches"
         required: true
         type: string
+      registry:
+        description: "Lowercase container registry namespace, for example ghcr.io/ultramarine-linux"
+        required: true
+        type: string
       rechunk:
         description: "Whether to run the rechunker step (true/false)"
         required: false
@@ -106,9 +110,9 @@ permissions:
 env:
   IMAGE_NAME: ${{ inputs.flavor }}-bootc
   IMAGE_DESC: ${{ inputs.image-desc }}
-  IMAGE_REGISTRY: "ghcr.io/ultramarine-linux"
+  IMAGE_REGISTRY: ${{ inputs.registry }}
   PLATFORMS: ${{ inputs.platforms }}
-  PODMAN_CACHE_TAG: "ghcr.io/ultramarine-linux/bootc/cache"
+  PODMAN_CACHE_TAG: ${{ inputs.registry }}/bootc/cache
 
 jobs:
   generate_matrix:

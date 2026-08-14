@@ -97,6 +97,7 @@ jobs:
     with:
       image-name: ultramarine
       flavor: base
+      registry: ${{ needs.normalize.outputs.registry }}
       release: ${{ needs.normalize.outputs.release }}
       tag: ${{ needs.normalize.outputs.tag }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
@@ -127,6 +128,7 @@ jobs:
     with:
       image-name: ultramarine-tier0
       flavor: ${{ matrix.flavor }}
+      registry: ${{ needs.normalize.outputs.registry }}
       release: ${{ needs.normalize.outputs.release }}
       context-path: tier0/${{ matrix.flavor }}
       from: >-
@@ -177,6 +179,7 @@ jobs:
     with:
       image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
+      registry: ${{ needs.normalize.outputs.registry }}
       release: ${{ needs.normalize.outputs.release }}
       context-path: tier1/${{ matrix.flavor }}
       build_iso: false
@@ -238,6 +241,7 @@ jobs:
     with:
       image-name: ultramarine-tier2
       flavor: ${{ matrix.base-flavor }}
+      registry: ${{ needs.normalize.outputs.registry }}
       release: ${{ needs.normalize.outputs.release }}
       context-path: tier2/${{ matrix.variant }}
       platforms: >-
