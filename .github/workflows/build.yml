@@ -1,5 +1,8 @@
 name: Build bootc images
-permissions: write-all
+permissions:
+  contents: read
+  pull-requests: read
+  packages: write
 
 env:
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}

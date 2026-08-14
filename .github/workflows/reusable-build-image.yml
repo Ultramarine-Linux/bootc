@@ -95,7 +95,9 @@ on:
         description: "The private key used to sign the image"
         required: false
 
-permissions: write-all
+permissions:
+  contents: read
+  packages: write
 
 env:
   IMAGE_NAME: ${{ inputs.flavor }}-bootc
@@ -136,9 +138,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
     container:
-      image: ghcr.io/ultramarine-linux/ultramarine:43
+      image: ghcr.io/ultramarine-linux/ultramarine:44
       options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse -v /var/tmp:/var/tmp -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys:/sys --cgroupns=host -v /var/lib/containers:/var/lib/containers -v /:/hostfs
 
     steps:
@@ -221,7 +222,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin $registry
+          printf '%s\n' "$password" | sudo podman login -u "$username" --password-stdin "$registry"
 
       # - name: Mount BTRFS loopback
       #   uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
@@ -262,6 +263,9 @@ jobs:
                 FROM_ARG="--from=$FROM_IMAGE"
               fi
 
+              PLATFORM_SAFE=$(echo "$PLATFORM" | tr '/' '-')
+              CACHE_TAG="${PODMAN_CACHE_TAG}:${FLAVOR}-${PLATFORM_SAFE}"
+
               # Set default context path if not provided
               BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
 
@@ -275,13 +279,13 @@ jobs:
                 # Conditionally add --cache-from based on skip-cache-from input
                 CACHE_FROM_ARG=""
                 if [ "${{ inputs.skip-cache-from }}" != "true" ]; then
-                  CACHE_FROM_ARG="--cache-from ${PODMAN_CACHE_TAG}"
+                  CACHE_FROM_ARG="--cache-from ${CACHE_TAG}"
                 fi
 
                 sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
                   --layers=true \
                   $CACHE_FROM_ARG \
-                  --cache-to ${PODMAN_CACHE_TAG} \
+                  --cache-to "$CACHE_TAG" \
                   -t "localhost/${FLAVOR}-bootc:build" \
                   -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
                   $FROM_ARG \
@@ -439,10 +443,23 @@ jobs:
           platform_safe=$(echo "$PLATFORM" | tr '/' '-')
           arch_tag="${BASE_TAG}${TAG_SUFFIX:+${TAG_SUFFIX}}-${platform_safe}"
 
+          rm -f /tmp/digestfile
+          push_succeeded=false
           for i in {1..3}; do
             # TODO: use docker:// or not use
-            sudo podman push $SIGN_ARG --digestfile=/tmp/digestfile "$LOCAL_IMAGE" docker://"${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}" && break || sleep $((5 * i));
+            if sudo podman push $SIGN_ARG --digestfile=/tmp/digestfile "$LOCAL_IMAGE" "docker://${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}"; then
+              push_succeeded=true
+              break
+            fi
+            if [ "$i" -lt 3 ]; then
+              sleep $((5 * i))
+            fi
           done
+
+          if [ "$push_succeeded" != true ] || [ ! -s /tmp/digestfile ]; then
+            echo "Failed to push ${LOCAL_IMAGE} after 3 attempts" >&2
+            exit 1
+          fi
 
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
           echo "remote_image_digest=$REMOTE_IMAGE_DIGEST" >> $GITHUB_OUTPUT
@@ -501,7 +518,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
     outputs:
       image: ${{ steps.push_manifest.outputs.IMAGE }}
       digest: ${{ steps.push_manifest.outputs.DIGEST }}
@@ -637,7 +653,11 @@ jobs:
 
       - name: Login to GHCR
         # Authenticate before manifest add performs registry lookups.
-        run: echo ${{ secrets.GITHUB_TOKEN }} | podman login -u ${{ github.actor }} --password-stdin ghcr.io
+        env:
+          REGISTRY: ghcr.io
+          USERNAME: ${{ github.actor }}
+          PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s\n' "$PASSWORD" | podman login -u "$USERNAME" --password-stdin "$REGISTRY"
 
       - name: Create Manifest
         # if: github.event_name != 'pull_request'
@@ -879,7 +899,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
