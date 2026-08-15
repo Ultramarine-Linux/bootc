@@ -210,26 +210,45 @@ jobs:
 
       - name: Clean up space before build
         run: |
-          df -h
+          set -u
+
+          available_bytes() {
+            df -B1 --output=avail /hostfs | awk 'NR == 2 { print $1 }'
+          }
+
+          cleanup_path() {
+            local path="$1"
+            local before after freed start elapsed
+
+            if [ ! -e "$path" ]; then
+              echo "Skipping missing path: $path"
+              return
+            fi
+
+            before=$(available_bytes)
+            start=$SECONDS
+            echo "Deleting $path (available before: ${before} bytes)"
+            rm -rf -- "$path"
+            elapsed=$((SECONDS - start))
+            after=$(available_bytes)
+            freed=$((after - before))
+            echo "Finished $path: ${elapsed}s, available after: ${after} bytes, filesystem delta: ${freed} bytes"
+          }
+
+          echo "Before cleanup:"
+          df -h /hostfs
+
           # Wipe stuff in our host /usr to make some space
-
-          # We don't need the android SDK
-          rm -rf /hostfs/usr/local/lib/android
-          # We're a Rust shop, not a Haskell shop
-          rm -rf /hostfs/usr/local/.ghcup
-          rm -rf /hostfs/opt/ghc
-          # or Swift either
-          rm -rf /hostfs/usr/share/swift
-          # nor Java
-          rm -rf /hostfs/usr/lib/jvm
-          # We don't even use .NET
-          rm -rf /hostfs/usr/share/dotnet
-          # We don't need tools we're in a container
-          rm -rf /hostfs/opt/hostedtoolcache
-
+          cleanup_path /hostfs/usr/local/lib/android
+          cleanup_path /hostfs/usr/local/.ghcup
+          cleanup_path /hostfs/opt/ghc
+          cleanup_path /hostfs/usr/share/swift
+          cleanup_path /hostfs/usr/lib/jvm
+          cleanup_path /hostfs/usr/share/dotnet
+          cleanup_path /hostfs/opt/hostedtoolcache
 
           echo "After cleanup:"
-          df -h
+          df -h /hostfs
 
       - name: Login to GitHub Container Registry
         # if: github.event_name != 'pull_request'
