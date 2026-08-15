@@ -280,7 +280,9 @@ jobs:
               fi
 
               PLATFORM_SAFE=$(echo "$PLATFORM" | tr '/' '-')
-              CACHE_TAG="${PODMAN_CACHE_TAG}:${FLAVOR}-${PLATFORM_SAFE}"
+              # Podman requires cache-to/cache-from references to be repositories,
+              # not tagged images. Keep flavor/platform isolation in the path.
+              CACHE_REPOSITORY="${PODMAN_CACHE_TAG}/${FLAVOR}-${PLATFORM_SAFE}"
 
               # Set default context path if not provided
               BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
@@ -295,13 +297,13 @@ jobs:
                 # Conditionally add --cache-from based on skip-cache-from input
                 CACHE_FROM_ARG=""
                 if [ "${{ inputs.skip-cache-from }}" != "true" ]; then
-                  CACHE_FROM_ARG="--cache-from ${CACHE_TAG}"
+                  CACHE_FROM_ARG="--cache-from ${CACHE_REPOSITORY}"
                 fi
 
                 sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
                   --layers=true \
                   $CACHE_FROM_ARG \
-                  --cache-to "$CACHE_TAG" \
+                  --cache-to "$CACHE_REPOSITORY" \
                   -t "localhost/${FLAVOR}-bootc:build" \
                   -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
                   $FROM_ARG \
