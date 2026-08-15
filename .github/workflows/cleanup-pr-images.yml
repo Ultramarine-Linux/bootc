@@ -1,0 +1,45 @@
+name: Clean up PR images
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  packages: write
+
+jobs:
+  cleanup:
+    name: Delete staging images for PR ${{ github.event.pull_request.number }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete PR-tagged image versions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          PR_TAG_PREFIX: pr-${{ github.event.pull_request.number }}-
+        run: |
+          set -euo pipefail
+
+          packages=(
+            base-bootc
+            desktop-bootc
+            server-bootc
+            gnome-bootc
+            xfce-bootc
+            plasma-bootc
+            budgie-bootc
+          )
+
+          for package in "${packages[@]}"; do
+            echo "Checking ghcr.io/${OWNER}/${package}"
+            gh api --paginate \
+              "/orgs/${OWNER}/packages/container/${package}/versions?per_page=100" \
+              --jq '.[] | [.id, (.metadata.container.tags // [])[]] | @tsv' 2>/dev/null |
+            while IFS=$'\t' read -r version_id tag; do
+              if [[ "$tag" == "${PR_TAG_PREFIX}"* ]]; then
+                echo "Deleting ${package}:${tag} (version ${version_id})"
+                gh api --method DELETE \
+                  "/orgs/${OWNER}/packages/container/${package}/versions/${version_id}"
+              fi
+            done
+          done
