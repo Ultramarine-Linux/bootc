@@ -1,5 +1,9 @@
 enable bootloader-update.service
 
+# bootc images are provisioned non-interactively by
+# tetra/cloud-init; do not enable systemd-firstboot prompts.
+disable systemd-firstboot.service
+
 # Disable dnf-makecache.timer on bootc/image mode systems
 # https://github.com/coreos/fedora-coreos-tracker/issues/1896#issuecomment-2848251507
 disable dnf-makecache.timer
