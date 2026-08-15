@@ -239,7 +239,9 @@ jobs:
           df -h /hostfs
 
           # Wipe stuff in our host /usr to make some space
-          cleanup_path /hostfs/usr/local/lib/android
+
+          # this might be needed later, but it adds about a minute to build time for about 10GB of savings which is like, not worth it when we aren't that strapped for space
+          # cleanup_path /hostfs/usr/local/lib/android
           cleanup_path /hostfs/usr/local/.ghcup
           cleanup_path /hostfs/opt/ghc
           cleanup_path /hostfs/usr/share/swift
