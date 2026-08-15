@@ -2,7 +2,7 @@
 
 # Quick-and-dirty script to invoke bootc-image-builder
 
-: ${BOOTC_IMAGE_BUILDER:="quay.io/centos-bootc/bootc-image-builder"}
+: "${BOOTC_IMAGE_BUILDER:=quay.io/centos-bootc/bootc-image-builder}"
 
 dirs_check=(
     "output"
@@ -10,11 +10,11 @@ dirs_check=(
     ".cache/store"
 )
 
-cache_dir=$(pwd)/.cache
+cache_dir="$(pwd)/.cache"
 
 function create_dirs {
-    for dir in ${dirs_check[@]}; do
-        mkdir -p $dir
+    for dir in "${dirs_check[@]}"; do
+        mkdir -p "$dir"
     done
 }
 
@@ -30,17 +30,16 @@ function bootc-image-builder {
         --privileged \
         --pull=newer \
         --security-opt label=type:unconfined_t \
-        -v $(pwd)/output:/output \
-        -v $cache_dir/rpmmd:/rpmmd \
-        -v $cache_dir/store:/store \
-        -v $(pwd)/scripts:/scripts \
+        -v "$(pwd)/output:/output" \
+        -v "$cache_dir/rpmmd:/rpmmd" \
+        -v "$cache_dir/store:/store" \
+        -v "$(pwd)/scripts:/scripts" \
         -v /var/lib/containers/storage:/var/lib/containers/storage \
         "$BOOTC_IMAGE_BUILDER" \
         --progress=verbose \
         --chown "$(get_uid_gid)" \
-        $@
+        "$@"
 }
 
 create_dirs
-bootc-image-builder $@
-
+bootc-image-builder "$@"

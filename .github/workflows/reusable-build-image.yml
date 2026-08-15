@@ -52,6 +52,14 @@ on:
         required: false
         type: string
         default: ""
+      release:
+        description: "Fedora/Ultramarine release number used to isolate build caches"
+        required: true
+        type: string
+      registry:
+        description: "Lowercase container registry namespace, for example ghcr.io/ultramarine-linux"
+        required: true
+        type: string
       rechunk:
         description: "Whether to run the rechunker step (true/false)"
         required: false
@@ -77,6 +85,11 @@ on:
         required: false
         type: boolean
         default: true
+      publish:
+        description: "Whether to push images and publish a multi-architecture manifest"
+        required: false
+        type: boolean
+        default: true
     outputs:
       image:
         description: "The image name that was built"
@@ -95,14 +108,16 @@ on:
         description: "The private key used to sign the image"
         required: false
 
-permissions: write-all
+permissions:
+  contents: read
+  packages: write
 
 env:
   IMAGE_NAME: ${{ inputs.flavor }}-bootc
   IMAGE_DESC: ${{ inputs.image-desc }}
-  IMAGE_REGISTRY: "ghcr.io/ultramarine-linux"
+  IMAGE_REGISTRY: ${{ inputs.registry }}
   PLATFORMS: ${{ inputs.platforms }}
-  PODMAN_CACHE_TAG: "ghcr.io/ultramarine-linux/bootc/cache"
+  PODMAN_CACHE_TAG: ${{ inputs.registry }}/bootc/cache
 
 jobs:
   generate_matrix:
@@ -136,9 +151,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
     container:
-      image: ghcr.io/ultramarine-linux/ultramarine:43
+      image: ghcr.io/ultramarine-linux/ultramarine:44
       options: --privileged --security-opt label=disable --device /dev/udev -v /dev:/dev --device /dev/fuse -v /var/tmp:/var/tmp -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys:/sys --cgroupns=host -v /var/lib/containers:/var/lib/containers -v /:/hostfs
 
     steps:
@@ -174,11 +188,14 @@ jobs:
 
           # Normalize: lowercase and replace slashes with dashes so branch names like feature/foo become feature-foo
           BASE_TAG=$(echo "$BASE_TAG" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          # Version branches use the umNN convention, while image tags use NN.
+          BASE_TAG=${BASE_TAG#um}
           echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
 
           # Default branch to gate latest tagging
           DEFAULT_BRANCH="${{ github.event.repository.default_branch || 'main' }}"
           DEFAULT_BRANCH=$(echo "$DEFAULT_BRANCH" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          DEFAULT_BRANCH=${DEFAULT_BRANCH#um}
           echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
 
       # Only uncomment if necessary, your builds are super small anyways
@@ -193,27 +210,47 @@ jobs:
 
       - name: Clean up space before build
         run: |
-          df -h
+          set -u
+
+          available_bytes() {
+            df -B1 --output=avail /hostfs | awk 'NR == 2 { print $1 }'
+          }
+
+          cleanup_path() {
+            local path="$1"
+            local before after freed start elapsed
+
+            if [ ! -e "$path" ]; then
+              echo "Skipping missing path: $path"
+              return
+            fi
+
+            before=$(available_bytes)
+            start=$SECONDS
+            echo "Deleting $path (available before: ${before} bytes)"
+            rm -rf -- "$path"
+            elapsed=$((SECONDS - start))
+            after=$(available_bytes)
+            freed=$((after - before))
+            echo "Finished $path: ${elapsed}s, available after: ${after} bytes, filesystem delta: ${freed} bytes"
+          }
+
+          echo "Before cleanup:"
+          df -h /hostfs
+
           # Wipe stuff in our host /usr to make some space
 
-          # We don't need the android SDK
-          rm -rf /hostfs/usr/local/lib/android
-          # We're a Rust shop, not a Haskell shop
-          rm -rf /hostfs/usr/local/.ghcup
-          rm -rf /hostfs/opt/ghc
-          # or Swift either
-          rm -rf /hostfs/usr/share/swift
-          # nor Java
-          rm -rf /hostfs/usr/lib/jvm
-          # We don't even use .NET
-          rm -rf /hostfs/usr/share/dotnet
-          # We don't need tools we're in a container
-          rm -rf /hostfs/opt/hostedtoolcache
-
+          # this might be needed later, but it adds about a minute to build time for about 10GB of savings which is like, not worth it when we aren't that strapped for space
+          # cleanup_path /hostfs/usr/local/lib/android
+          cleanup_path /hostfs/usr/local/.ghcup
+          cleanup_path /hostfs/opt/ghc
+          cleanup_path /hostfs/usr/share/swift
+          cleanup_path /hostfs/usr/lib/jvm
+          cleanup_path /hostfs/usr/share/dotnet
+          cleanup_path /hostfs/opt/hostedtoolcache
 
           echo "After cleanup:"
-          df -h
-
+          df -h /hostfs
 
       - name: Login to GitHub Container Registry
         # if: github.event_name != 'pull_request'
@@ -222,7 +259,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login -u ${{ github.actor }} --password-stdin $registry
+          printf '%s\n' "$password" | sudo podman login -u "$username" --password-stdin "$registry"
 
       # - name: Mount BTRFS loopback
       #   uses: ublue-os/container-storage-action@911baca08baf30c8654933e9e9723cb399892140
@@ -263,6 +300,11 @@ jobs:
                 FROM_ARG="--from=$FROM_IMAGE"
               fi
 
+              PLATFORM_SAFE=$(echo "$PLATFORM" | tr '/' '-')
+              # Podman requires cache-to/cache-from references to be repositories,
+              # not tagged images. Keep flavor/platform isolation in the path.
+              CACHE_REPOSITORY="${PODMAN_CACHE_TAG}/${FLAVOR}-${PLATFORM_SAFE}"
+
               # Set default context path if not provided
               BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
 
@@ -276,13 +318,13 @@ jobs:
                 # Conditionally add --cache-from based on skip-cache-from input
                 CACHE_FROM_ARG=""
                 if [ "${{ inputs.skip-cache-from }}" != "true" ]; then
-                  CACHE_FROM_ARG="--cache-from ${PODMAN_CACHE_TAG}"
+                  CACHE_FROM_ARG="--cache-from ${CACHE_REPOSITORY}"
                 fi
 
                 sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
                   --layers=true \
                   $CACHE_FROM_ARG \
-                  --cache-to ${PODMAN_CACHE_TAG} \
+                  --cache-to "$CACHE_REPOSITORY" \
                   -t "localhost/${FLAVOR}-bootc:build" \
                   -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
                   $FROM_ARG \
@@ -338,9 +380,9 @@ jobs:
           path: |
             ${{ env.MKOSI_CONTEXT }}/mkosi.cache
             ${{ env.MKOSI_CONTEXT }}/mkosi.tools
-          key: mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-${{ hashFiles(format('{0}/**', env.MKOSI_CONTEXT)) }}
+          key: mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-${{ inputs.release }}-${{ hashFiles(format('{0}/**', env.MKOSI_CONTEXT)) }}
           restore-keys: |
-            mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-
+            mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-${{ inputs.release }}-
 
       - name: Build Image (mkosi)
         id: build-image
@@ -412,9 +454,9 @@ jobs:
 
       # Push the image to GHCR (Image Registry)
       - name: Push to GHCR
-        # if: github.event_name != 'pull_request'
         id: push
         env:
+          PUBLISH: ${{ inputs.publish }}
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           PLATFORM: ${{ matrix.platform }}
@@ -423,10 +465,15 @@ jobs:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
         run: |
           set -x
-          # Push the local image directly by digest
-          # The manifest job will reference these by digest to create the multi-arch manifest
+          # Push the local image directly by digest. For pull requests, retain the
+          # local digest as an artifact so the build is validated without publishing.
           LOCAL_IMAGE="localhost/${IMAGE_NAME}:build"
-
+          if [ "$PUBLISH" != true ]; then
+            LOCAL_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "$LOCAL_IMAGE")
+            echo "remote_image_digest=$LOCAL_DIGEST" >> $GITHUB_OUTPUT
+            echo "Skipping registry push for this validation build"
+            exit 0
+          fi
 
           # write the secret to a file
           SIGN_ARG=""
@@ -440,10 +487,23 @@ jobs:
           platform_safe=$(echo "$PLATFORM" | tr '/' '-')
           arch_tag="${BASE_TAG}${TAG_SUFFIX:+${TAG_SUFFIX}}-${platform_safe}"
 
+          rm -f /tmp/digestfile
+          push_succeeded=false
           for i in {1..3}; do
             # TODO: use docker:// or not use
-            sudo podman push $SIGN_ARG --digestfile=/tmp/digestfile "$LOCAL_IMAGE" docker://"${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}" && break || sleep $((5 * i));
+            if sudo podman push $SIGN_ARG --digestfile=/tmp/digestfile "$LOCAL_IMAGE" "docker://${IMAGE_REGISTRY}/${IMAGE_NAME}:${arch_tag}"; then
+              push_succeeded=true
+              break
+            fi
+            if [ "$i" -lt 3 ]; then
+              sleep $((5 * i))
+            fi
           done
+
+          if [ "$push_succeeded" != true ] || [ ! -s /tmp/digestfile ]; then
+            echo "Failed to push ${LOCAL_IMAGE} after 3 attempts" >&2
+            exit 1
+          fi
 
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
           echo "remote_image_digest=$REMOTE_IMAGE_DIGEST" >> $GITHUB_OUTPUT
@@ -492,7 +552,7 @@ jobs:
   manifest:
     name: Create ${{ inputs.image-name }} Manifest
     runs-on: ubuntu-24.04
-    if: "!cancelled()"
+    if: inputs.publish && !cancelled()
     needs:
       - generate_matrix
       - build_push
@@ -502,7 +562,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
     outputs:
       image: ${{ steps.push_manifest.outputs.IMAGE }}
       digest: ${{ steps.push_manifest.outputs.DIGEST }}
@@ -575,10 +634,13 @@ jobs:
 
           # Normalize: lowercase and replace slashes with dashes so branch names like feature/foo become feature-foo
           BASE_TAG=$(echo "$BASE_TAG" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          # Version branches use the umNN convention, while image tags use NN.
+          BASE_TAG=${BASE_TAG#um}
           echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
 
           DEFAULT_BRANCH="${{ github.event.repository.default_branch || 'main' }}"
           DEFAULT_BRANCH=$(echo "$DEFAULT_BRANCH" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+          DEFAULT_BRANCH=${DEFAULT_BRANCH#um}
           echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
 
       - name: Image Metadata
@@ -636,6 +698,14 @@ jobs:
           done
           echo "DIGESTS_JSON=$(echo $DIGESTS_JSON | jq -c '.')" >> $GITHUB_OUTPUT
 
+      - name: Login to GHCR
+        # Authenticate before manifest add performs registry lookups.
+        env:
+          REGISTRY: ghcr.io
+          USERNAME: ${{ github.actor }}
+          PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s\n' "$PASSWORD" | podman login -u "$USERNAME" --password-stdin "$REGISTRY"
+
       - name: Create Manifest
         # if: github.event_name != 'pull_request'
         id: create-manifest
@@ -681,10 +751,6 @@ jobs:
             echo "Applying label $label to manifest"
             podman manifest annotate --index --annotation "$label" $MANIFEST
           done <<< "$LABELS"
-
-      - name: Login to GHCR
-        # if: github.event_name != 'pull_request'
-        run: echo ${{ secrets.GITHUB_TOKEN }} | podman login -u ${{ github.actor }} --password-stdin ghcr.io
 
       - name: Push Manifest
         # if: github.event_name != 'pull_request'
@@ -880,7 +946,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
