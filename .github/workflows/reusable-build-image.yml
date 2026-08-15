@@ -85,6 +85,11 @@ on:
         required: false
         type: boolean
         default: true
+      publish:
+        description: "Whether to push images and publish a multi-architecture manifest"
+        required: false
+        type: boolean
+        default: true
     outputs:
       image:
         description: "The image name that was built"
@@ -426,9 +431,9 @@ jobs:
 
       # Push the image to GHCR (Image Registry)
       - name: Push to GHCR
-        # if: github.event_name != 'pull_request'
         id: push
         env:
+          PUBLISH: ${{ inputs.publish }}
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           PLATFORM: ${{ matrix.platform }}
@@ -437,10 +442,15 @@ jobs:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
         run: |
           set -x
-          # Push the local image directly by digest
-          # The manifest job will reference these by digest to create the multi-arch manifest
+          # Push the local image directly by digest. For pull requests, retain the
+          # local digest as an artifact so the build is validated without publishing.
           LOCAL_IMAGE="localhost/${IMAGE_NAME}:build"
-
+          if [ "$PUBLISH" != true ]; then
+            LOCAL_DIGEST=$(sudo podman image inspect --format '{{.Digest}}' "$LOCAL_IMAGE")
+            echo "remote_image_digest=$LOCAL_DIGEST" >> $GITHUB_OUTPUT
+            echo "Skipping registry push for this validation build"
+            exit 0
+          fi
 
           # write the secret to a file
           SIGN_ARG=""
@@ -519,7 +529,7 @@ jobs:
   manifest:
     name: Create ${{ inputs.image-name }} Manifest
     runs-on: ubuntu-24.04
-    if: "!cancelled()"
+    if: inputs.publish && !cancelled()
     needs:
       - generate_matrix
       - build_push

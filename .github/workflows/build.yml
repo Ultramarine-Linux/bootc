@@ -16,6 +16,13 @@ on:
       - "tier1/**"
       - "tier2/**"
       - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "base/**"
+      - "tier0/**"
+      - "tier1/**"
+      - "tier2/**"
+      - ".github/workflows/**"
   schedule:
     - cron: "0 1 * * TUE" # Every Tuesday at 1am UTC
   merge_group:
@@ -103,6 +110,7 @@ jobs:
       skip-cache-from: ${{ github.event_name == 'schedule' }}
       mkosi: true
       maximize-build-space: false
+      publish: ${{ github.event_name != 'pull_request' }}
 
   # todo: maybe tier0 for desktop base images?
   #
@@ -139,6 +147,7 @@ jobs:
         }}
       tag: ${{ needs.normalize.outputs.tag }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
+      publish: ${{ github.event_name != 'pull_request' }}
 
   tier0-outputs:
     needs: [build-tier0]
@@ -191,6 +200,7 @@ jobs:
         }}
       tag: ${{ needs.normalize.outputs.tag }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
+      publish: ${{ github.event_name != 'pull_request' }}
 
   tier1-outputs:
     needs: [build-tier1]
@@ -260,6 +270,7 @@ jobs:
       tag: ${{ needs.normalize.outputs.tag }}
       rechunk: ${{ matrix.variant != 'standard' }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
+      publish: ${{ github.event_name != 'pull_request' }}
 
   # tier2-outputs:
   #   needs: [build-tier2]
