@@ -1,0 +1,4 @@
+#!/bin/bash
+set -euo pipefail
+
+systemctl enable cloud-init-local cloud-init-main cloud-config cloud-final tetra

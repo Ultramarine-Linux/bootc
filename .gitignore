@@ -6,3 +6,16 @@ cosign.key
 katsu-work/
 *.iso
 *.img
+
+# mkosi build artifacts, shared by every tier
+basetree/
+mkosi.builddir/
+mkosi.cache/
+mkosi.extra.tar
+mkosi.local/
+mkosi.local.conf
+mkosi.output/
+mkosi.skeleton.tar
+mkosi.tools/
+mkosi.tools.manifest
+mkosi.version
