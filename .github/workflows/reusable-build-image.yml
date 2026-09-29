@@ -22,11 +22,6 @@ on:
         required: false
         type: string
         default: "amd64,arm64"
-      needs:
-        description: "The jobs that this job depends on"
-        required: false
-        type: string
-        default: ""
       from:
         description: "Published image this tier derives from, unpacked into the base tree"
         required: false

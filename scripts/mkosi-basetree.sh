@@ -25,7 +25,7 @@ for arg in "$@"; do
     case "$arg" in
         --copy) MODE=copy ;;
         -h|--help)
-            sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//' | sed '${/^$/d}'
             exit 0
             ;;
         -*)

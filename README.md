@@ -20,11 +20,17 @@ The base image is an OCI/Docker image, which can be consumed to build a disk ima
 
 ## Building
 
-The build process is separated into _tiers_, which depend on each other in a linear fashion, starting with the bare minimum base, building up to a full Ultramarine system, desktop variants, and HWE sub-variants for those images.
+The build process is separated into _tiers_, which build on each other, starting with the bare minimum base, building up to a full Ultramarine system, desktop variants, and hardware or deployment variants of those desktop images.
 
 ### Prerequisites
 
-Local builds require Podman, `just`, and a Linux host with the privileges needed for rootful/privileged container builds. Building bootable images additionally requires access to `/dev` and the container storage volume used by Podman. The CI workflows provide the required build tools inside their build containers.
+Local builds require [mkosi](https://github.com/systemd/mkosi) 26 or newer,
+Podman, `just`, and a Linux host with the privileges needed for rootful builds.
+mkosi builds the image root directly, so unlike the Containerfiles this
+replaced it needs root rather than a privileged container. Building bootable
+images additionally requires access to `/dev` and the container storage volume
+used by Podman. The CI workflows provide the required build tools inside their
+build containers.
 
 Version branches use the `umNN` convention. This repository is currently on `um44`; a new version branch is created from the previous version and its release references are updated there.
 
@@ -58,23 +64,57 @@ This will build the base image from scratch and rechunk it. You can then proceed
 ```bash
 just context=tier0/desktop ball
 just context=tier1/gnome ball
-just context=tier2/standard ball from=ghcr.io/ultramarine-linux/gnome-bootc:main
+just context=tier2/standard ball from=ghcr.io/ultramarine-linux/gnome-bootc:44
+```
+
+### How tiers build on each other
+
+Every image is an [mkosi](https://github.com/systemd/mkosi) project. mkosi has
+no `FROM`, so a tier derives from the published image of the tier below it
+through mkosi's `BaseTrees=` setting. The `basetree` recipe materialises that
+image's root filesystem into `<tier>/basetree/`, which is what the tier's
+`BaseTrees=basetree` points at:
+
+```bash
+just context=tier1/gnome basetree from=ghcr.io/ultramarine-linux/desktop-bootc:44
+```
+
+`base` is the exception: it installs from packages and so has no base tree,
+which is why `from` is unset for it.
+
+Each tier's `mkosi.conf` keeps only what differs between tiers. Everything the
+tiers share lives in `common/`:
+
+- `common/mkosi.conf.d/` holds the Distribution, Build, Validation and Output
+  settings, included by every tier. Note that relative paths inside an included
+  file resolve against the tier directory, not against `common/`.
+- `common/dnf/dnf.conf` is the package-manager configuration for the sandbox
+  mkosi runs dnf in. Tiers that need an `exclude=` ship their own complete
+  copy, because dnf5 has no `include=` mechanism to layer one on top.
+
+`mkosi` subcommands also work directly against a tier, provided the base tree
+is already in place:
+
+```bash
+mkosi -C tier1/gnome summary   # show the resolved configuration
+mkosi -C tier1/gnome build     # build into tier1/gnome/mkosi.output
 ```
 
 ## Building bootable images
 
-To build a bootable disk image off of the built images, use the `build-vm` or `build-vm-imb` Just recipes:
+To build a bootable disk image off of the built images, use the `build-vm` or
+`build-bib` Just recipes:
 
 ```bash
 just context=tier1/gnome build-vm
 ```
 
 ```bash
-just context=tier1/gnome build-vm-imb
+just context=tier1/gnome build-bib
 ```
 
 ```bash
-just context=tier1/gnome build-vm-imb qcow2 # or raw, vhd, anaconda-iso, bootc-installer, etc.
+just context=tier1/gnome build-bib qcow2 # or raw, vhd, anaconda-iso, bootc-installer, etc.
 ```
 
 ## Notes on building derivatives
@@ -82,3 +122,9 @@ just context=tier1/gnome build-vm-imb qcow2 # or raw, vhd, anaconda-iso, bootc-i
 Ultramarine bootc stores two copies of the RPM database, one in `/usr/lib/sysimage/rpm` and one in `/usr/share/rpm`. The former is used by the system at runtime, while the latter is used by `rpm-ostree` for rechunking operations. This is a known quirk with rpm-ostree based systems.
 
 The base image provides a DNF 5 action hook that automatically syncs the two databases after transactions, which require the Actions plugin to be installed.
+
+Every tier sets `CleanPackageMetadata=no` so that `/usr/lib/sysimage/rpm`
+survives the build. Without it, dnf could not see what the tier below already
+installed, and the image could not itself be used as the base tree of the tier
+above. One consequence is that mkosi's `RemovePackages=` is skipped, so a tier
+that removes a package does it with dnf in its postinstall script instead.
