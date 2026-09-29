@@ -1,0 +1,15 @@
+#!/bin/bash
+set -xeuo pipefail
+
+# Replaces the Containerfile's "--action=remove" in the same transaction as the
+# install. RemovePackages= cannot be used here: it is skipped when
+# CleanPackageMetadata=no, which tier1 requires to stay usable as a base tree.
+dnf remove -y ultramarine-release-identity-basic
+
+sed -i 's/^livesys_session=.*/livesys_session="xfce"/' /etc/sysconfig/livesys
+
+# tier0/desktop already created this file, so append rather than truncate.
+{
+    echo '# Use our XFCE panel config'
+    echo 'cp /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml /home/liveuser/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml'
+} >>/var/lib/livesys/livesys-session-extra

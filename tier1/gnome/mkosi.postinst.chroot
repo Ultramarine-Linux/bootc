@@ -1,0 +1,7 @@
+#!/bin/bash
+set -xeuo pipefail
+
+# Replaces the Containerfile's "--action=remove" in the same transaction as the
+# install. RemovePackages= cannot be used here: it is skipped when
+# CleanPackageMetadata=no, which tier1 requires to stay usable as a base tree.
+dnf remove -y ultramarine-release-identity-basic

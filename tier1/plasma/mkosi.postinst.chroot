@@ -1,0 +1,17 @@
+#!/bin/bash
+set -xeuo pipefail
+
+# Replaces the Containerfile's "--action=remove" in the same transaction as the
+# install. RemovePackages= cannot be used here: it is skipped when
+# CleanPackageMetadata=no, which tier1 requires to stay usable as a base tree.
+dnf remove -y ultramarine-release-identity-basic
+
+# Disable the PackageKit backend for bootc installs.
+mv /usr/lib64/qt6/plugins/discover/packagekit-backend.so \
+   /usr/lib64/qt6/plugins/discover/packagekit-backend.so.disabled
+
+# qtvirtualkeyboard is not getting installed properly, but it is required for
+# plasma-keyboard to actually work.
+dnf reinstall -y qt6-qtvirtualkeyboard
+
+sed -i 's/^livesys_session=.*/livesys_session="kde"/' /etc/sysconfig/livesys
