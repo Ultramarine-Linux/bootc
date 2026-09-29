@@ -1,0 +1,11 @@
+#!/bin/bash
+set -xeuo pipefail
+
+# Experiment: replace sudo with a minimal shim that delegates to run0, a wrapper
+# around systemd-run.
+#
+# The removal has to happen after Packages= has installed the shim, because
+# run0-sudo-shim and sudo both provide /usr/bin/sudo and the transaction needs
+# --nodeps to drop the real sudo. mkosi's own transaction cannot express that,
+# so it is done here with rpm directly.
+rpm -e --nodeps sudo

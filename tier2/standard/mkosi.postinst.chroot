@@ -1,0 +1,13 @@
+#!/bin/bash
+set -xeuo pipefail
+
+# Revert the ostree-specific changes so the image works as a standard
+# (mutable) installation. Only valid outside an ostree-booted system.
+export DRACUT_NO_XATTR=1
+export ONLINE=1
+# GRUB sees the backing filesystem as an overlay during a container build and
+# cannot canonicalise it as an installable boot device, so the external
+# installer generates the config instead.
+export NOGRUB=1
+
+/usr/libexec/revert-bootc
