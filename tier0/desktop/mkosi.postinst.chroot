@@ -1,0 +1,19 @@
+#!/bin/bash
+set -xeuo pipefail
+
+# Component markers. xattrs cannot be carried in git, so they are set here.
+setfattr -n user.component -v "ultramarine-desktop" /usr/lib/bootc/kargs.d/20-rhgb.toml
+setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/flatpak-add-flathub-repos.service
+setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/packagekit.service.d
+setfattr -n user.component -v "ultramarine-desktop-config" /usr/src/ultramarine-bootc/tier0/desktop
+
+# The SW Catalog confuses users and does not work in bootc; standard builds
+# reinstall it.
+rm -rf /usr/share/swcatalog
+
+plymouth-set-default-theme bgrt
+
+DESKTOP_SRC=/usr/src/ultramarine-bootc/tier0/desktop
+chmod +x "$DESKTOP_SRC/desktop.sh" "$DESKTOP_SRC/live-setup.sh"
+"$DESKTOP_SRC/desktop.sh"
+"$DESKTOP_SRC/live-setup.sh"
