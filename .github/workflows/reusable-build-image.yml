@@ -28,15 +28,10 @@ on:
         type: string
         default: ""
       from:
-        description: "Base image to use with --from argument in podman build"
+        description: "Published image this tier derives from, unpacked into the base tree"
         required: false
         type: string
         default: ""
-      containerfile:
-        description: "Path to the Containerfile relative to the context"
-        required: false
-        type: string
-        default: "Containerfile"
       context-path:
         description: "Build context path"
         required: false
@@ -66,17 +61,12 @@ on:
         type: boolean
         default: true
       skip-cache-from:
-        description: "Skip using --cache-from (for scheduled builds to start fresh)"
+        description: "Discard the mkosi build cache before building, so scheduled builds start fresh"
         required: false
         type: boolean
         default: false
       build_iso:
         description: "Whether to build the ISO image alongside the container image"
-        required: false
-        type: boolean
-        default: false
-      mkosi:
-        description: "Whether to use mkosi for building the image"
         required: false
         type: boolean
         default: false
@@ -263,86 +253,7 @@ jobs:
       #     mount-opts: compress-force=zstd:8
       #     loopback-free: 0.8
 
-      - name: Build Image (Containerfile)
-        if: inputs.mkosi == false
-        id: build-image-mkosi
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        env:
-          IMAGE_NAME: ${{ env.IMAGE_NAME }}
-          GITHUB_WORKSPACE: ${{ github.workspace }}
-          FLAVOR: ${{ inputs.flavor }}
-          PLATFORM: ${{ matrix.platform }}
-          IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
-          FROM_IMAGE: ${{ inputs.from }}
-          CONTAINERFILE: ${{ inputs.containerfile }}
-          CONTEXT_PATH: ${{ inputs.context-path }}
-        with:
-          retry_on_exit_code: 125
-          timeout_minutes: 120
-          max_attempts: 5
-          command: |
-            set -x
-
-            function build() {
-              # Normalize platform to linux/ARCH format
-              BUILD_PLATFORM="${PLATFORM}"
-              if [[ "$BUILD_PLATFORM" != linux/* ]]; then
-                BUILD_PLATFORM="linux/${BUILD_PLATFORM}"
-              fi
-
-              FROM_ARG=""
-              if [ -n "$FROM_IMAGE" ]; then
-                FROM_ARG="--from=$FROM_IMAGE"
-              fi
-
-              PLATFORM_SAFE=$(echo "$PLATFORM" | tr '/' '-')
-              # Podman requires cache-to/cache-from references to be repositories,
-              # not tagged images. Keep flavor/platform isolation in the path.
-              CACHE_REPOSITORY="${PODMAN_CACHE_TAG}/${FLAVOR}-${PLATFORM_SAFE}"
-
-              # Set default context path if not provided
-              BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
-
-              local max_attempts=3
-              local attempt=1
-              local exit_code=0
-
-              while [ $attempt -le $max_attempts ]; do
-                echo "Build attempt $attempt of $max_attempts"
-
-                # Conditionally add --cache-from based on skip-cache-from input
-                CACHE_FROM_ARG=""
-                if [ "${{ inputs.skip-cache-from }}" != "true" ]; then
-                  CACHE_FROM_ARG="--cache-from ${CACHE_REPOSITORY}"
-                fi
-
-                sudo podman build --platform "$BUILD_PLATFORM" --cap-add=all --userns=host --cgroupns=host \
-                  --layers=true \
-                  $CACHE_FROM_ARG \
-                  --cache-to "$CACHE_REPOSITORY" \
-                  -t "localhost/${FLAVOR}-bootc:build" \
-                  -f "${BUILD_CONTEXT}/${CONTAINERFILE}" \
-                  $FROM_ARG \
-                  "${BUILD_CONTEXT}"
-                exit_code=$?
-
-                if [ $exit_code -eq 0 ]; then
-                  return 0
-                elif [ $exit_code -eq 125 ] && [ $attempt -lt $max_attempts ]; then
-                  echo "Podman returned exit code 125, retrying..."
-                  attempt=$((attempt + 1))
-                  sleep 5
-                else
-                  return $exit_code
-                fi
-              done
-
-              return $exit_code
-            }
-
-            build
       - name: setup-mkosi
-        if: inputs.mkosi == true
         run: |
           mkdir -p /usr/local/src
           git clone https://github.com/systemd/mkosi /usr/local/src/mkosi
@@ -360,7 +271,6 @@ jobs:
         shell: bash
 
       - name: Resolve mkosi context path
-        if: inputs.mkosi == true
         env:
           CONTEXT_PATH: ${{ inputs.context-path }}
           FLAVOR: ${{ inputs.flavor }}
@@ -368,35 +278,53 @@ jobs:
           BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
           echo "MKOSI_CONTEXT=${BUILD_CONTEXT}" >> $GITHUB_ENV
 
+      # mkosi has no FROM, so a tier derives from the published image of the tier
+      # below it via BaseTrees=. Unpack that image's root filesystem into place
+      # before building. base installs from packages and passes no from image.
+      - name: Materialise base tree
+        env:
+          FROM_IMAGE: ${{ inputs.from }}
+          MKOSI_CONTEXT: ${{ env.MKOSI_CONTEXT }}
+        run: |
+          set -eux
+          if [ -z "$FROM_IMAGE" ]; then
+            echo "No from image, building without a base tree"
+            exit 0
+          fi
+          df -h /
+          sudo scripts/mkosi-basetree.sh "$FROM_IMAGE" "${MKOSI_CONTEXT}/basetree"
+          df -h /
+
+      # mkosi keeps its incremental build cache in the context, so a fresh start
+      # means discarding it before the cache step restores anything.
+      - name: Discard mkosi cache
+        if: inputs.skip-cache-from
+        env:
+          MKOSI_CONTEXT: ${{ env.MKOSI_CONTEXT }}
+        run: |
+          rm -rf "${MKOSI_CONTEXT}/mkosi.cache" "${MKOSI_CONTEXT}/mkosi.tools"
+
       - name: Cache mkosi build cache
-        if: inputs.mkosi == true
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ${{ env.MKOSI_CONTEXT }}/mkosi.cache
             ${{ env.MKOSI_CONTEXT }}/mkosi.tools
-          key: mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-${{ inputs.release }}-${{ hashFiles(format('{0}/**', env.MKOSI_CONTEXT)) }}
+          # The shared config lives outside the context, so hash it as well or a
+          # change there would not invalidate the cache.
+          key: mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-${{ inputs.release }}-${{ hashFiles(format('{0}/**', env.MKOSI_CONTEXT), 'common/**', 'base/repodir/**') }}
           restore-keys: |
             mkosi-${{ inputs.flavor }}-${{ matrix.platform }}-${{ inputs.release }}-
 
       - name: Build Image (mkosi)
         id: build-image
-        if: inputs.mkosi == true
         env:
-          IMAGE_NAME: ${{ env.IMAGE_NAME }}
-          GITHUB_WORKSPACE: ${{ github.workspace }}
           FLAVOR: ${{ inputs.flavor }}
-          PLATFORM: ${{ matrix.platform }}
-          IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
-          FROM_IMAGE: ${{ inputs.from }}
-          CONTAINERFILE: ${{ inputs.containerfile }}
-          CONTEXT_PATH: ${{ inputs.context-path }}
+          MKOSI_CONTEXT: ${{ env.MKOSI_CONTEXT }}
         run: |
           set -eux
-          BUILD_CONTEXT="${CONTEXT_PATH:-${GITHUB_WORKSPACE}/${FLAVOR}}"
-          sudo mkosi -C "${BUILD_CONTEXT}" build -B
-          # find output directory in ${CONTEXT_PATH}/mkosi.output/
-          OUTPUT_DIR=$(find ${BUILD_CONTEXT}/mkosi.output/ -type d  | head -n 2 | tail -n 1)
+          sudo mkosi -C "${MKOSI_CONTEXT}" build -B
+          OUTPUT_DIR=$(find "${MKOSI_CONTEXT}/mkosi.output" -mindepth 1 -maxdepth 1 -type d)
           sudo podman pull "oci:${OUTPUT_DIR}" > /tmp/digest
           DIGEST=$(cat /tmp/digest)
           sudo podman tag "${DIGEST}" "localhost/${FLAVOR}-bootc:build"
@@ -655,7 +583,7 @@ jobs:
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
             org.opencontainers.image.documentation=https://wiki.ultramarine-linux.org/
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/blob/${{ env.DEFAULT_BRANCH }}/Containerfile
+            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/bootc/blob/${{ env.DEFAULT_BRANCH }}/${{ inputs.context-path || 'base' }}/mkosi.conf
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.url=https://ultramarine-linux.org/
             org.opencontainers.image.vendor=${{ github.repository_owner }}

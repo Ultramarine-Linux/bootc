@@ -4,24 +4,28 @@
 # Materialise a container image into a directory for use as an mkosi
 # BaseTrees= source, printing its path on stdout.
 #
-# Usage: mkosi-basetree.sh [--copy] <image-ref>
+# Usage: mkosi-basetree.sh [--copy] <image-ref> [dest]
 #
 # Mounting rather than exporting because `podman export` drops user.* xattrs,
 # and the base image marks /usr/lib/ostree-boot and the initramfs with
 # user.component. Mounting needs no extra setup when rootful (as CI runs); when
 # rootless we re-exec under `podman unshare`, which means the printed path is
 # only valid inside that namespace -- use --copy to get a path that is not.
+#
+# With a dest argument the tree is copied there, replacing anything already
+# there, and dest must not be "/" or a prefix of "/".
 
 set -euo pipefail
 
 MODE=mount
 IMAGE=""
+DEST=""
 
 for arg in "$@"; do
     case "$arg" in
         --copy) MODE=copy ;;
         -h|--help)
-            sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         -*)
@@ -29,11 +33,15 @@ for arg in "$@"; do
             exit 2
             ;;
         *)
-            if [ -n "$IMAGE" ]; then
-                echo "mkosi-basetree.sh: expected exactly one image reference" >&2
+            if [ -z "$IMAGE" ]; then
+                IMAGE="$arg"
+            elif [ -z "$DEST" ]; then
+                DEST="$arg"
+                MODE=copy
+            else
+                echo "mkosi-basetree.sh: expected at most <image-ref> [dest]" >&2
                 exit 2
             fi
-            IMAGE="$arg"
             ;;
     esac
 done
@@ -54,7 +62,7 @@ cleanup() {
     if [ -n "${MOUNTPOINT:-}" ]; then
         podman image umount "$IMAGE" >/dev/null 2>&1 || true
     fi
-    if [ -n "${COPYDIR:-}" ]; then
+    if [ -n "${COPYDIR:-}" ] && [ -z "$DEST" ]; then
         rm -rf "$COPYDIR"
     fi
 }
@@ -72,15 +80,31 @@ if [ -z "$MOUNTPOINT" ] || [ ! -d "$MOUNTPOINT" ]; then
     exit 1
 fi
 
-if [ "$MODE" = "copy" ]; then
-    # Copy out so the path stays valid outside this mount namespace.
+if [ "$MODE" != "copy" ]; then
+    trap - EXIT
+    printf '%s\n' "$MOUNTPOINT"
+    exit 0
+fi
+
+# Copy out so the path stays valid outside this mount namespace.
+if [ -n "$DEST" ]; then
+    case "$DEST" in
+        /|/usr|/var|/etc|/boot|/lib|/bin|/sbin)
+            echo "mkosi-basetree.sh: refusing to use '$DEST' as a destination" >&2
+            exit 2
+            ;;
+    esac
+    rm -rf "$DEST"
+    mkdir -p "$DEST"
+    cp -a --reflink=auto "$MOUNTPOINT/." "$DEST/"
+    podman image umount "$IMAGE" >/dev/null 2>&1 || true
+    trap - EXIT
+    printf '%s\n' "$DEST"
+else
     COPYDIR=$(mktemp -d "${TMPDIR:-/tmp}/mkosi-basetree.XXXXXXXX")
     cp -a --reflink=auto "$MOUNTPOINT/." "$COPYDIR/"
     podman image umount "$IMAGE" >/dev/null 2>&1 || true
     MOUNTPOINT=""
     trap - EXIT
     printf '%s\n' "$COPYDIR"
-else
-    trap - EXIT
-    printf '%s\n' "$MOUNTPOINT"
 fi

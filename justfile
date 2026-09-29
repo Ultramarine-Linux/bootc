@@ -12,11 +12,6 @@ image_tag := if image_tag_override != "" {
     registry_prefix + "/" + variant + image_suffix + ":" + tag
 }
 from := ""
-from_arg := if from != "" {
-    "--from=" + from
-} else {
-    ""
-}
 
 [private]
 test:
@@ -25,7 +20,16 @@ test:
 
 ball: (build) (rechunk)
 
-mkosi-build:
+# Populate the base tree for a tier that derives from a published image.
+basetree:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -z "{{ from }}" ]; then
+        exit 0
+    fi
+    scripts/mkosi-basetree.sh "{{ from }}" "{{ context }}/basetree" >/dev/null
+
+mkosi-build: basetree
     mkosi -C {{ context }} build -B
 
 katsu-live:
@@ -43,18 +47,13 @@ pull:
     #!/usr/bin/bash
     podman pull "{{ image_tag }}"
 
-build:
-    #!/usr/bin/bash -x
-    podman build \
-    --device=/dev/fuse \
-    --cap-add=all \
-    --userns=host \
-    {{ from_arg }} \
-    --cache-from={{ registry_prefix }}/{{ variant }}{{ image_suffix }} \
-    --cgroupns=host \
-    --layers=true \
-    --security-opt=label=disable -t \
-    {{ image_tag }} {{ context }}
+build: basetree
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    mkosi -C {{ context }} build -B
+    output_dir=$(find {{ context }}/mkosi.output -mindepth 1 -maxdepth 1 -type d)
+    digest=$(podman pull "oci:${output_dir}")
+    podman tag "${digest}" "{{ image_tag }}"
 
 rechunk:
     #!/usr/bin/bash -x

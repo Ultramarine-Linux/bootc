@@ -114,7 +114,6 @@ jobs:
       release: ${{ needs.normalize.outputs.release }}
       tag: ${{ needs.normalize.outputs.tag }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
-      mkosi: true
       maximize-build-space: false
       publish: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'um') }}
 
