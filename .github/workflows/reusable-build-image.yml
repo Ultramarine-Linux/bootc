@@ -547,6 +547,9 @@ jobs:
   manifest:
     name: Create ${{ inputs.image-name }} Manifest
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
     if: inputs.publish && !cancelled()
     needs:
       - generate_matrix
@@ -564,6 +567,7 @@ jobs:
       tags: ${{ steps.push_manifest.outputs.TAGS }}
     steps:
       - name: Install dependencies
+        shell: sh
         run: |
           apk add \
             jq \
@@ -583,7 +587,6 @@ jobs:
 
       - name: Configure containers
         run: |
-          ln -sf /bin/bash /bin/sh
           mkdir -p /etc/containers/registries.d
           echo '{"default":[{"type":"insecureAcceptAnything"}]}' | jq . > /etc/containers/policy.json
           cp .github/ghcr.io.yaml /etc/containers/registries.d/ghcr.io.yaml
@@ -637,17 +640,20 @@ jobs:
           DEFAULT_BRANCH=$(echo "$DEFAULT_BRANCH" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
           DEFAULT_BRANCH=${DEFAULT_BRANCH#um}
           echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
+          # Gate rolling aliases on the actual git branch
+          echo "IS_DEFAULT_BRANCH=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch || 'main') }}" >> $GITHUB_ENV
 
       - name: Image Metadata
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         id: metadata
         with:
-          # Tag 43 for now
-          # new default branch will be 44 later so main is 43 at the moment
+          flavor: |
+            latest=false
           tags: |
             type=raw,value=${{ env.BASE_TAG }}${{ env.TAG_SUFFIX }}
-            type=raw,value=latest${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == env.DEFAULT_BRANCH }}
-            type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable=${{ env.BASE_TAG == env.DEFAULT_BRANCH }}
+            type=raw,value=main${{ env.TAG_SUFFIX }},enable=${{ env.IS_DEFAULT_BRANCH == 'true' }}
+            type=raw,value=latest${{ env.TAG_SUFFIX }},enable=${{ env.IS_DEFAULT_BRANCH == 'true' }}
+            type=raw,value=${{ env.BASE_TAG }}.{{date 'YYYYMMDD'}}${{ env.TAG_SUFFIX }},enable=${{ env.IS_DEFAULT_BRANCH == 'true' }}
             type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
 
           labels: |
@@ -776,7 +782,7 @@ jobs:
             # Defensive: if a suffix was requested, refuse to publish unsuffixed tags (prevents nvidia images from clobbering plain latest)
             if [ -n "${TAG_SUFFIX:-}" ]; then
               for t in "${tag_array[@]}"; do
-                if [[ "$t" =~ (^latest$|^${BASE_TAG}$) ]]; then
+                if [[ "$t" =~ (^latest$|^main$|^${BASE_TAG}$) ]]; then
                   echo "ERROR: unexpected unsuffixed tag '$t' generated while tag-suffix='$TAG_SUFFIX'" >&2
                   exit 1
                 fi
@@ -811,18 +817,6 @@ jobs:
             fi
           done
 
-            # if we're on the default branch, re-push the canonical tag to the corresponding latest tag
-            # to ensure the last manifest wins (even if something else raced earlier in the workflow).
-            if [ "${BASE_TAG:-}" = "${DEFAULT_BRANCH:-}" ]; then
-              latest_tag="latest${TAG_SUFFIX:-}"
-              echo "Force-syncing $latest_tag to digest $DIGEST"
-              podman manifest push $PODMAN_COMPRESSION $SIGN_ARG --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag"
-              synced=$(skopeo inspect --format '{{.Digest}}' "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$latest_tag")
-              if [ "$synced" != "$DIGEST" ]; then
-                echo "ERROR: $latest_tag still points to $synced after sync (expected $DIGEST)" >&2
-                exit 1
-              fi
-            fi
 
           echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
           echo "IMAGE=$IMAGE_REGISTRY/$IMAGE_NAME" >> $GITHUB_OUTPUT
