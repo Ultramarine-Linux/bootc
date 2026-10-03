@@ -18,6 +18,33 @@ Allowing respins and derivatives to be easily built for any of these use cases, 
 
 The base image is an OCI/Docker image, which can be consumed to build a disk image or run as a container, or simply extracted to an existing filesystem layout.
 
+## Installation/Usage
+
+Currently prebuilt ISO images are broken right now, however
+there is ongoing work to get proper working bootc-based live ISOs working for this.
+
+### Boot images
+
+You may test pre-built ISOs from the experimental branch of Katsu from GitHub Actions CI [here](https://github.com/FyraLabs/katsu/actions/workflows/build-test.yml) on the
+`bootc-direct-boot` branch
+
+Addtionally you may also use another bootc-compatible image for this as a bootstrap image, such as [Fedora CoreOS](https://fedoraproject.org/coreos/)
+
+### Installing Ultramarine bootc
+
+After booting into an existing live boot image with bootc, simply use `bootc install to-disk` with your preferred target edition.
+
+```bash
+bootc install to-disk --source-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:44 --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:44
+```
+
+If you are on the actual Ultramarine bootc ISO experimental built with Katsu, you may do an offline instal directly from the embedded storage by replacing `--source-imgref` with `containers-storage:<$IMAGE>`
+
+
+```bash
+bootc install to-disk --source-imgref container-storage:ghcr.io/ultramarine-linux/plasma-bootc:44 --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:44
+```
+
 ## Building
 
 The build process is separated into _tiers_, which depend on each other in a linear fashion, starting with the bare minimum base, building up to a full Ultramarine system, desktop variants, and HWE sub-variants for those images.
