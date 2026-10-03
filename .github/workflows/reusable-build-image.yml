@@ -801,7 +801,7 @@ jobs:
             local attempt
             for attempt in 1 2 3; do
               rm -f /tmp/digestfile
-              if podman manifest push $SIGN_ARG --all --retry=3 --digestfile=/tmp/digestfile "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag"; then
+              if podman manifest push $SIGN_ARG --all --digestfile=/tmp/digestfile "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag"; then
                 return 0
               fi
               if [ "$attempt" -lt 3 ]; then
