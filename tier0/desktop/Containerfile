@@ -2,6 +2,9 @@ FROM ghcr.io/ultramarine-linux/base-bootc:main
 
 COPY . /usr/src/ultramarine-bootc/tier0/desktop
 COPY systemd/flatpak-add-flathub-repos.service /usr/lib/systemd/system/flatpak-add-flathub-repos.service
+COPY systemd/livesys.service.d /usr/lib/systemd/system/livesys.service.d
+COPY systemd/livesys-late.service.d /usr/lib/systemd/system/livesys-late.service.d
+COPY etc/containers/storage.conf /etc/containers/storage.conf
 COPY 20-rhgb.toml /usr/lib/bootc/kargs.d/
 COPY systemd/packagekit.service.d /usr/lib/systemd/system/packagekit.service.d/
 COPY libdnf.conf.d/ /usr/share/dnf5/libdnf.conf.d/
@@ -12,6 +15,9 @@ COPY repos.override.d/ /usr/share/dnf5/repos.override.d/
 RUN setfattr -n user.component -v "ultramarine-desktop" /usr/lib/bootc/kargs.d/20-rhgb.toml && \
     setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/flatpak-add-flathub-repos.service && \
     setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/packagekit.service.d && \
+    setfattr -n user.component -v "ultramarine-desktop-live" /usr/lib/systemd/system/livesys.service.d && \
+    setfattr -n user.component -v "ultramarine-desktop-live" /usr/lib/systemd/system/livesys-late.service.d && \
+    setfattr -n user.component -v "ultramarine-desktop-live" /etc/containers/storage.conf && \
     setfattr -n user.component -v "ultramarine-desktop-config" /usr/src/ultramarine-bootc/tier0/desktop
 
 
@@ -61,6 +67,7 @@ RUN EXTRA_MESA_PACKAGES=""; \
     dracut-strip-trigger \
     PackageKit \
     fuse-libs \
+    fuse-overlayfs \
     tuned-ppd \
     powertop \
     tuned-profiles-atomic \
@@ -68,6 +75,10 @@ RUN EXTRA_MESA_PACKAGES=""; \
     @base-graphical \
     --exclude='PackageKit-command-not-found' && \
     dnf clean all
+
+# fuse-overlayfs is only used on live media, where podman cannot take a native
+# overlay mount on the read-only payload. A real installation keeps the faster
+# native driver; the fallback is applied in the live drop-in, not globally.
 
 # HACK: Remove the SW Catalog, will confuse users and wont work in bootc anyway
 # we'll reinstall it on standard builds

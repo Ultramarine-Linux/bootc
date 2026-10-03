@@ -70,5 +70,35 @@ systemctl disable taidan-initial-setup-reconfiguration || true
 systemctl disable --now polycrystal.service || true
 EOF
 
+# Katsu live media: a composefs ISO has no writable disk, so the container store
+# has to be redirected off the read-only payload and the image we booted from has
+# to stay reachable for an offline install.
+cat >>/var/lib/livesys/livesys-session-extra <<'EOF'
+
+# Katsu live media has no writable disk, so the container store is redirected off
+# the read-only payload. The default graphroot resolves under /sysroot, which is a
+# read-only EROFS here, and every container operation would fail against it.
+#
+# Only the live case patches this: a real installation keeps the native overlay
+# driver, which is faster than the fuse fallback forced here.
+if grep -qw rd.katsu.composefs /proc/cmdline; then
+    install -d -m 0755 /run/containers/storage /etc/containers/storage.conf.d
+    cat >/etc/containers/storage.conf.d/99-katsu-live.conf <<'STORAGE_EOF'
+[storage]
+# /run is a tmpfs on live media; anything written here is discarded on reboot,
+# which is the correct behaviour for a live environment.
+graphroot = "/run/containers/storage"
+runroot = "/run/containers/storage"
+
+[storage.options]
+# A nested store on a read-only payload cannot use a native overlay mount.
+mount_program = "/usr/bin/fuse-overlayfs"
+
+[storage.options.overlay]
+mount_program = "/usr/bin/fuse-overlayfs"
+STORAGE_EOF
+fi
+EOF
+
 # Delete the firefox redhat configs, debranding
 rm -rf /usr/lib64/firefox/browser/defaults/preferences/firefox-redhat-default-prefs.js
