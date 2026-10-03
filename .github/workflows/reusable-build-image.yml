@@ -764,7 +764,7 @@ jobs:
           TAG_SUFFIX: ${{ env.TAG_SUFFIX }}
           BASE_TAG: ${{ env.BASE_TAG }}
           SIGNING_SECRET: ${{ secrets.SIGNING_SECRET }}
-          PODMAN_COMPRESSION: "--add-compression zstd:chunked --add-compression zstd --compression-format zstd:chunked"
+
         run: |
           set -eu
 
@@ -794,19 +794,33 @@ jobs:
             exit 1
           fi
 
-          # Push manifest once to capture the digest
+          # Architecture images are already in GHCR. Preserve their compression
+          # instead of generating and uploading extra variants for every alias.
+          push_manifest() {
+            local tag="$1"
+            local attempt
+            for attempt in 1 2 3; do
+              rm -f /tmp/digestfile
+              if podman manifest push $SIGN_ARG --all --retry=3 --digestfile=/tmp/digestfile "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag"; then
+                return 0
+              fi
+              if [ "$attempt" -lt 3 ]; then
+                sleep $((5 * attempt))
+              fi
+            done
+            echo "ERROR: failed to publish manifest tag $tag after 3 attempts" >&2
+            return 1
+          }
+
           first_tag=${tag_array[0]}
-          podman manifest push $PODMAN_COMPRESSION $SIGN_ARG --all --digestfile=/tmp/digestfile "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$first_tag"
+          push_manifest "$first_tag"
           DIGEST=$(cat /tmp/digestfile)
           echo "Pushed manifest with digest: $DIGEST"
 
-          # Push the same manifest to every other tag
-          if [ ${#tag_array[@]} -gt 1 ]; then
-            for tag in "${tag_array[@]:1}"; do
-              echo "Pushing manifest to tag: $tag"
-              podman manifest push $PODMAN_COMPRESSION $SIGN_ARG --all "$MANIFEST" "docker://$IMAGE_REGISTRY/$IMAGE_NAME:$tag"
-            done
-          fi
+          for tag in "${tag_array[@]:1}"; do
+            echo "Pushing manifest to tag: $tag"
+            push_manifest "$tag"
+          done
 
           # Verify all tags now point at the expected digest (catches stale latest/main drift)
           for tag in "${tag_array[@]}"; do
@@ -816,7 +830,6 @@ jobs:
               exit 1
             fi
           done
-
 
           echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
           echo "IMAGE=$IMAGE_REGISTRY/$IMAGE_NAME" >> $GITHUB_OUTPUT
