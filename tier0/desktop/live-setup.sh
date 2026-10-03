@@ -71,31 +71,42 @@ systemctl disable --now polycrystal.service || true
 EOF
 
 # Katsu live media: a composefs ISO has no writable disk, so the container store
-# has to be redirected off the read-only payload and the image we booted from has
-# to stay reachable for an offline install.
+# has to be redirected off the read-only payload. The config is written *here*
+# rather than baked into the image on purpose: a normal installation resolves the
+# store through bootc itself, and shipping this in /etc breaks it, because
+# `additionalimagestores` makes containers-storage stat /usr/lib/bootc/storage,
+# which is a symlink through /sysroot and dangles wherever that is not mounted.
 cat >>/var/lib/livesys/livesys-session-extra <<'EOF'
 
-# Katsu live media has no writable disk, so the container store is redirected off
-# the read-only payload. The default graphroot resolves under /sysroot, which is a
-# read-only EROFS here, and every container operation would fail against it.
-#
-# Only the live case patches this: a real installation keeps the native overlay
-# driver, which is faster than the fuse fallback forced here.
+# Live media only; a real install keeps the native overlay driver and the default
+# graphroot.
 if grep -qw rd.katsu.composefs /proc/cmdline; then
-    install -d -m 0755 /run/containers/storage /etc/containers/storage.conf.d
-    cat >/etc/containers/storage.conf.d/99-katsu-live.conf <<'STORAGE_EOF'
+    install -d -m 0755 /run/containers/storage /etc/containers
+    cat >/etc/containers/storage.conf <<'STORAGE_EOF'
 [storage]
+driver = "overlay"
 # /run is a tmpfs on live media; anything written here is discarded on reboot,
-# which is the correct behaviour for a live environment.
+# which is the correct behaviour for a live environment. The default graphroot
+# resolves under /sysroot, a read-only EROFS here.
 graphroot = "/run/containers/storage"
 runroot = "/run/containers/storage"
 
 [storage.options]
-# A nested store on a read-only payload cannot use a native overlay mount.
+# Read-only store merged in so podman can see the image we booted from; it is what
+# makes an offline `bootc install` possible. A nested store on a read-only payload
+# cannot use a native overlay mount, hence the fuse fallback.
+additionalimagestores = [
+    "/usr/lib/bootc/storage",
+]
 mount_program = "/usr/bin/fuse-overlayfs"
 
 [storage.options.overlay]
 mount_program = "/usr/bin/fuse-overlayfs"
+
+[storage.options.pull_options]
+# Partial pulls leave layer data in the source store; an offline install needs
+# every layer present locally.
+enable_partial_images = "false"
 STORAGE_EOF
 fi
 EOF

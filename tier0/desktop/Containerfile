@@ -4,7 +4,6 @@ COPY . /usr/src/ultramarine-bootc/tier0/desktop
 COPY systemd/flatpak-add-flathub-repos.service /usr/lib/systemd/system/flatpak-add-flathub-repos.service
 COPY systemd/livesys.service.d /usr/lib/systemd/system/livesys.service.d
 COPY systemd/livesys-late.service.d /usr/lib/systemd/system/livesys-late.service.d
-COPY etc/containers/storage.conf /etc/containers/storage.conf
 COPY 20-rhgb.toml /usr/lib/bootc/kargs.d/
 COPY systemd/packagekit.service.d /usr/lib/systemd/system/packagekit.service.d/
 COPY libdnf.conf.d/ /usr/share/dnf5/libdnf.conf.d/
@@ -17,7 +16,6 @@ RUN setfattr -n user.component -v "ultramarine-desktop" /usr/lib/bootc/kargs.d/2
     setfattr -n user.component -v "ultramarine-desktop" /usr/lib/systemd/system/packagekit.service.d && \
     setfattr -n user.component -v "ultramarine-desktop-live" /usr/lib/systemd/system/livesys.service.d && \
     setfattr -n user.component -v "ultramarine-desktop-live" /usr/lib/systemd/system/livesys-late.service.d && \
-    setfattr -n user.component -v "ultramarine-desktop-live" /etc/containers/storage.conf && \
     setfattr -n user.component -v "ultramarine-desktop-config" /usr/src/ultramarine-bootc/tier0/desktop
 
 
