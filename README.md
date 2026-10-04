@@ -42,8 +42,19 @@ If you are on the actual Ultramarine bootc ISO experimental built with Katsu, yo
 
 
 ```bash
-bootc install to-disk --source-imgref container-storage:ghcr.io/ultramarine-linux/plasma-bootc:44 --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:44
+bootc install to-disk --source-imgref containers-storage:ghcr.io/ultramarine-linux/plasma-bootc:44 --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:44
 ```
+
+If `podman images` shows nothing, the embedded store is not being merged into
+Podman's own store. Point Podman at it in `/etc/containers/storage.conf`:
+
+```ini
+[storage.options]
+additionalimagestores = ["/usr/lib/bootc/storage"]
+```
+
+On the live ISO this is normally written for you by `livesys-session-extra`; add
+it by hand when you are booting the image some other way.
 
 ## Building
 
