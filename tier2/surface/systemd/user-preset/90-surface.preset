@@ -1,0 +1,5 @@
+# Enable the per-user Surface DTX helper for all users.
+#
+# Same 90- prefix ordering rule as the system preset: it must sort ahead of
+# 99-default-disable.preset's catchall "disable *".
+enable surface-dtx-userd.service

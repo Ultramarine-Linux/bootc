@@ -23,7 +23,7 @@ test:
     echo "Image Tag: {{ image_tag }}"
 
 
-ball: (build) (rechunk)
+ball: (build) (chunkah)
 
 mkosi-build:
     mkosi -C {{ context }} build -B
@@ -67,10 +67,17 @@ rechunk:
         "{{ image_tag }}"
 
 chunkah:
-    #!/usr/bin/bash
+    #!/usr/bin/bash -x
     IMG="{{ image_tag }}"
     export CHUNKAH_CONFIG_STR="$(podman inspect "$IMG")"
-    podman run --rm --mount=type=image,src="$IMG",dest=/chunkah -e CHUNKAH_CONFIG_STR quay.io/coreos/chunkah build | podman load
+    MAX_LAYERS=128
+    podman run --rm \
+        --mount=type=image,source="$IMG",target=/chunkah \
+        -e CHUNKAH_CONFIG_STR \
+        quay.io/coreos/chunkah build \
+        --label ostree.bootable=1 \
+        --prune /sysroot/ \
+        --max-layers "$MAX_LAYERS" | podman load
 
 # bootc {args}
 bootc *ARGS:

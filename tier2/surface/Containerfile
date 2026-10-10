@@ -1,0 +1,47 @@
+# meh, this will be overriden with --from anyway
+FROM ghcr.io/ultramarine-linux/plasma-bootc:main
+COPY . /usr/src/ultramarine-bootc/tier2/surface
+
+COPY systemd/system-preset/ /usr/lib/systemd/system-preset/
+COPY systemd/user-preset/ /usr/lib/systemd/user-preset/
+
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --no-best \
+    --allowerasing \
+    --action=remove \
+    kernel \
+    kernel-core \
+    kernel-modules* \
+    --action=install \
+    kernel-surface \
+    kernel-surface-core \
+    kernel-surface-modules \
+    kernel-surface-modules-extra \
+    kernel-surface-default-watchdog \
+    kernel-surface-modules-internal \
+    terra-surface-dtx-daemon \
+    libwacom-surface \
+    iptsd
+
+# Installing the kernel RPMs in a container runs `kernel-install`, which leaves
+# BLS entries in /boot/loader/entries carrying GRUB variables (`$tuned_initrd`,
+# `$tuned_params`, `$grub_users`). Those are expanded by GRUB at boot; bootc's
+# composefs installer takes the `initrd` path literally and fails with
+# `Directory entry "initramfs-....img $tuned_initrd" does not exist`. A bootc
+# image ships no BLS entries -- bootc generates its own at install -- so drop
+# them here, matching the mkosi-built base.
+#
+# Removing the stock `kernel-core` also leaves its module directory behind: the
+# `initramfs.img` the base image wrote there is not owned by any RPM, so it
+# survives the transaction and keeps the directory alive. `dracut_rebuild` then
+# targets that kernel-less directory. Purge any module dir without a `vmlinuz`
+# so only the Surface kernel remains.
+RUN rm -rf /boot/loader/entries && \
+    bash -c 'for d in /usr/lib/modules/*/; do [ -e "$d/vmlinuz" ] || rm -rf "$d"; done'
+
+
+RUN systemctl --no-reload preset surface-dtx-daemon.service && \
+    systemctl --no-reload preset --global surface-dtx-userd.service
+
+
+RUN bash -c 'source /usr/src/ultramarine-bootc/base/common.sh && dracut_rebuild'

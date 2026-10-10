@@ -1,0 +1,6 @@
+# Enable the Surface DTX daemon on the surface variant.
+#
+# The 90- prefix matters: preset files are matched lexicographically earliest
+# first, and 99-default-disable.preset ships a catchall "disable *" that would
+# otherwise win. Any prefix below 99 enables the unit.
+enable surface-dtx-daemon.service

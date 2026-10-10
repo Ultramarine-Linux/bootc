@@ -250,7 +250,7 @@ jobs:
           - plasma
           - budgie
         variant:
-          # - surface
+          - surface
           # - nvidia
           # - rpi
           # - run0
