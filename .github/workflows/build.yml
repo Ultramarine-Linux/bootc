@@ -9,6 +9,8 @@ env:
 
 on:
   push:
+    branches:
+      - "um**"
     paths:
       # Update this when new tiers are added
       - "base/**"
