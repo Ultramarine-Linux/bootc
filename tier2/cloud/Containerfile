@@ -1,0 +1,8 @@
+FROM ghcr.io/ultramarine-linux/server-bootc:main
+
+# cloud-init's units are enabled by the default system presets on install.
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --no-best \
+    --allowerasing \
+    --action install \
+    cloud-init
