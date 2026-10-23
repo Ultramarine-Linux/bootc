@@ -1,0 +1,31 @@
+# meh, this will be overriden with --from anyway
+FROM ghcr.io/ultramarine-linux/plasma-bootc:main
+COPY . /usr/src/ultramarine-bootc/tier2/cachyos
+
+# CachyOS kernel from the bieszczaders/kernel-cachyos COPR.
+# kernel-cachyos targets x86-64-v3, so this variant is amd64 only.
+COPY copr-kernel-cachyos.repo /etc/yum.repos.d/copr-kernel-cachyos.repo
+
+RUN --mount=type=cache,target=/var/cache dnf do -y \
+    --allowerasing \
+    --action=remove \
+    kernel \
+    kernel-core \
+    kernel-modules* \
+    --action=install \
+    kernel-cachyos \
+    kernel-cachyos-devel-matched
+
+# Same cleanup as tier2/surface: drop the BLS entries kernel-install left behind
+# (bootc generates its own), and purge module dirs without a vmlinuz so
+# dracut_rebuild targets the CachyOS kernel.
+RUN rm -rf /boot/loader/entries && \
+    bash -c 'for d in /usr/lib/modules/*/; do [ -e "$d/vmlinuz" ] || rm -rf "$d"; done'
+
+# The CachyOS kernel needs this to load its modules under SELinux.
+# -N: don't try to load the policy into the (nonexistent) running kernel.
+RUN semanage boolean -N -m --on domain_kernel_load_modules
+
+RUN bash -c 'source /usr/src/ultramarine-bootc/base/common.sh && dracut_rebuild'
+
+LABEL readymade.prettyname_suffix=" (with CachyOS Kernel)"
