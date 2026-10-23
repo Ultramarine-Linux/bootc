@@ -9,6 +9,9 @@ env:
 
 on:
   push:
+    # Only build pushes to version branches; other branches are built via pull_request
+    branches:
+      - "um*"
     paths:
       # Update this when new tiers are added
       - "base/**"
