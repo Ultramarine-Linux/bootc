@@ -470,13 +470,15 @@ jobs:
             exit 0
           fi
 
-          # write the secret to a file
+          # write the secret to a file; keep xtrace off so the key never hits the log
+          { set +x; } 2>/dev/null
           SIGN_ARG=""
           if [ -n "${COSIGN_PRIVATE_KEY:-}" ]; then
-            echo "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key
+            (umask 077 && printf '%s\n' "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key)
             trap 'rm -f /tmp/cosign.key' EXIT
             SIGN_ARG="--sign-by-sigstore-private-key=/tmp/cosign.key"
           fi
+          set -x
 
           # Tag name that is unique per arch to avoid collisions with multi-arch tags.
           platform_safe=$(echo "$PLATFORM" | tr '/' '-')
@@ -657,11 +659,12 @@ jobs:
             type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
 
           labels: |
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/${{ env.DEFAULT_BRANCH }}/README.md
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/${{ github.event.repository.default_branch || 'main' }}/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
             org.opencontainers.image.documentation=https://wiki.ultramarine-linux.org/
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/blob/${{ env.DEFAULT_BRANCH }}/Containerfile
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.url=https://ultramarine-linux.org/
             org.opencontainers.image.vendor=${{ github.repository_owner }}
@@ -889,7 +892,9 @@ jobs:
         env:
           IMAGE: ${{ needs.manifest.outputs.image }}
           DIGEST: ${{ needs.manifest.outputs.digest }}
+        shell: bash
         run: |
+          set -o pipefail
           podman run --rm \
             --privileged \
             --pull=newer \
@@ -897,6 +902,7 @@ jobs:
             bootc container lint | tee /tmp/lint-output.txt
 
       - name: Upload Lint Results
+        if: always()
         # let's heredoc the lint results to github summary
         run: |
           {

@@ -16,7 +16,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OWNER: ${{ github.repository_owner }}
-          PR_TAG_PREFIX: pr-${{ github.event.pull_request.number }}-
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
 
@@ -32,14 +32,15 @@ jobs:
 
           for package in "${packages[@]}"; do
             echo "Checking ghcr.io/${OWNER}/${package}"
+            # A version can carry several tags (e.g. pr-N and pr-N-<sha>[-suffix]),
+            # so check all of them. Only delete versions whose
+            # tags all belong to this PR, never one that also carries a release tag.
             gh api --paginate \
               "/orgs/${OWNER}/packages/container/${package}/versions?per_page=100" \
-              --jq '.[] | [.id, (.metadata.container.tags // [])[]] | @tsv' 2>/dev/null |
-            while IFS=$'\t' read -r version_id tag; do
-              if [[ "$tag" == "${PR_TAG_PREFIX}"* ]]; then
-                echo "Deleting ${package}:${tag} (version ${version_id})"
-                gh api --method DELETE \
-                  "/orgs/${OWNER}/packages/container/${package}/versions/${version_id}"
-              fi
+              --jq ".[] | (.metadata.container.tags // []) as \$t | select((\$t | length) > 0 and all(\$t[]; . == \"pr-${PR_NUMBER}\" or startswith(\"pr-${PR_NUMBER}-\"))) | [.id, (\$t | join(\",\"))] | @tsv" |
+            while IFS=$'\t' read -r version_id tags; do
+              echo "Deleting ${package} version ${version_id} (${tags})"
+              gh api --method DELETE \
+                "/orgs/${OWNER}/packages/container/${package}/versions/${version_id}"
             done
           done

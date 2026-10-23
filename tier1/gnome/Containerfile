@@ -1,4 +1,4 @@
-FROM ghcr.io/ultramarine-linux/desktop-bootc:latest
+FROM ghcr.io/ultramarine-linux/desktop-bootc:main
 COPY . /usr/src/ultramarine-bootc/tier1/gnome
 
 RUN --mount=type=cache,target=/var/cache dnf do -y \
