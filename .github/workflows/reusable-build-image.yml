@@ -431,9 +431,26 @@ jobs:
 
           MAX_LAYERS=128
           IMAGE_REF="localhost/${{ inputs.flavor }}-bootc:build"
-          sudo podman run --rm --mount=type=image,source=$IMAGE_REF,target=/chunkah \
+          CHUNKAH_IMAGE="quay.io/coreos/chunkah:latest"
+
+          # Pull chunkah up front with a real backoff. Quay regularly 503s, and
+          # podman's built-in 3x1s retry inside `podman run` isn't enough; a failed
+          # pull there just feeds an empty stream into `podman load`.
+          for attempt in 1 2 3 4 5 6; do
+            if sudo podman pull "$CHUNKAH_IMAGE"; then
+              break
+            fi
+            if [ "$attempt" -eq 6 ]; then
+              echo "Failed to pull $CHUNKAH_IMAGE after $attempt attempts" >&2
+              exit 1
+            fi
+            echo "Pull of $CHUNKAH_IMAGE failed, retrying in $((attempt * 15))s..."
+            sleep $((attempt * 15))
+          done
+
+          sudo podman run --rm --pull=never --mount=type=image,source=$IMAGE_REF,target=/chunkah \
             -e CHUNKAH_CONFIG_STR="$(sudo podman inspect $IMAGE_REF)" \
-            quay.io/coreos/chunkah build \
+            "$CHUNKAH_IMAGE" build \
               --label ostree.bootable=1 \
               --prune /sysroot/ \
               --max-layers $MAX_LAYERS | sudo podman load > /tmp/podman_load_output.txt
