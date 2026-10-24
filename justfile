@@ -1,6 +1,8 @@
 base_dir := env("BUILD_BASE_DIR", justfile_directory())
 registry_prefix := "ghcr.io/ultramarine-linux"
-tag := "44"
+# Ultramarine/Fedora release this branch targets. Bump with `just bump-release <N>`.
+release := "44"
+tag := release
 image_suffix := "-bootc"
 context := "base"
 variant := file_name(context)
@@ -17,6 +19,58 @@ from_arg := if from != "" {
 } else {
     ""
 }
+
+# Bump every release reference in the repo, e.g. `just bump-release 45`
+bump-release new:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    old="{{ release }}"
+    new="{{ new }}"
+
+    if ! [[ "$new" =~ ^[0-9]+$ ]]; then
+        echo "error: release must be a number, got '$new'" >&2
+        exit 1
+    fi
+    if [ "$new" = "$old" ]; then
+        echo "error: already on release $old" >&2
+        exit 1
+    fi
+
+    cd "{{ justfile_directory() }}"
+    echo "Bumping release $old -> $new"
+
+    # justfile itself
+    sed -i -E "s/^release := \"$old\"$/release := \"$new\"/" justfile
+
+    # mkosi base: target distro release and tools tree
+    sed -i -E "s/^(Release|ToolsTreeRelease)=$old$/\1=$new/" base/mkosi.conf
+
+    # Containerfile base images (only used for local builds; CI passes --from)
+    for f in tier*/*/Containerfile; do
+        sed -i -E "s#^(FROM ghcr\.io/ultramarine-linux/[a-z0-9-]+):$old\$#\1:$new#" "$f"
+    done
+
+    # CI build container and disk image sources
+    sed -i -E "s#(ghcr\.io/ultramarine-linux/ultramarine):$old\b#\1:$new#" .github/workflows/reusable-build-image.yml
+    sed -i -E "s#(ghcr\.io/ultramarine-linux/[a-z0-9-]+-bootc):$old\b#\1:$new#g" .github/workflows/build-disk.yaml
+
+    # README examples and current branch note
+    sed -i -E \
+        -e "s#(ghcr\.io/ultramarine-linux/[a-z0-9-]+-bootc):$old\b#\1:$new#g" \
+        -e "s#currently on \`um$old\`#currently on \`um$new\`#" \
+        README.md
+
+    echo
+    echo "Changed files:"
+    git status --short
+
+    # Anything still mentioning the old release should be checked by hand
+    echo
+    echo "Remaining references to $old (review these manually):"
+    git grep -nwE "(um|fc|f)?$old" -- . || echo "  none"
+
+    echo
+    echo "Next: commit this on a new um$new branch and set it as the default branch when ready."
 
 [private]
 test:
