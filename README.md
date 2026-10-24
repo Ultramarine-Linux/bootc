@@ -96,7 +96,7 @@ This will build the base image from scratch and rechunk it. You can then proceed
 ```bash
 just context=tier0/desktop ball
 just context=tier1/gnome ball
-just context=tier2/standard ball from=ghcr.io/ultramarine-linux/gnome-bootc:main
+just context=tier2/standard ball from=ghcr.io/ultramarine-linux/gnome-bootc:44
 ```
 
 ## Building bootable images

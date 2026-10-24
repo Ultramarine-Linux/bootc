@@ -1,6 +1,6 @@
 base_dir := env("BUILD_BASE_DIR", justfile_directory())
 registry_prefix := "ghcr.io/ultramarine-linux"
-tag := "main"
+tag := "44"
 image_suffix := "-bootc"
 context := "base"
 variant := file_name(context)
