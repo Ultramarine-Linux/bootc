@@ -1,6 +1,14 @@
 #!/bin/bash
 set -xeuo pipefail
 
+# RemoveFiles=/var/ (mkosi.conf) runs before this script and also drops the
+# /var/run and /var/lock compat symlinks owned by `filesystem`. Without them,
+# any RPM installed in a later tier that ships files under /var/run (e.g. pptp
+# -> /var/run/pptp) creates /var/run as a real directory, which fails
+# `bootc container lint` (var-run) and shadows /run at runtime.
+ln -sfn ../run /var/run
+ln -sfn ../run/lock /var/lock
+
 # Required for rechunker to work
 
 RPM_MUT_DB="/usr/lib/sysimage/rpm"
