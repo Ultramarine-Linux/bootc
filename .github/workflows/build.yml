@@ -282,6 +282,8 @@ jobs:
       tag-suffix: "-${{ matrix.variant }}"
       tag: ${{ needs.normalize.outputs.tag }}
       rechunk: ${{ matrix.variant != 'standard' }}
+      # standard is the mutable (revert-bootc) variant, so bootc lint doesn't apply
+      lint: ${{ matrix.variant != 'standard' }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
       publish: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'um') }}
 

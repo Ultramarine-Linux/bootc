@@ -85,6 +85,11 @@ on:
         required: false
         type: boolean
         default: true
+      lint:
+        description: "Whether to run bootc container lint (disable for non-bootc images like standard)"
+        required: false
+        type: boolean
+        default: true
       publish:
         description: "Whether to push images and publish a multi-architecture manifest"
         required: false
@@ -420,8 +425,9 @@ jobs:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
           FLAVOR: ${{ inputs.flavor }}
+        shell: bash
         run: |
-          set -xeu
+          set -xeuo pipefail
 
           MAX_LAYERS=128
           IMAGE_REF="localhost/${{ inputs.flavor }}-bootc:build"
@@ -883,6 +889,7 @@ jobs:
   lint:
     runs-on: ${{ contains(matrix.platform, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     needs: [manifest, generate_matrix]
+    if: inputs.lint
     continue-on-error: true
     strategy:
       fail-fast: false
