@@ -64,7 +64,7 @@ The build process is separated into _tiers_, which depend on each other in a lin
 
 Local builds require Podman, `just`, and a Linux host with the privileges needed for rootful/privileged container builds. Building bootable images additionally requires access to `/dev` and the container storage volume used by Podman. The CI workflows provide the required build tools inside their build containers.
 
-Version branches use the `umNN` convention. This repository is currently on `um44`; a new version branch is created from the previous version and its release references are updated there.
+Version branches use the `umNN` convention. This repository is currently on `um44`; a new version branch is created from the previous version and its release references are updated there with `just bump-release <N>` (e.g. `just bump-release 45`).
 
 The image tiers are:
 
