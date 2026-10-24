@@ -72,6 +72,7 @@ The image tiers are:
 - Tier 0: Stage 2 images containing common server and desktop variations.
 - Tier 1: Primary Ultramarine desktop images: GNOME, Xfce, Plasma, and Budgie.
 - Tier 2: Hardware or deployment variants built from Tier 1, including standard and NVIDIA images. Additional variants may be present but disabled in CI.
+- Server variants: Deployment variants built from the Tier 0 server image, such as `cloud` (server plus cloud-init), published as `server-bootc:<tag>-<variant>`. Their contexts live under `tier2/`.
 
 We provide pre-built base images on GHCR, which can be pulled with Podman or Docker:
 
