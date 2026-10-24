@@ -9,6 +9,9 @@ env:
 
 on:
   push:
+    # Only build pushes to version branches; other branches are built via pull_request
+    branches:
+      - "um*"
     paths:
       # Update this when new tiers are added
       - "base/**"
@@ -296,6 +299,7 @@ jobs:
           # - steam
           - nvidia
           - standard
+          - cachyos
     with:
       image-name: ultramarine-tier2
       flavor: ${{ matrix.base-flavor }}
@@ -305,7 +309,7 @@ jobs:
       platforms: >-
         ${{
         matrix.variant == 'rpi' && 'linux/arm64' ||
-        (matrix.variant == 'steam' || matrix.variant == 'nvidia' || matrix.variant == 'surface') && 'linux/amd64' ||
+        (matrix.variant == 'steam' || matrix.variant == 'nvidia' || matrix.variant == 'surface' || matrix.variant == 'cachyos') && 'linux/amd64' ||
         'linux/amd64,linux/arm64'
         }}
       from: >-
