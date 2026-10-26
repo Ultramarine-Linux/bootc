@@ -35,14 +35,14 @@ Addtionally you may also use another bootc-compatible image for this as a bootst
 After booting into an existing live boot image with bootc, simply use `bootc install to-disk` with your preferred target edition.
 
 ```bash
-bootc install to-disk --source-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:45 --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:45
+bootc install to-disk --source-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:rawhide --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:rawhide
 ```
 
 If you are on the actual Ultramarine bootc ISO experimental built with Katsu, you may do an offline instal directly from the embedded storage by replacing `--source-imgref` with `containers-storage:<$IMAGE>`
 
 
 ```bash
-bootc install to-disk --source-imgref containers-storage:ghcr.io/ultramarine-linux/plasma-bootc:45 --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:45
+bootc install to-disk --source-imgref containers-storage:ghcr.io/ultramarine-linux/plasma-bootc:rawhide --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:rawhide
 ```
 
 If `podman images` shows nothing, the embedded store is not being merged into
@@ -64,7 +64,7 @@ The build process is separated into _tiers_, which depend on each other in a lin
 
 Local builds require Podman, `just`, and a Linux host with the privileges needed for rootful/privileged container builds. Building bootable images additionally requires access to `/dev` and the container storage volume used by Podman. The CI workflows provide the required build tools inside their build containers.
 
-Version branches use the `umNN` convention. This repository is currently on `um45`; a new version branch is created from the previous version and its release references are updated there with `just bump-release <N>` (e.g. `just bump-release 45`).
+Version branches use the `umNN` convention. This repository is currently on `umrawhide`; a new version branch is created from the previous version and its release references are updated there with `just bump-release <N>` (e.g. `just bump-release 45`).
 
 The image tiers are:
 
@@ -96,7 +96,7 @@ This will build the base image from scratch and rechunk it. You can then proceed
 ```bash
 just context=tier0/desktop ball
 just context=tier1/gnome ball
-just context=tier2/standard ball from=ghcr.io/ultramarine-linux/gnome-bootc:45
+just context=tier2/standard ball from=ghcr.io/ultramarine-linux/gnome-bootc:rawhide
 ```
 
 ## Building bootable images

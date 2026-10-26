@@ -1,4 +1,4 @@
-FROM ghcr.io/ultramarine-linux/base-bootc:45
+FROM ghcr.io/ultramarine-linux/base-bootc:rawhide
 
 COPY . /usr/src/ultramarine-bootc/tier0/server
 
