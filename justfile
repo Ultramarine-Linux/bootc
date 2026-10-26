@@ -27,7 +27,7 @@ bump-release new:
     old="{{ release }}"
     new="{{ new }}"
 
-    if ! [[ "$new" =~ ^[0-9]+$ ]]; then
+    if ! [[ "$new" =~ ^[0-9]+$ || "$new" = "rawhide" ]]; then
         echo "error: release must be a number, got '$new'" >&2
         exit 1
     fi
