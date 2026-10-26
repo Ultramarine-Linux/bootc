@@ -9,6 +9,9 @@ env:
 
 on:
   push:
+    # Only build pushes to version branches; other branches are built via pull_request
+    branches:
+      - "um*"
     paths:
       # Update this when new tiers are added
       - "base/**"
@@ -257,6 +260,7 @@ jobs:
           # - steam
           - nvidia
           - standard
+          - cachyos
     with:
       image-name: ultramarine-tier2
       flavor: ${{ matrix.base-flavor }}
@@ -266,7 +270,7 @@ jobs:
       platforms: >-
         ${{
         matrix.variant == 'rpi' && 'linux/arm64' ||
-        (matrix.variant == 'steam' || matrix.variant == 'nvidia') && 'linux/amd64' ||
+        (matrix.variant == 'steam' || matrix.variant == 'nvidia' || matrix.variant == 'surface' || matrix.variant == 'cachyos') && 'linux/amd64' ||
         'linux/amd64,linux/arm64'
         }}
       from: >-
@@ -278,6 +282,8 @@ jobs:
       tag-suffix: "-${{ matrix.variant }}"
       tag: ${{ needs.normalize.outputs.tag }}
       rechunk: ${{ matrix.variant != 'standard' }}
+      # standard is the mutable (revert-bootc) variant, so bootc lint doesn't apply
+      lint: ${{ matrix.variant != 'standard' }}
       skip-cache-from: ${{ github.event_name == 'schedule' }}
       publish: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'um') }}
 
