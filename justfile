@@ -51,7 +51,7 @@ bump-release new:
     done
 
     # CI build container and disk image sources
-    sed -i -E "s#(ghcr\.io/ultramarine-linux/ultramarine):$old\b#\1:$new#" .github/workflows/reusable-build-image.yml
+    sed -i -E "s#(ghcr\.io/ultramarine-linux/builder):um$old\b#\1:um$new#" .github/workflows/reusable-build-image.yml
     sed -i -E "s#(ghcr\.io/ultramarine-linux/[a-z0-9-]+-bootc):$old\b#\1:$new#g" .github/workflows/build-disk.yaml
 
     # README examples and current branch note
