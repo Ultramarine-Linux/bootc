@@ -1,4 +1,4 @@
-FROM ghcr.io/ultramarine-linux/desktop-bootc:44
+FROM ghcr.io/ultramarine-linux/desktop-bootc:45
 COPY . /usr/src/ultramarine-bootc/tier1/plasma
 # Milou is required module for KRunner, upstream packaging forgot to depend
 RUN --mount=type=cache,target=/var/cache dnf do -y \

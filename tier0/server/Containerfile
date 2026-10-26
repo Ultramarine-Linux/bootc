@@ -1,4 +1,4 @@
-FROM ghcr.io/ultramarine-linux/base-bootc:44
+FROM ghcr.io/ultramarine-linux/base-bootc:45
 
 COPY . /usr/src/ultramarine-bootc/tier0/server
 

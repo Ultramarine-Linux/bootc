@@ -1,7 +1,7 @@
 base_dir := env("BUILD_BASE_DIR", justfile_directory())
 registry_prefix := "ghcr.io/ultramarine-linux"
 # Ultramarine/Fedora release this branch targets. Bump with `just bump-release <N>`.
-release := "44"
+release := "45"
 tag := release
 image_suffix := "-bootc"
 context := "base"
