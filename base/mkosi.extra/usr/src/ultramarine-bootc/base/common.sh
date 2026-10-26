@@ -4,7 +4,7 @@
 # Usage: source /usr/src/ultramarine-bootc/base/common.sh
 
 get_kernel_version() {
-    KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/modules" -exec basename '{}' ';' | sort | tail -n 1)"
+    KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/modules" -exec basename '{}' ';' | sort -V | tail -n 1)"
     echo "$KERNEL_VERSION"
 }
 

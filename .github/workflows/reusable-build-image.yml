@@ -85,6 +85,11 @@ on:
         required: false
         type: boolean
         default: true
+      lint:
+        description: "Whether to run bootc container lint (disable for non-bootc images like standard)"
+        required: false
+        type: boolean
+        default: true
       publish:
         description: "Whether to push images and publish a multi-architecture manifest"
         required: false
@@ -420,14 +425,32 @@ jobs:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
           FLAVOR: ${{ inputs.flavor }}
+        shell: bash
         run: |
-          set -xeu
+          set -xeuo pipefail
 
           MAX_LAYERS=128
           IMAGE_REF="localhost/${{ inputs.flavor }}-bootc:build"
-          sudo podman run --rm --mount=type=image,source=$IMAGE_REF,target=/chunkah \
+          CHUNKAH_IMAGE="quay.io/coreos/chunkah:latest"
+
+          # Pull chunkah up front with a real backoff. Quay regularly 503s, and
+          # podman's built-in 3x1s retry inside `podman run` isn't enough; a failed
+          # pull there just feeds an empty stream into `podman load`.
+          for attempt in 1 2 3 4 5 6; do
+            if sudo podman pull "$CHUNKAH_IMAGE"; then
+              break
+            fi
+            if [ "$attempt" -eq 6 ]; then
+              echo "Failed to pull $CHUNKAH_IMAGE after $attempt attempts" >&2
+              exit 1
+            fi
+            echo "Pull of $CHUNKAH_IMAGE failed, retrying in $((attempt * 15))s..."
+            sleep $((attempt * 15))
+          done
+
+          sudo podman run --rm --pull=never --mount=type=image,source=$IMAGE_REF,target=/chunkah \
             -e CHUNKAH_CONFIG_STR="$(sudo podman inspect $IMAGE_REF)" \
-            quay.io/coreos/chunkah build \
+            "$CHUNKAH_IMAGE" build \
               --label ostree.bootable=1 \
               --prune /sysroot/ \
               --max-layers $MAX_LAYERS | sudo podman load > /tmp/podman_load_output.txt
@@ -470,13 +493,15 @@ jobs:
             exit 0
           fi
 
-          # write the secret to a file
+          # write the secret to a file; keep xtrace off so the key never hits the log
+          { set +x; } 2>/dev/null
           SIGN_ARG=""
           if [ -n "${COSIGN_PRIVATE_KEY:-}" ]; then
-            echo "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key
+            (umask 077 && printf '%s\n' "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key)
             trap 'rm -f /tmp/cosign.key' EXIT
             SIGN_ARG="--sign-by-sigstore-private-key=/tmp/cosign.key"
           fi
+          set -x
 
           # Tag name that is unique per arch to avoid collisions with multi-arch tags.
           platform_safe=$(echo "$PLATFORM" | tr '/' '-')
@@ -657,11 +682,12 @@ jobs:
             type=ref,event=pr,suffix=${{ env.TAG_SUFFIX }}
 
           labels: |
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/${{ env.DEFAULT_BRANCH }}/README.md
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/${{ github.event.repository.default_branch || 'main' }}/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
             org.opencontainers.image.documentation=https://wiki.ultramarine-linux.org/
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/blob/${{ env.DEFAULT_BRANCH }}/Containerfile
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.url=https://ultramarine-linux.org/
             org.opencontainers.image.vendor=${{ github.repository_owner }}
@@ -880,6 +906,7 @@ jobs:
   lint:
     runs-on: ${{ contains(matrix.platform, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     needs: [manifest, generate_matrix]
+    if: inputs.lint
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -889,7 +916,9 @@ jobs:
         env:
           IMAGE: ${{ needs.manifest.outputs.image }}
           DIGEST: ${{ needs.manifest.outputs.digest }}
+        shell: bash
         run: |
+          set -o pipefail
           podman run --rm \
             --privileged \
             --pull=newer \
@@ -897,6 +926,7 @@ jobs:
             bootc container lint | tee /tmp/lint-output.txt
 
       - name: Upload Lint Results
+        if: always()
         # let's heredoc the lint results to github summary
         run: |
           {
