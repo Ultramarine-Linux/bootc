@@ -172,6 +172,45 @@ jobs:
         with:
           matrix-step-name: ultramarine-tier0
 
+  # Deployment variants of the server image
+  build-server-variants:
+    uses: ./.github/workflows/reusable-build-image.yml
+    secrets: inherit
+    needs: [normalize, detect-changes, build-tier0, tier0-outputs]
+    if: |
+      !cancelled() &&
+      needs.build-tier0.result != 'failure' &&
+      needs.tier0-outputs.result != 'failure' &&
+      (github.event_name == 'pull_request' ||
+      needs.build-tier0.result == 'success' ||
+      needs.detect-changes.outputs.base == 'true' ||
+      needs.detect-changes.outputs.tier0 == 'true' ||
+      needs.detect-changes.outputs.tier2 == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch')
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - cloud
+    with:
+      image-name: ultramarine-server-variants
+      flavor: server
+      registry: ${{ needs.normalize.outputs.registry }}
+      release: ${{ needs.normalize.outputs.release }}
+      context-path: tier2/${{ matrix.variant }}
+      from: >-
+        ${{
+          needs.tier0-outputs.result == 'success' &&
+          fromJson(needs.tier0-outputs.outputs.result).manifest.server ||
+          format('{0}/server-bootc:{1}', needs.normalize.outputs.registry, needs.normalize.outputs.tag)
+        }}
+      tag-suffix: "-${{ matrix.variant }}"
+      tag: ${{ needs.normalize.outputs.tag }}
+      skip-cache-from: ${{ github.event_name == 'schedule' }}
+      publish: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'um') }}
+
   build-tier1:
     uses: ./.github/workflows/reusable-build-image.yml
     secrets: inherit

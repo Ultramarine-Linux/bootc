@@ -70,7 +70,11 @@ You need Podman, [`just`](https://github.com/casey/just), and mkosi for the base
 
 Version branches use the `umNN` convention, and `umrawhide` tracks Rawhide. A new version branch is created from the previous one, and its release references are updated with `just bump-release <N>` (e.g. `just bump-release 46`).
 
-All recipes take `context=<dir>` and tag the result as `ghcr.io/ultramarine-linux/<basename of context>-bootc:<tag>`, so `context=tier1/gnome` produces `gnome-bootc:rawhide`. Set `tag=` to use a different tag.
+- Base: The bare minimum bootc-compatible base image.
+- Tier 0: Stage 2 images containing common server and desktop variations.
+- Tier 1: Primary Ultramarine desktop images: Plasma, GNOME, and Xfce.
+- Tier 2: Hardware or deployment variants built from Tier 1, including standard and NVIDIA images. Additional variants may be present but disabled in CI.
+- Server variants: Deployment variants built from the Tier 0 server image, such as `cloud` (server plus cloud-init), published as `server-bootc:<tag>-<variant>`. Their contexts live under `tier2/`.
 
 ### Pulling prebuilt images
 
