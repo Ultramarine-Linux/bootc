@@ -24,7 +24,7 @@ ln -sT var/mnt /mnt
 ln -sT var/opt /opt
 ln -sT var/roothome /root
 ln -sT var/srv /srv
-ln -sT ../../var/usrlocal /usr/local
+ln -sT ../var/usrlocal /usr/local
 
 setfattr -n user.component -v "bootupd" /usr/lib/ostree-boot
 setfattr -n user.component -v "bootupd-efi" /usr/lib/ostree-boot/efi

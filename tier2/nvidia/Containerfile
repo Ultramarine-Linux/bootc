@@ -1,4 +1,4 @@
-FROM ghcr.io/ultramarine-linux/plasma-bootc:45
+FROM ghcr.io/ultramarine-linux/plasma-bootc:rawhide
 COPY . /usr/src/ultramarine-bootc/tier2/nvidia
 
 # nvidia.sh pulls in its own prerequisites (gcc-c++, terra-release-nvidia)

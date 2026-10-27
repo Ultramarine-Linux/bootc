@@ -1,0 +1,9 @@
+{
+  "repoOwner": "Ultramarine-Linux",
+  "repoName": "bootc",
+  "resetAuthor": true,
+  "targetBranchChoices": ["umrawhide", "um45", "um44"],
+  "branchLabelMapping": {
+    "^sync-(.+)$": "$1"
+  }
+}

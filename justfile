@@ -1,7 +1,7 @@
 base_dir := env("BUILD_BASE_DIR", justfile_directory())
 registry_prefix := "ghcr.io/ultramarine-linux"
 # Ultramarine/Fedora release this branch targets. Bump with `just bump-release <N>`.
-release := "45"
+release := "rawhide"
 tag := release
 image_suffix := "-bootc"
 context := "base"
@@ -27,8 +27,8 @@ bump-release new:
     old="{{ release }}"
     new="{{ new }}"
 
-    if ! [[ "$new" =~ ^[0-9]+$ ]]; then
-        echo "error: release must be a number, got '$new'" >&2
+    if ! [[ "$new" =~ ^[0-9]+$ || "$new" = "rawhide" ]]; then
+        echo "error: release must be a number or rawhide, got '$new'" >&2
         exit 1
     fi
     if [ "$new" = "$old" ]; then
@@ -51,7 +51,7 @@ bump-release new:
     done
 
     # CI build container and disk image sources
-    sed -i -E "s#(ghcr\.io/ultramarine-linux/ultramarine):$old\b#\1:$new#" .github/workflows/reusable-build-image.yml
+    sed -i -E "s#(ghcr\.io/ultramarine-linux/builder):um$old\b#\1:um$new#" .github/workflows/reusable-build-image.yml
     sed -i -E "s#(ghcr\.io/ultramarine-linux/[a-z0-9-]+-bootc):$old\b#\1:$new#g" .github/workflows/build-disk.yaml
 
     # README examples and current branch note

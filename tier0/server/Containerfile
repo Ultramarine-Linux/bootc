@@ -1,4 +1,4 @@
-FROM ghcr.io/ultramarine-linux/base-bootc:45
+FROM ghcr.io/ultramarine-linux/base-bootc:rawhide
 
 # todo: move the udev rules stuff into a hardware support group
 

@@ -1,4 +1,4 @@
-FROM ghcr.io/ultramarine-linux/base-bootc:45
+FROM ghcr.io/ultramarine-linux/base-bootc:rawhide
 
 COPY . /usr/src/ultramarine-bootc/tier0/desktop
 COPY systemd/flatpak-add-flathub-repos.service /usr/lib/systemd/system/flatpak-add-flathub-repos.service
@@ -53,7 +53,7 @@ RUN EXTRA_MESA_PACKAGES=""; \
     docker-compose \
     podman \
     container-selinux \
-    dive \
+    umdive \
     dracut-live \
     dracut-network \
     distrobox \
