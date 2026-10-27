@@ -195,7 +195,6 @@ jobs:
           - gnome
           - xfce
           - plasma
-          - budgie
     with:
       image-name: ultramarine-tier1
       flavor: ${{ matrix.flavor }}
@@ -251,7 +250,6 @@ jobs:
           - gnome
           - xfce
           - plasma
-          - budgie
         variant:
           - surface
           # - nvidia

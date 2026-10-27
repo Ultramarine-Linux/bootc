@@ -70,7 +70,7 @@ The image tiers are:
 
 - Base: The bare minimum bootc-compatible base image.
 - Tier 0: Stage 2 images containing common server and desktop variations.
-- Tier 1: Primary Ultramarine desktop images: GNOME, Xfce, Plasma, and Budgie.
+- Tier 1: Primary Ultramarine desktop images: Plasma, GNOME, and Xfce.
 - Tier 2: Hardware or deployment variants built from Tier 1, including standard and NVIDIA images. Additional variants may be present but disabled in CI.
 
 We provide pre-built base images on GHCR, which can be pulled with Podman or Docker:

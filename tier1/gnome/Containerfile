@@ -1,17 +1,18 @@
 FROM ghcr.io/ultramarine-linux/desktop-bootc:rawhide
 COPY . /usr/src/ultramarine-bootc/tier1/gnome
 
+# The atomic environment (comps in um-packages) leaves out the apps in
+# ultramarine-gnome.preinstall; flatpak-preinstall.service installs them as Flatpaks.
+# gnome-extensions-app is one of them, but comes in as a weak dep.
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \
     --action=remove \
         ultramarine-release-identity-basic \
     --action=install \
-        ultramarine-release-identity-gnome \
-        @gnome-desktop \
-        @ultramarine-gnome-product-environment \
-        @ultramarine-gnome-no-flatpak-apps \
-        gnome-tweaks
+        ultramarine-release-identity-atomic-gnome \
+        @ultramarine-atomic-gnome-product-environment \
+        gnome-tweaks \
+    --exclude=gnome-extensions-app
 
-
-LABEL readymade.prettyname="Ultramarine GNOME Edition"
+LABEL readymade.prettyname="Ultramarine GNOME"

@@ -1,20 +1,19 @@
 FROM ghcr.io/ultramarine-linux/desktop-bootc:rawhide
 COPY . /usr/src/ultramarine-bootc/tier1/plasma
-# Milou is required module for KRunner, upstream packaging forgot to depend
+# The app set lives in comps (@ultramarine-atomic-plasma-product-environment in
+# um-packages): no RPMs for the apps in ultramarine-plasma.preinstall, and a
+# trimmed kde-desktop. abrt-cli comes from Fedora's @standard, so exclude it here.
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \
     --action=remove \
     ultramarine-release-identity-basic \
     --action=install \
-    ultramarine-release-identity-plasma \
-    plasma-discover-flatpak \
-    plasma-discover-rpm-ostree \
+    ultramarine-release-identity-atomic-plasma \
     plasma-discover-packagekit \
-    @ultramarine-plasma-product-environment \
-    @ultramarine-plasma-no-flatpak-apps \
-    plasma-milou \
+    @ultramarine-atomic-plasma-product-environment \
     --exclude='desktop-backgrounds*' \
+    --exclude='abrt*' \
     --setopt=install_weak_deps=False
 
 
@@ -31,4 +30,4 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
 RUN sed -i 's/^livesys_session=.*/livesys_session="kde"/' /etc/sysconfig/livesys
 
 
-LABEL readymade.prettyname="Ultramarine Plasma Edition"
+LABEL readymade.prettyname="Ultramarine"
