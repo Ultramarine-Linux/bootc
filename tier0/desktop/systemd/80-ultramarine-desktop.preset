@@ -1,5 +1,5 @@
-# flatpak-preinstall.service ships in ultramarine-release-desktop, which only
-# gets installed in tier1. Its %systemd_post applies this preset at that point.
-# (90-default.preset in ultramarine-systemd-presets-common has the same line,
-# but that package isn't installed in the bootc images.)
+# flatpak-preinstall.service ships in ultramarine-release-atomic-desktop, which
+# only gets installed in tier1. Its %systemd_post applies this preset then.
+# (81-atomic-desktop.preset in ultramarine-systemd-presets-desktop-atomic has the
+# same line, but that package isn't installed in the bootc images.)
 enable flatpak-preinstall.service
