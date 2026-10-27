@@ -53,7 +53,7 @@ RUN EXTRA_MESA_PACKAGES=""; \
     docker-compose \
     podman \
     container-selinux \
-    dive \
+    umdive \
     dracut-live \
     dracut-network \
     distrobox \
