@@ -27,7 +27,6 @@ jobs:
             gnome-bootc
             xfce-bootc
             plasma-bootc
-            budgie-bootc
           )
 
           for package in "${packages[@]}"; do

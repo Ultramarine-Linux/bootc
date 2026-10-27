@@ -19,7 +19,6 @@ jobs:
           - name: gnome
           - name: plasma
           - name: xfce
-          - name: budgie
     name: Build ISO images with katsu
     runs-on: ${{ contains(matrix.arch, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 

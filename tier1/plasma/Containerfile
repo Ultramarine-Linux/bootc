@@ -19,6 +19,8 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     --exclude='libreoffice*' \
     --exclude=elisa-player \
     --exclude=haruna \
+    --exclude=kamoso \
+    --exclude=kcalc \
     --exclude=kate \
     --exclude=kfind \
     --exclude=kjournald \
@@ -30,9 +32,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     --exclude=okular \
     --setopt=install_weak_deps=False
 
-
-# Apps that used to be RPMs get installed as Flatpaks by flatpak-preinstall.service instead
-COPY preinstall.d/ /usr/share/flatpak/preinstall.d/
 
 # HACK: Disable PackageKit backend for bootc installs
 RUN mv /usr/lib64/qt6/plugins/discover/packagekit-backend.so /usr/lib64/qt6/plugins/discover/packagekit-backend.so.disabled
@@ -47,4 +46,4 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
 RUN sed -i 's/^livesys_session=.*/livesys_session="kde"/' /etc/sysconfig/livesys
 
 
-LABEL readymade.prettyname="Ultramarine Plasma Edition"
+LABEL readymade.prettyname="Ultramarine"

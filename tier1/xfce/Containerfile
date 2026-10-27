@@ -16,4 +16,4 @@ RUN sed -i 's/^livesys_session=.*/livesys_session="xfce"/' /etc/sysconfig/livesy
 RUN echo '# Use our XFCE panel config' >> /var/lib/livesys/livesys-session-extra && \
     echo 'cp /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml /home/liveuser/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml' >> /var/lib/livesys/livesys-session-extra
 
-LABEL readymade.prettyname="Ultramarine Xfce Edition"
+LABEL readymade.prettyname="Ultramarine Xfce"

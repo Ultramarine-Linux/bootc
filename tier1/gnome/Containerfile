@@ -1,6 +1,8 @@
 FROM ghcr.io/ultramarine-linux/desktop-bootc:rawhide
 COPY . /usr/src/ultramarine-bootc/tier1/gnome
 
+# Apps in ultramarine-gnome.preinstall (ultramarine-release) are installed as
+# Flatpaks by flatpak-preinstall.service, so don't also ship them as RPMs
 RUN --mount=type=cache,target=/var/cache dnf do -y \
     --no-best \
     --allowerasing \
@@ -10,8 +12,21 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
         ultramarine-release-identity-gnome \
         @gnome-desktop \
         @ultramarine-gnome-product-environment \
-        @ultramarine-gnome-no-flatpak-apps \
-        gnome-tweaks
+        gnome-tweaks \
+    --exclude=decibels \
+    --exclude=geary \
+    --exclude=gnome-calculator \
+    --exclude=gnome-calendar \
+    --exclude=gnome-clocks \
+    --exclude=gnome-connections \
+    --exclude=gnome-contacts \
+    --exclude=gnome-extensions-app \
+    --exclude=gnome-maps \
+    --exclude=gnome-text-editor \
+    --exclude=gnome-weather \
+    --exclude=papers \
+    --exclude=showtime \
+    --exclude=snapshot
 
 
-LABEL readymade.prettyname="Ultramarine GNOME Edition"
+LABEL readymade.prettyname="Ultramarine GNOME"
