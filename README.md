@@ -68,13 +68,7 @@ The build process is separated into _tiers_, which depend on each other in a lin
 
 You need Podman, [`just`](https://github.com/casey/just), and mkosi for the base image. CI pins mkosi to a specific commit, which is in `.github/workflows/reusable-build-image.yml`.
 
-<<<<<<< HEAD
-Version branches use the `umNN` convention. This repository is currently on `um45`; a new version branch is created from the previous version and its release references are updated there with `just bump-release <N>` (e.g. `just bump-release 45`).
-=======
-
 Version branches use the `umNN` convention, and `umrawhide` tracks Rawhide. A new version branch is created from the previous one, and its release references are updated with `just bump-release <N>` (e.g. `just bump-release 46`).
-
-> > > > > > > fd24304 (update readme for correctness)
 
 All recipes take `context=<dir>` and tag the result as `ghcr.io/ultramarine-linux/<basename of context>-bootc:<tag>`, so `context=tier1/gnome` produces `gnome-bootc:rawhide`. Set `tag=` to use a different tag.
 
