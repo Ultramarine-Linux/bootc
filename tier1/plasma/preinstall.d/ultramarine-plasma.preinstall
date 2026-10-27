@@ -1,0 +1,23 @@
+[Flatpak Preinstall org.kde.elisa]
+Branch=stable
+
+[Flatpak Preinstall org.kde.haruna]
+Branch=stable
+
+[Flatpak Preinstall org.kde.kamoso]
+Branch=stable
+
+[Flatpak Preinstall org.kde.kate]
+Branch=stable
+
+[Flatpak Preinstall org.kde.kcalc]
+Branch=stable
+
+[Flatpak Preinstall org.kde.koko]
+Branch=stable
+
+[Flatpak Preinstall org.kde.okular]
+Branch=stable
+
+[Flatpak Preinstall org.libreoffice.LibreOffice]
+Branch=stable

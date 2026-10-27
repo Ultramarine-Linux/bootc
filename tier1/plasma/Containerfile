@@ -14,7 +14,6 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     @ultramarine-plasma-product-environment \
     plasma-browser-integration \
     plasma-milou \
-    polycrystal \
     --exclude='desktop-backgrounds*' \
     --exclude='abrt*' \
     --exclude='libreoffice*' \
@@ -32,11 +31,8 @@ RUN --mount=type=cache,target=/var/cache dnf do -y \
     --setopt=install_weak_deps=False
 
 
-# Apps that used to be RPMs get installed as Flatpaks on first boot instead.
-# Overrides the shared list from ultramarine-release-identity-plasma, which
-# also includes kolourpaint/kwrite that we don't want on bootc.
-COPY polycrystal/ultramarine-plasma.json /etc/polycrystal/entries/ultramarine-plasma.json
-RUN systemctl enable polycrystal.service
+# Apps that used to be RPMs get installed as Flatpaks by flatpak-preinstall.service instead
+COPY preinstall.d/ /usr/share/flatpak/preinstall.d/
 
 # HACK: Disable PackageKit backend for bootc installs
 RUN mv /usr/lib64/qt6/plugins/discover/packagekit-backend.so /usr/lib64/qt6/plugins/discover/packagekit-backend.so.disabled

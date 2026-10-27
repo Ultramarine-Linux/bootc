@@ -64,9 +64,10 @@ rm -rf /.unconfigured
 systemctl disable initial-setup || true
 systemctl disable taidan-initial-setup-reconfiguration || true
 
-# Disable polycrystal, so it doesn't attempt to fill the ramdisk with Flatpaks
-# on live images
+# Disable polycrystal/flatpak-preinstall, so they don't attempt to fill the
+# ramdisk with Flatpaks on live images
 systemctl disable --now polycrystal.service || true
+systemctl disable --now flatpak-preinstall.service || true
 EOF
 
 # Katsu live media: a composefs ISO has no writable disk, so the container store

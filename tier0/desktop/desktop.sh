@@ -9,6 +9,7 @@ source /usr/src/ultramarine-bootc/base/common.sh
 systemctl --global enable xdg-user-dirs.service || true
 systemctl disable sssd-kcm.service sssd-kcm.socket || true
 systemctl enable flatpak-add-flathub-repos.service
+systemctl enable flatpak-preinstall.service
 
 setfattr -n user.component -v "packagekit-config" /etc/PackageKit/PackageKit.conf
 
