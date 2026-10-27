@@ -20,29 +20,28 @@ The base image is an OCI/Docker image, which can be consumed to build a disk ima
 
 ## Installation/Usage
 
-Currently prebuilt ISO images are broken right now, however
-there is ongoing work to get proper working bootc-based live ISOs working for this.
+Images are published to GHCR as `ghcr.io/ultramarine-linux/<edition>-bootc:<tag>`. The tag follows the branch: `rawhide` on `umrawhide`, `45` on `um45`, and so on (`latest` tracks the default branch). Hardware variants get a suffix, e.g. `plasma-bootc:rawhide-nvidia`.
+
+The editions are `plasma`, `gnome` and `xfce`, and the hardware variants are `standard`, `nvidia`, `cachyos` and `surface`.
 
 ### Boot images
 
-You may test pre-built ISOs from the experimental branch of Katsu from GitHub Actions CI [here](https://github.com/FyraLabs/katsu/actions/workflows/build-test.yml) on the
-`bootc-direct-boot` branch
+Live ISOs are built by the [Build ISO images with katsu](https://github.com/Ultramarine-Linux/bootc/actions/workflows/build-iso.yaml) workflow, and you can download them from that run's artifacts. They're still experimental.
 
-Addtionally you may also use another bootc-compatible image for this as a bootstrap image, such as [Fedora CoreOS](https://fedoraproject.org/coreos/)
+You can also boot any other bootc-capable image (e.g. [Fedora CoreOS](https://fedoraproject.org/coreos/)) and install from there.
 
 ### Installing Ultramarine bootc
 
-After booting into an existing live boot image with bootc, simply use `bootc install to-disk` with your preferred target edition.
+From a booted live image with bootc, install your edition with `bootc install to-disk` (as root):
 
 ```bash
-bootc install to-disk --source-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:rawhide --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:rawhide
+bootc install to-disk --source-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:rawhide --target-imgref ghcr.io/ultramarine-linux/plasma-bootc:rawhide /dev/sdX
 ```
 
-If you are on the actual Ultramarine bootc ISO experimental built with Katsu, you may do an offline instal directly from the embedded storage by replacing `--source-imgref` with `containers-storage:<$IMAGE>`
-
+On the Ultramarine live ISO the image is already embedded, so you can install offline from local storage instead:
 
 ```bash
-bootc install to-disk --source-imgref containers-storage:ghcr.io/ultramarine-linux/plasma-bootc:rawhide --target-imgref docker://ghcr.io/ultramarine-linux/plasma-bootc:rawhide
+bootc install to-disk --source-imgref containers-storage:ghcr.io/ultramarine-linux/plasma-bootc:rawhide-standard --target-imgref ghcr.io/ultramarine-linux/plasma-bootc:rawhide-standard /dev/sdX
 ```
 
 If `podman images` shows nothing, the embedded store is not being merged into
@@ -58,61 +57,71 @@ it by hand when you are booting the image some other way.
 
 ## Building
 
-The build process is separated into _tiers_, which depend on each other in a linear fashion, starting with the bare minimum base, building up to a full Ultramarine system, desktop variants, and HWE sub-variants for those images.
+The build process is separated into _tiers_, which depend on each other in a linear fashion, starting with the bare minimum base, building up to a full Ultramarine system, desktop variants, and hardware sub-variants for those images.
+
+- Base (`base`): The bare minimum bootc-compatible base image, built with [mkosi](https://github.com/systemd/mkosi).
+- Tier 0 (`tier0/*`): Common desktop and server layers on top of base.
+- Tier 1 (`tier1/*`): The Ultramarine desktop editions: Plasma, GNOME and Xfce.
+- Tier 2 (`tier2/*`): Hardware or deployment variants built from Tier 1, like `standard` and `nvidia`. Some variants exist here but aren't built in CI.
 
 ### Prerequisites
 
-Local builds require Podman, `just`, and a Linux host with the privileges needed for rootful/privileged container builds. Building bootable images additionally requires access to `/dev` and the container storage volume used by Podman. The CI workflows provide the required build tools inside their build containers.
+You need Podman, [`just`](https://github.com/casey/just), and mkosi for the base image. CI pins mkosi to a specific commit, which is in `.github/workflows/reusable-build-image.yml`.
 
-Version branches use the `umNN` convention. This repository is currently on `umrawhide`; a new version branch is created from the previous version and its release references are updated there with `just bump-release <N>` (e.g. `just bump-release 45`).
+Version branches use the `umNN` convention, and `umrawhide` tracks Rawhide. A new version branch is created from the previous one, and its release references are updated with `just bump-release <N>` (e.g. `just bump-release 46`).
 
-The image tiers are:
+All recipes take `context=<dir>` and tag the result as `ghcr.io/ultramarine-linux/<basename of context>-bootc:<tag>`, so `context=tier1/gnome` produces `gnome-bootc:rawhide`. Set `tag=` to use a different tag.
 
-- Base: The bare minimum bootc-compatible base image.
-- Tier 0: Stage 2 images containing common server and desktop variations.
-- Tier 1: Primary Ultramarine desktop images: GNOME, Xfce, Plasma, and Budgie.
-- Tier 2: Hardware or deployment variants built from Tier 1, including standard and NVIDIA images. Additional variants may be present but disabled in CI.
-
-We provide pre-built base images on GHCR, which can be pulled with Podman or Docker:
+### Pulling prebuilt images
 
 ```bash
-podman pull ghcr.io/ultramarine-linux/base-bootc:latest
+just context=base pull                # ghcr.io/ultramarine-linux/base-bootc:rawhide
+just context=tier1/plasma tag=44 pull # a different tag
 ```
 
-There's also a Just recipe to quickly pull the image:
+### Building locally
+
+The base image is built with mkosi rather than a Containerfile, so `ball` doesn't work for it. Build it, then load the OCI output into Podman under the tag the other tiers expect, and rechunk it:
 
 ```bash
-just context=base pull
+sudo just mkosi-build
+podman pull "oci:$(find base/mkosi.output -mindepth 1 -maxdepth 1 -type d | head -1)"   # prints the image ID
+podman tag <image ID> ghcr.io/ultramarine-linux/base-bootc:rawhide
+just context=base chunkah
 ```
 
-To build the base image locally, use the Just recipe:
-
-```bash
-just context=base ball
-```
-
-This will build the base image from scratch and rechunk it. You can then proceed to build the tier 0, tier 1, and tier 2 images similarly:
+Everything above base is a Containerfile, and `ball` builds and rechunks it. Each tier's `FROM` points at the tag the previous step produced:
 
 ```bash
 just context=tier0/desktop ball
-just context=tier1/gnome ball
-just context=tier2/standard ball from=ghcr.io/ultramarine-linux/gnome-bootc:rawhide
+just context=tier1/plasma ball
+just context=tier2/standard from=ghcr.io/ultramarine-linux/plasma-bootc:rawhide ball
 ```
+
+Locally, tier 2 images are tagged after their own directory (`standard-bootc:rawhide`), not like CI's `plasma-bootc:rawhide-standard`. Pass `image_tag_override=` if you need the CI name.
+
+You can skip building the lower tiers by pulling them first (e.g. `just context=tier0/desktop pull`).
 
 ## Building bootable images
 
-To build a bootable disk image off of the built images, use the `build-vm` or `build-vm-imb` Just recipes:
+`build-bib` builds a disk image with [bootc-image-builder](https://github.com/osbuild/bootc-image-builder). It copies the image into root's container storage for you and writes the result to `output/`:
 
 ```bash
-just context=tier1/gnome build-vm
+just context=tier1/plasma build-bib        # qcow2
+just context=tier1/plasma build-bib raw    # or vmdk, vhd, anaconda-iso, iso, ...
 ```
 
-```bash
-just context=tier1/gnome build-vm-imb
-```
+`build-vm` runs `bootc install to-disk` against a 20G loopback file at `output/bootable.img`. It needs root and the image in root's storage:
 
 ```bash
-just context=tier1/gnome build-vm-imb qcow2 # or raw, vhd, anaconda-iso, bootc-installer, etc.
+sudo podman image scp "$USER@localhost::ghcr.io/ultramarine-linux/plasma-bootc:rawhide" root@localhost::
+sudo just context=tier1/plasma build-vm
+```
+
+`katsu-live` builds a live ISO (`out.iso`) with [Katsu](https://github.com/FyraLabs/katsu) the same way CI does. It needs `katsu` and root, or you can run it inside `ghcr.io/fyralabs/katsu:main`:
+
+```bash
+sudo just image_tag=ghcr.io/ultramarine-linux/plasma-bootc:rawhide-standard katsu-live
 ```
 
 ## Notes on building derivatives
