@@ -1,0 +1,42 @@
+[
+  {
+    "id": "org.kde.elisa",
+    "remote": "flathub",
+    "branch": "stable"
+  },
+  {
+    "id": "org.kde.haruna",
+    "remote": "flathub",
+    "branch": "stable"
+  },
+  {
+    "id": "org.kde.kamoso",
+    "remote": "flathub",
+    "branch": "stable"
+  },
+  {
+    "id": "org.kde.kate",
+    "remote": "flathub",
+    "branch": "stable"
+  },
+  {
+    "id": "org.kde.kcalc",
+    "remote": "flathub",
+    "branch": "stable"
+  },
+  {
+    "id": "org.kde.koko",
+    "remote": "flathub",
+    "branch": "stable"
+  },
+  {
+    "id": "org.kde.okular",
+    "remote": "flathub",
+    "branch": "stable"
+  },
+  {
+    "id": "org.libreoffice.LibreOffice",
+    "remote": "flathub",
+    "branch": "stable"
+  }
+]
